@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Avatar Test</title>
+    <style>
+        img { width: 150px; height: 150px; border: 3px solid #adb5bd; border-radius: 50%; object-fit: cover; }
+        .container { padding: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Avatar Test</h1>
+        <p>Default Avatar:</p>
+        <img src="/images/default-avatar.svg" alt="Default Avatar">
+        <p>Profile picture from storage (if exists):</p>
+        <img src="/storage/profile-pictures/profile_1_1758203119_FzCwSJmfh4.png" alt="Profile Picture" 
+             onerror="this.src='/images/default-avatar.svg'; this.alt='Fallback Avatar';">
+    </div>
+</body>
+</html>

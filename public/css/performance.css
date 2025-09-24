@@ -1,0 +1,109 @@
+/* Performance Optimization CSS */
+
+/* Force hide preloaders immediately */
+.preloader,
+.overlay,
+[class*="preloader"],
+.loading-screen {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* Ensure body is visible */
+body {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Fast transitions */
+* {
+    -webkit-transition: all 0.1s !important;
+    -moz-transition: all 0.1s !important;
+    -o-transition: all 0.1s !important;
+    transition: all 0.1s !important;
+}
+
+/* Disable slow animations */
+.fade.in,
+.collapse.in,
+.collapsing {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Fast sidebar transitions */
+.main-sidebar {
+    transition: margin-left 0.1s !important;
+}
+
+/* Reduce animation delays */
+.sidebar-collapse .main-sidebar {
+    transition: margin-left 0.1s !important;
+}
+
+/* Speed up modal animations */
+.modal.fade .modal-dialog {
+    transition: transform 0.1s !important;
+}
+
+.modal.fade {
+    transition: opacity 0.1s !important;
+}
+
+/* Fast dropdown animations */
+.dropdown-menu {
+    transition: opacity 0.1s !important;
+}
+
+/* Speed up AdminLTE components */
+.btn {
+    transition: all 0.1s !important;
+}
+
+.card {
+    transition: all 0.1s !important;
+}
+
+/* Optimize loading states */
+.loading-placeholder {
+    background: linear-gradient(90deg, #f0f0f0 25%, transparent 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Improve perceived performance */
+.info-box-number:empty::after {
+    content: "...";
+    color: #ccc;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    * {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    .main-sidebar,
+    .content-wrapper,
+    .main-header {
+        transition: none !important;
+    }
+}
+
+/* Critical above-the-fold content */
+.content-header,
+.main-header,
+.small-box {
+    animation: none !important;
+    transition: none !important;
+}

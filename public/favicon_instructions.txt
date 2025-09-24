@@ -1,0 +1,32 @@
+FAVICON AND LOGO INSTRUCTIONS
+=============================
+
+To complete the logo integration:
+
+1. SAVE THE PROVIDED LOGO IMAGE as one of these formats:
+   - public/images/logo.png (recommended - 300x200px)
+   - public/images/logo.jpg
+   - public/images/favicon.ico (16x16, 32x32, 48x48 sizes)
+
+2. OPTIONAL: Create a favicon from the logo:
+   - Resize logo to 32x32 pixels
+   - Save as public/favicon.ico
+   - This will appear in browser tabs
+
+3. UPDATE CONFIG (if using PNG/JPG instead of SVG):
+   Edit config/adminlte.php and change:
+   'logo_img' => 'images/logo.png',  // or .jpg
+
+4. LOGO WILL APPEAR IN:
+   - Top navigation bar (navbar)
+   - Login/registration pages
+   - Loading screen/preloader
+   - Browser tab (if favicon.ico exists)
+
+Current Status:
+- ✅ SVG placeholder created and configured
+- ✅ Custom CSS styling applied
+- ✅ AdminLTE configuration updated
+- ⚠️  Need actual logo image file
+
+The system will display the placeholder SVG logo until you replace it with the actual logo image.

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JS Function Test</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>JavaScript Function Test</h1>
+    
+    <p>This page tests if JavaScript functions can be called via onclick handlers.</p>
+    
+    <button onclick="testFunction(1, 'Test Medicine', 50, 'pcs')" id="testBtn">Test Function Call</button>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;">
+        <p>Output will appear here...</p>
+    </div>
+    
+    <script>
+        console.log('Test page script loading...');
+        
+        // Test if global functions work
+        window.testFunction = function(id, name, currentStock, unit) {
+            console.log('testFunction called with:', {id, name, currentStock, unit});
+            
+            var output = document.getElementById('output');
+            output.innerHTML = '<p><strong>✅ Function called successfully!</strong></p>' +
+                              '<p>ID: ' + id + '</p>' +
+                              '<p>Name: ' + name + '</p>' +
+                              '<p>Stock: ' + currentStock + '</p>' +
+                              '<p>Unit: ' + unit + '</p>' +
+                              '<p>Time: ' + new Date().toLocaleTimeString() + '</p>';
+        };
+        
+        console.log('Test function defined. Type: ' + typeof window.testFunction);
+        
+        // Try calling it programmatically
+        setTimeout(function() {
+            console.log('Testing programmatic call...');
+            if (typeof window.testFunction === 'function') {
+                console.log('✅ Function is accessible from window object');
+                // Don't auto-call, wait for button click
+            } else {
+                console.error('❌ Function not found on window object');
+            }
+        }, 100);
+        
+        console.log('Test page script loaded completely.');
+    </script>
+</body>
+</html>

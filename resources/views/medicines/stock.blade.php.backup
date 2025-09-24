@@ -1,0 +1,1648 @@
+@extends('adminlte::page')
+
+@section('title', 'Stock Management | Bokod CMS')
+
+@section('adminlte_css_pre')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+@endsection
+
+@section('content_header')
+    <div class="row">
+        <div class="col-sm-6">
+            <h1 class="m-0">Stock Management</h1>
+        </div>
+        <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('medicines.index') }}">Medicines</a></li>
+                <li class="breadcrumb-item active">Stock Management</li>
+            </ol>
+        </div>
+    </div>
+@endsection
+
+@section('content')
+    <!-- Hidden CSRF Token for AJAX -->
+    <input type="hidden" name="_token" value="{{ csrf_token() }}" id="csrf-token">
+
+    <!-- Success/Error Messages -->
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <i class="icon fas fa-check"></i> {{ session('success') }}
+        </div>
+    @endif
+
+    @if ($errors->has('error'))
+        <div class="alert alert-danger alert-dismissible">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <i class="icon fas fa-ban"></i> {{ $errors->first('error') }}
+        </div>
+    @endif
+
+    <!-- Stock Alerts Row -->
+    <div class="row mb-3">
+        <div class="col-lg-6 col-12">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ $lowStockCount }}</h3>
+                    <p>Low Stock Medicines</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="small-box-footer">
+                    <i class="fas fa-info-circle mr-1"></i>Require immediate attention
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 col-12">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3>{{ $outOfStockCount }}</h3>
+                    <p>Out of Stock Medicines</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="small-box-footer">
+                    <i class="fas fa-info-circle mr-1"></i>Critical stock shortage
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Card -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-cogs mr-2"></i>Bulk Actions</h3>
+            <div class="card-tools">
+                <a href="{{ route('medicines.index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left mr-1"></i>Back to Medicines
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-success btn-block" id="bulkAddStock" onclick="testBulkAddStock()">
+                        <i class="fas fa-plus mr-2"></i>Bulk Add Stock
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-warning btn-block" id="exportLowStock" onclick="testExportStock()">
+                        <i class="fas fa-file-excel mr-2"></i>Export Low Stock Report
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-info btn-block" id="printStockReport" onclick="testPrintStock()">
+                        <i class="fas fa-print mr-2"></i>Print Stock Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Management Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-boxes mr-2"></i>Medicine Stock Levels
+            </h3>
+            <div class="card-tools">
+                <div class="input-group input-group-sm" style="width: 200px;">
+                    <input type="text" name="table_search" class="form-control float-right" placeholder="Search medicines..." id="stockSearch">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-default">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body table-responsive">
+            @if($medicines->count() > 0)
+                <table class="table table-bordered table-striped" id="stockTable">
+                    <thead>
+                        <tr>
+                            <th width="5%">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="selectAll">
+                                    <label class="custom-control-label" for="selectAll"></label>
+                                </div>
+                            </th>
+                            <th width="25%">Medicine</th>
+                            <th width="15%">Current Stock</th>
+                            <th width="12%">Min. Stock</th>
+                            <th width="15%">Status</th>
+                            <th width="13%">Last Updated</th>
+                            <th width="15%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($medicines as $medicine)
+                        <tr class="{{ $medicine->is_low_stock ? 'table-warning' : '' }}{{ $medicine->stock_quantity <= 0 ? 'table-danger' : '' }}">
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input medicine-checkbox" 
+                                           id="medicine_{{ $medicine->id }}" value="{{ $medicine->id }}">
+                                    <label class="custom-control-label" for="medicine_{{ $medicine->id }}"></label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    @if($medicine->stock_quantity <= 0)
+                                        <i class="fas fa-exclamation-circle text-danger mr-2"></i>
+                                    @elseif($medicine->is_low_stock)
+                                        <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
+                                    @else
+                                        <i class="fas fa-check-circle text-success mr-2"></i>
+                                    @endif
+                                    <div>
+                                        <strong>{{ $medicine->medicine_name }}</strong>
+                                        @if($medicine->brand_name)
+                                            <br><small class="text-muted">{{ $medicine->brand_name }}</small>
+                                        @endif
+                                        <br><small class="text-info">{{ $medicine->strength }} {{ $medicine->dosage_form }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="stock-quantity" data-id="{{ $medicine->id }}">
+                                    <strong class="text-{{ $medicine->stock_quantity <= 0 ? 'danger' : ($medicine->is_low_stock ? 'warning' : 'success') }}">
+                                        {{ $medicine->stock_quantity }}
+                                    </strong> {{ $medicine->unit ?? 'pcs' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted">{{ $medicine->minimum_stock ?? 10 }} {{ $medicine->unit ?? 'pcs' }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ $medicine->stock_status_color }}" id="status_{{ $medicine->id }}">
+                                    {{ $medicine->stock_status }}
+                                </span>
+                                @if($medicine->expiry_date && $medicine->is_expiring_soon)
+                                    <br><small class="text-warning">
+                                        <i class="fas fa-clock mr-1"></i>Exp: {{ $medicine->expiry_date->format('M d, Y') }}
+                                    </small>
+                                @endif
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ $medicine->updated_at->format('M d, Y') }}<br>
+                                    {{ $medicine->updated_at->format('h:i A') }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-success stock-add" 
+                                            data-id="{{ $medicine->id }}" 
+                                            data-name="{{ $medicine->medicine_name }}"
+                                            data-current="{{ $medicine->stock_quantity }}"
+                                            data-unit="{{ $medicine->unit ?? 'pcs' }}"
+                                            onclick="testAddStock({{ $medicine->id }}, '{{ $medicine->medicine_name }}', {{ $medicine->stock_quantity }}, '{{ $medicine->unit ?? 'pcs' }}')">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-warning stock-subtract" 
+                                            data-id="{{ $medicine->id }}" 
+                                            data-name="{{ $medicine->medicine_name }}"
+                                            data-current="{{ $medicine->stock_quantity }}"
+                                            data-unit="{{ $medicine->unit ?? 'pcs' }}"
+                                            onclick="testSubtractStock({{ $medicine->id }}, '{{ $medicine->medicine_name }}', {{ $medicine->stock_quantity }}, '{{ $medicine->unit ?? 'pcs' }}')"
+                                            {{ $medicine->stock_quantity <= 0 ? 'disabled' : '' }}>
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-info stock-history" 
+                                            data-id="{{ $medicine->id }}" 
+                                            data-name="{{ $medicine->medicine_name }}"
+                                            onclick="testStockHistory({{ $medicine->id }}, '{{ $medicine->medicine_name }}')">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        Showing {{ $medicines->firstItem() }} to {{ $medicines->lastItem() }} of {{ $medicines->total() }} results
+                    </div>
+                    {{ $medicines->links() }}
+                </div>
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No medicines found for stock management</h5>
+                    <p class="text-muted">Add some medicines first to manage their stock levels.</p>
+                    <a href="{{ route('medicines.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus mr-1"></i>Add New Medicine
+                    </a>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Quick Stock Update Modal -->
+    <div class="modal fade" id="quickStockModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Quick Stock Update</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="quickStockForm">
+                        <input type="hidden" id="quickMedicineId">
+                        <input type="hidden" id="quickOperation">
+                        
+                        <div class="alert alert-info" id="stockInfo">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span id="operationText"></span> stock for <strong id="quickMedicineName"></strong>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Current Stock:</label>
+                            <p class="form-control-static">
+                                <strong id="quickCurrentStock"></strong> <span id="quickStockUnit"></span>
+                            </p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quickQuantity">Quantity:</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="quickQuantity" min="1" required>
+                                <div class="input-group-append">
+                                    <span class="input-group-text" id="quantityUnit"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quickNotes">Notes (optional):</label>
+                            <textarea class="form-control" id="quickNotes" rows="2" placeholder="Reason for stock update..."></textarea>
+                        </div>
+                        
+                        <div id="newStockPreview" class="alert alert-secondary" style="display: none;">
+                            <strong>New Stock Level:</strong> <span id="previewStock"></span>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmStockUpdate">
+                        <i class="fas fa-check mr-2"></i>Update Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Update Modal -->
+    <div class="modal fade" id="bulkUpdateModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Bulk Stock Update</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Selected <span id="selectedCount">0</span> medicine(s) for bulk update
+                    </div>
+                    
+                    <form id="bulkUpdateForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="bulkOperation">Operation:</label>
+                                    <select class="form-control" id="bulkOperation" required>
+                                        <option value="add">Add to Stock</option>
+                                        <option value="set">Set Stock Level</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="bulkQuantity">Quantity:</label>
+                                    <input type="number" class="form-control" id="bulkQuantity" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bulkNotes">Notes:</label>
+                            <textarea class="form-control" id="bulkNotes" rows="2" placeholder="Reason for bulk update..."></textarea>
+                        </div>
+                        
+                        <div id="selectedMedicines" class="mt-3">
+                            <!-- Selected medicines will be populated here -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmBulkUpdate">
+                        <i class="fas fa-check mr-2"></i>Update Selected
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock Input Modal -->
+    <div class="modal fade" id="stockInputModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="stockInputTitle">Update Stock</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" id="stockInputInfo">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span id="stockInputMessage">Update stock for medicine</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stockInputQuantity">Enter Quantity:</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="stockInputQuantity" min="1" placeholder="Enter quantity...">
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="stockInputUnit">pcs</span>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted" id="stockInputHelper">Current stock: 0</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="stockInputConfirm" onclick="confirmStockUpdate()">
+                        <i class="fas fa-check mr-2"></i>Update Stock
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success/Error Modal -->
+    <div class="modal fade" id="responseModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" id="responseModalHeader">
+                    <h4 class="modal-title" id="responseModalTitle">Operation Result</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center py-3" id="responseModalBody">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 id="responseModalMessage">Operation completed successfully!</h5>
+                        <p class="text-muted" id="responseModalDetails"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" id="responseModalOk">
+                        <i class="fas fa-check mr-2"></i>OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="confirmationTitle">Confirm Action</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center py-3">
+                        <i class="fas fa-question-circle fa-3x text-warning mb-3"></i>
+                        <h5 id="confirmationMessage">Are you sure you want to continue?</h5>
+                        <p class="text-muted" id="confirmationDetails"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="confirmationConfirm">
+                        <i class="fas fa-check mr-2"></i>Continue
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bulk Selection Modal -->
+    <div class="modal fade" id="bulkSelectionModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Bulk Stock Update</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span id="bulkSelectionCount">0 medicines selected</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bulkQuantityInput">Quantity to add to each medicine:</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="bulkQuantityInput" min="1" placeholder="Enter quantity...">
+                            <div class="input-group-append">
+                                <span class="input-group-text">units</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-list mr-2"></i>Selected Medicines:</h6>
+                        </div>
+                        <div class="card-body" id="bulkSelectedMedicines">
+                            <!-- Selected medicines will be listed here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" id="bulkUpdateConfirm">
+                        <i class="fas fa-plus mr-2"></i>Update All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock History Modal -->
+    <div class="modal fade" id="stockHistoryModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Stock History</h4>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="stockHistoryContent">
+                        <div class="text-center py-3">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p class="mt-2">Loading stock history...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+@endsection
+
+@section('css')
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+    .small-box h3 {
+        font-size: 2.2rem;
+        font-weight: bold;
+        margin: 0 0 10px 0;
+        white-space: nowrap;
+        padding: 0;
+    }
+    
+    .table-warning {
+        background-color: #fff3cd !important;
+    }
+    
+    .table-danger {
+        background-color: #f8d7da !important;
+    }
+    
+    .btn-group-sm > .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.775rem;
+    }
+</style>
+@endsection
+
+@section('js')
+<!-- Ensure jQuery is loaded -->
+@if(!isset($jquery_loaded))
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@endif
+
+<script>
+// Global variables to store current operation data
+var currentStockOperation = null;
+
+// Safe modal showing function with multiple fallback methods
+function showModalSafely(modalId) {
+    console.log('Attempting to show modal:', modalId);
+    
+    var modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('Modal element not found:', modalId);
+        alert('Modal not found: ' + modalId);
+        return;
+    }
+    
+    console.log('Modal element found:', modal);
+    
+    // Try Bootstrap jQuery modal (most common)
+    if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined') {
+        console.log('Using Bootstrap jQuery modal');
+        try {
+            $('#' + modalId).modal('show');
+            console.log('Bootstrap modal triggered successfully');
+            return;
+        } catch (e) {
+            console.error('Bootstrap jQuery modal failed:', e);
+        }
+    }
+    
+    // Try Bootstrap 5 vanilla JS modal
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        console.log('Using Bootstrap 5 vanilla JS modal');
+        try {
+            var bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            console.log('Bootstrap 5 modal triggered successfully');
+            return;
+        } catch (e) {
+            console.error('Bootstrap 5 modal failed:', e);
+        }
+    }
+    
+    // Fallback: Manual modal display
+    console.log('Using manual modal display fallback');
+    modal.style.display = 'block';
+    modal.classList.add('show');
+    modal.setAttribute('aria-modal', 'true');
+    modal.removeAttribute('aria-hidden');
+    
+    // Add backdrop
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop fade show';
+    backdrop.id = modalId + '-backdrop';
+    document.body.appendChild(backdrop);
+    document.body.classList.add('modal-open');
+    
+    console.log('Manual modal display applied');
+}
+
+// Function to hide modal manually
+function hideModalSafely(modalId) {
+    var modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.removeAttribute('aria-modal');
+        modal.setAttribute('aria-hidden', 'true');
+        
+        // Remove backdrop
+        var backdrop = document.getElementById(modalId + '-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        document.body.classList.remove('modal-open');
+    }
+}
+
+// Inline test functions for immediate functionality
+function testAddStock(id, name, currentStock, unit) {
+    console.log('ADD STOCK CLICKED:', { id, name, currentStock, unit });
+    
+    // Store operation data globally
+    currentStockOperation = {
+        medicineId: id,
+        medicineName: name,
+        currentStock: parseInt(currentStock),
+        unit: unit || 'pcs',
+        action: 'add'
+    };
+    
+    // Set up the modal
+    document.getElementById('stockInputTitle').textContent = 'Add Stock';
+    document.getElementById('stockInputMessage').textContent = 'Add stock to ' + name;
+    document.getElementById('stockInputQuantity').value = '';
+    document.getElementById('stockInputQuantity').removeAttribute('max');
+    document.getElementById('stockInputUnit').textContent = unit || 'pcs';
+    document.getElementById('stockInputHelper').textContent = 'Current stock: ' + currentStock + ' ' + (unit || 'pcs');
+    
+    // Show the modal with multiple fallback methods
+    showModalSafely('stockInputModal');
+}
+
+function testSubtractStock(id, name, currentStock, unit) {
+    console.log('SUBTRACT STOCK CLICKED:', { id, name, currentStock, unit });
+    
+    currentStock = parseInt(currentStock);
+    
+    if (currentStock <= 0) {
+        showSimpleModal('error', 'Cannot Subtract Stock', 'Cannot subtract from zero stock!');
+        return;
+    }
+    
+    // Store operation data globally
+    currentStockOperation = {
+        medicineId: id,
+        medicineName: name,
+        currentStock: currentStock,
+        unit: unit || 'pcs',
+        action: 'subtract'
+    };
+    
+    // Set up the modal
+    document.getElementById('stockInputTitle').textContent = 'Subtract Stock';
+    document.getElementById('stockInputMessage').textContent = 'Remove stock from ' + name;
+    document.getElementById('stockInputQuantity').value = '';
+    document.getElementById('stockInputQuantity').setAttribute('max', currentStock);
+    document.getElementById('stockInputUnit').textContent = unit || 'pcs';
+    document.getElementById('stockInputHelper').textContent = 'Current stock: ' + currentStock + ' ' + (unit || 'pcs') + ' (max: ' + currentStock + ')';
+    
+    // Show the modal with multiple fallback methods
+    showModalSafely('stockInputModal');
+}
+
+function testStockHistory(id, name) {
+    console.log('STOCK HISTORY CLICKED:', { id, name });
+    
+    document.querySelector('#stockHistoryModal .modal-title').textContent = 'Stock History - ' + name;
+    document.getElementById('stockHistoryContent').innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle mr-2"></i>Stock history for <strong>' + name + '</strong><br><small>This feature is under development. Full stock movement tracking will be available soon.</small></div>';
+    showModalSafely('stockHistoryModal');
+}
+
+function testBulkAddStock() {
+    console.log('BULK ADD STOCK CLICKED');
+    
+    // Check for selected medicines
+    var checkboxes = document.querySelectorAll('.medicine-checkbox:checked');
+    if (checkboxes.length === 0) {
+        showSimpleModal('warning', 'No Selection', 'Please select medicines first by checking the boxes next to medicine names.');
+        return;
+    }
+    
+    // Populate the bulk selection modal
+    var selectedMedicines = [];
+    var selectedMedicinesHtml = '';
+    
+    checkboxes.forEach(function(checkbox) {
+        var row = checkbox.closest('tr');
+        var medicineName = row.querySelector('strong').textContent;
+        var currentStock = row.querySelector('.stock-quantity strong').textContent;
+        var unit = row.querySelector('.stock-quantity').textContent.split(' ').pop();
+        
+        selectedMedicines.push({
+            id: checkbox.value,
+            name: medicineName,
+            currentStock: currentStock,
+            unit: unit
+        });
+        
+        selectedMedicinesHtml += '<div class="row mb-2"><div class="col-8"><strong>' + medicineName + '</strong></div><div class="col-4 text-right">Current: ' + currentStock + ' ' + unit + '</div></div>';
+    });
+    
+    // Update modal content
+    document.getElementById('bulkSelectionCount').textContent = selectedMedicines.length + ' medicines selected';
+    document.getElementById('bulkSelectedMedicines').innerHTML = selectedMedicinesHtml;
+    document.getElementById('bulkQuantityInput').value = '';
+    
+    // Store selected medicines globally
+    window.selectedMedicinesForBulk = selectedMedicines;
+    
+    // Show the bulk selection modal
+    showModalSafely('bulkSelectionModal');
+}
+
+function testExportStock() {
+    console.log('EXPORT STOCK CLICKED');
+    
+    // Show export options
+    var format = 'csv'; // Default to CSV
+    
+    // Create a temporary form to handle the download
+    var form = document.createElement('form');
+    form.method = 'GET';
+    form.action = '/medicines/export-stock';
+    form.target = '_blank';
+    
+    // Add format parameter
+    var formatInput = document.createElement('input');
+    formatInput.type = 'hidden';
+    formatInput.name = 'format';
+    formatInput.value = format;
+    form.appendChild(formatInput);
+    
+    // Add current filters if any
+    var searchValue = document.getElementById('stockSearch').value;
+    if (searchValue) {
+        var searchInput = document.createElement('input');
+        searchInput.type = 'hidden';
+        searchInput.name = 'search';
+        searchInput.value = searchValue;
+        form.appendChild(searchInput);
+    }
+    
+    // Submit form
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+    
+    // Show confirmation
+    showSimpleModal('success', 'Export Started', 'Stock report download has started. Check your downloads folder in a few moments.');
+}
+
+function testPrintStock() {
+    console.log('PRINT STOCK CLICKED');
+    
+    // Create a print-friendly version of the stock table
+    var printWindow = window.open('', '_blank');
+    
+    // Get the stock table
+    var stockTable = document.getElementById('stockTable');
+    if (!stockTable) {
+        showSimpleModal('error', 'Print Error', 'Stock table not found.');
+        return;
+    }
+    
+    // Create print document
+    var printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Stock Report - ${new Date().toLocaleDateString()}</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 20px;
+                    color: #333;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 10px;
+                }
+                .report-info {
+                    margin-bottom: 20px;
+                    font-size: 12px;
+                    color: #666;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                    font-size: 11px;
+                }
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 6px;
+                    text-align: left;
+                }
+                th {
+                    background-color: #f8f9fa;
+                    font-weight: bold;
+                }
+                .text-danger { color: #dc3545; }
+                .text-warning { color: #ffc107; }
+                .text-success { color: #28a745; }
+                .badge {
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                    font-size: 10px;
+                    font-weight: bold;
+                }
+                .badge-danger { background-color: #dc3545; color: white; }
+                .badge-warning { background-color: #ffc107; color: #333; }
+                .badge-success { background-color: #28a745; color: white; }
+                @media print {
+                    body { margin: 0; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>BOKOD CMS - Medicine Stock Report</h1>
+                <p>Generated on: ${new Date().toLocaleString()}</p>
+            </div>
+            
+            <div class="report-info">
+                <p><strong>Total Medicines:</strong> ${document.querySelectorAll('#stockTable tbody tr').length}</p>
+                <p><strong>Low Stock Items:</strong> ${document.querySelectorAll('.table-warning').length}</p>
+                <p><strong>Out of Stock Items:</strong> ${document.querySelectorAll('.table-danger').length}</p>
+            </div>
+    `;
+    
+    // Create a simplified table for printing
+    var rows = stockTable.querySelectorAll('tbody tr');
+    printContent += `
+        <table>
+            <thead>
+                <tr>
+                    <th>Medicine</th>
+                    <th>Current Stock</th>
+                    <th>Min. Stock</th>
+                    <th>Status</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    rows.forEach(function(row) {
+        var medicineName = row.querySelector('strong').textContent;
+        var brandName = row.querySelector('small') ? row.querySelector('small').textContent : '';
+        var stockQty = row.querySelector('.stock-quantity strong').textContent;
+        var stockUnit = row.querySelector('.stock-quantity').textContent.split(' ').pop();
+        var minStock = row.querySelectorAll('td')[3].textContent.trim();
+        var status = row.querySelector('.badge').textContent;
+        var statusClass = row.querySelector('.badge').className;
+        var lastUpdated = row.querySelectorAll('td')[5].querySelector('small').textContent.replace(/\n\s+/g, ' ');
+        
+        var rowClass = '';
+        if (row.classList.contains('table-danger')) rowClass = 'text-danger';
+        else if (row.classList.contains('table-warning')) rowClass = 'text-warning';
+        else rowClass = 'text-success';
+        
+        printContent += `
+            <tr class="${rowClass}">
+                <td>
+                    <strong>${medicineName}</strong>
+                    ${brandName ? '<br><small>' + brandName + '</small>' : ''}
+                </td>
+                <td><strong>${stockQty} ${stockUnit}</strong></td>
+                <td>${minStock}</td>
+                <td><span class="badge ${statusClass.replace('badge-', 'badge-')}">${status}</span></td>
+                <td><small>${lastUpdated}</small></td>
+            </tr>
+        `;
+    });
+    
+    printContent += `
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 30px; font-size: 10px; color: #666; text-align: center;">
+            <p>This report was generated automatically by BOKOD CMS</p>
+        </div>
+        
+        <script>
+            window.onload = function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 100);
+            };
+        </script>
+        </body>
+        </html>
+    `;
+    
+    // Write content to print window
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+}
+
+function performBulkStockUpdate(selectedMedicines, quantity) {
+    console.log('Performing bulk stock update:', { selectedMedicines, quantity });
+    
+    // Get CSRF token
+    var csrfToken = null;
+    var csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
+    if (csrfMetaTag) {
+        csrfToken = csrfMetaTag.getAttribute('content');
+    } else {
+        // Try other methods for CSRF token
+        if (typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
+            csrfToken = window.Laravel.csrfToken;
+        } else {
+            var csrfInput = document.querySelector('input[name="_token"]');
+            if (csrfInput) {
+                csrfToken = csrfInput.value;
+            }
+        }
+    }
+    
+    if (!csrfToken) {
+        showSimpleModal('error', 'Security Error', 'CSRF token not found. Please refresh the page and try again.');
+        return;
+    }
+    
+    // Prepare updates array in the format expected by controller
+    var updates = selectedMedicines.map(function(med) {
+        return {
+            medicine_id: parseInt(med.id),
+            action: 'add',
+            quantity: quantity
+        };
+    });
+    
+    // Use vanilla JS for AJAX
+    var xhr = new XMLHttpRequest();
+    var url = window.location.origin + '/medicines/bulk-update-stock';
+    
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            console.log('Bulk update response status:', xhr.status);
+            console.log('Bulk update response:', xhr.responseText);
+            
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        showSimpleModal('success', 'Bulk Update Successful', 
+                            response.message + '\n\nRefreshing page in 3 seconds...');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        var errorMsg = response.message || 'Please try again.';
+                        if (response.errors && response.errors.length > 0) {
+                            errorMsg += '\n\nErrors:\n' + response.errors.join('\n');
+                        }
+                        showSimpleModal('error', 'Bulk Update Failed', errorMsg);
+                    }
+                } catch (e) {
+                    console.error('JSON Parse error:', e);
+                    showSimpleModal('error', 'Response Error', 'Unexpected response format from server.');
+                }
+            } else {
+                showSimpleModal('error', 'Request Failed', 'HTTP Error: ' + xhr.status + ' - ' + xhr.statusText);
+            }
+        }
+    };
+    
+    var requestData = {
+        updates: updates,
+        reason: 'Bulk stock addition via stock management interface'
+    };
+    
+    console.log('Sending bulk update data:', requestData);
+    xhr.send(JSON.stringify(requestData));
+}
+
+function performStockUpdate(medicineId, action, quantity, reason) {
+    console.log('Performing stock update:', { medicineId, action, quantity, reason });
+    
+    // Get CSRF token
+    var csrfToken = null;
+    var csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
+    if (csrfMetaTag) {
+        csrfToken = csrfMetaTag.getAttribute('content');
+    } else {
+        // Try to get from Laravel's global window object
+        if (typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
+            csrfToken = window.Laravel.csrfToken;
+        } else {
+            // Try to get from a hidden input (fallback)
+            var csrfInput = document.querySelector('input[name="_token"]');
+            if (csrfInput) {
+                csrfToken = csrfInput.value;
+            }
+        }
+    }
+    
+    console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
+    
+    if (!csrfToken) {
+        showSimpleModal('error', 'Security Error', 'CSRF token not found. Please refresh the page and try again.');
+        return;
+    }
+    
+    // Use vanilla JS for AJAX to avoid jQuery issues
+    var xhr = new XMLHttpRequest();
+    var url = window.location.origin + '/medicines/' + medicineId + '/update-stock';
+    console.log('Request URL:', url);
+    
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            console.log('Response status:', xhr.status);
+            console.log('Response headers:', xhr.getAllResponseHeaders());
+            console.log('Raw response text:', xhr.responseText);
+            
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    console.log('Parsed response:', response);
+                    if (response.success) {
+                        showSimpleModal('success', 'Stock Updated', response.message + '\nNew quantity: ' + response.new_quantity + ' units');
+                        setTimeout(function() {
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        showSimpleModal('error', 'Update Failed', response.message || 'Please check the details and try again.');
+                    }
+                } catch (e) {
+                    console.error('JSON Parse error:', e);
+                    console.error('Response was:', xhr.responseText);
+                    showSimpleModal('error', 'Response Error', 'Unexpected response format. Check the console for details.');
+                }
+            } else {
+                console.error('HTTP Error:', xhr.status, xhr.statusText);
+                showSimpleModal('error', 'Request Failed', 'HTTP Error: ' + xhr.status + ' - ' + xhr.statusText + '\n' + xhr.responseText.substring(0, 200));
+            }
+        }
+    };
+    
+    var params = '_token=' + encodeURIComponent(csrfToken) +
+                 '&action=' + encodeURIComponent(action) + 
+                 '&quantity=' + encodeURIComponent(quantity) + 
+                 '&reason=' + encodeURIComponent(reason);
+    
+    console.log('Sending params:', params);
+    xhr.send(params);
+}
+
+// Simple Modal Function
+function showSimpleModal(type, title, message) {
+    var modal = document.getElementById('responseModal');
+    var header = document.getElementById('responseModalHeader');
+    var titleEl = document.getElementById('responseModalTitle');
+    var messageEl = document.getElementById('responseModalMessage');
+    var detailsEl = document.getElementById('responseModalDetails');
+    var icon = document.querySelector('#responseModalBody i');
+    var okBtn = document.getElementById('responseModalOk');
+    
+    // Reset classes
+    header.className = 'modal-header';
+    icon.className = 'fas fa-3x mb-3';
+    okBtn.className = 'btn';
+    
+    // Set styles based on type
+    switch(type) {
+        case 'success':
+            header.classList.add('bg-success');
+            icon.classList.add('fa-check-circle', 'text-success');
+            okBtn.classList.add('btn-success');
+            break;
+        case 'error':
+            header.classList.add('bg-danger');
+            icon.classList.add('fa-exclamation-circle', 'text-danger');
+            okBtn.classList.add('btn-danger');
+            break;
+        case 'warning':
+            header.classList.add('bg-warning');
+            icon.classList.add('fa-exclamation-triangle', 'text-warning');
+            okBtn.classList.add('btn-warning');
+            break;
+        case 'info':
+            header.classList.add('bg-info');
+            icon.classList.add('fa-info-circle', 'text-info');
+            okBtn.classList.add('btn-info');
+            break;
+    }
+    
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    detailsEl.textContent = '';
+    
+    showModalSafely('responseModal');
+}
+
+// Stock Input Confirmation Handler
+function confirmStockUpdate() {
+    if (!currentStockOperation) {
+        showSimpleModal('error', 'Error', 'No operation data found');
+        return;
+    }
+    
+    var quantity = parseInt(document.getElementById('stockInputQuantity').value);
+    
+    if (!quantity || quantity < 1) {
+        showSimpleModal('warning', 'Invalid Quantity', 'Please enter a valid quantity greater than 0');
+        return;
+    }
+    
+    if (currentStockOperation.action === 'subtract' && quantity > currentStockOperation.currentStock) {
+        showSimpleModal('error', 'Insufficient Stock', 'Cannot subtract more than current stock (' + currentStockOperation.currentStock + ' ' + currentStockOperation.unit + ')');
+        return;
+    }
+    
+    // Hide the input modal
+    hideModalSafely('stockInputModal');
+    
+    // Perform the stock update
+    performStockUpdate(
+        currentStockOperation.medicineId,
+        currentStockOperation.action,
+        quantity,
+        'Manual stock ' + currentStockOperation.action
+    );
+}
+
+// Add Enter key support for stock input
+document.addEventListener('DOMContentLoaded', function() {
+    var stockInput = document.getElementById('stockInputQuantity');
+    if (stockInput) {
+        stockInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                confirmStockUpdate();
+            }
+        });
+    }
+});
+
+// Debug: Check if jQuery is loaded
+console.log('jQuery version:', typeof $ !== 'undefined' ? $.fn.jquery : 'Not loaded');
+console.log('Bootstrap version:', typeof window.bootstrap !== 'undefined' ? 'Loaded' : 'Not loaded');
+console.log('Page loaded at:', new Date().toISOString());
+
+// Debug: Check CSRF token availability
+var csrfMetaTag = document.querySelector('meta[name="csrf-token"]');
+var csrfHiddenInput = document.querySelector('input[name="_token"]');
+console.log('CSRF Meta Tag:', csrfMetaTag ? csrfMetaTag.getAttribute('content').substring(0, 10) + '...' : 'Not found');
+console.log('CSRF Hidden Input:', csrfHiddenInput ? csrfHiddenInput.value.substring(0, 10) + '...' : 'Not found');
+console.log('Laravel Global CSRF:', typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken ? 'Available' : 'Not available');
+
+// Debug: Check Modal Elements and Bootstrap availability
+console.log('Stock Input Modal Element:', document.getElementById('stockInputModal') ? 'Found' : 'Not found');
+console.log('Bootstrap Modal Available:', typeof $.fn.modal !== 'undefined' ? 'Yes' : 'No');
+console.log('Bootstrap Version:', typeof $.fn.tooltip !== 'undefined' ? $.fn.tooltip.Constructor.VERSION : 'Not available');
+
+$(document).ready(function() {
+    console.log('Document ready - stock management initialized');
+    
+    // Add close button handlers for all modals
+    $('[data-dismiss="modal"]').on('click', function() {
+        var modal = $(this).closest('.modal');
+        if (modal.length) {
+            hideModalSafely(modal.attr('id'));
+        }
+    });
+    
+    // Add backdrop click handler
+    $('.modal').on('click', function(e) {
+        if (e.target === this) {
+            hideModalSafely($(this).attr('id'));
+        }
+    });
+    
+    // Bulk update confirmation handler
+    $('#bulkUpdateConfirm').on('click', function() {
+        var quantity = parseInt($('#bulkQuantityInput').val());
+        
+        if (!quantity || quantity < 1) {
+            showSimpleModal('warning', 'Invalid Quantity', 'Please enter a valid quantity greater than 0');
+            return;
+        }
+        
+        if (!window.selectedMedicinesForBulk || window.selectedMedicinesForBulk.length === 0) {
+            showSimpleModal('error', 'No Selection', 'No medicines selected for bulk update');
+            return;
+        }
+        
+        hideModalSafely('bulkSelectionModal');
+        performBulkStockUpdate(window.selectedMedicinesForBulk, quantity);
+    });
+    
+    // Initialize DataTable for searching and sorting (optional)
+    @if($medicines->count() > 0)
+    try {
+        var stockTable = $('#stockTable').DataTable({
+            "paging": false,
+            "searching": true,
+            "ordering": true,
+            "info": false,
+            "autoWidth": false,
+            "responsive": true,
+            "order": [[ 2, "asc" ]], // Sort by current stock
+            "columnDefs": [
+                { "orderable": false, "targets": [0, 6] } // Disable sorting on checkbox and actions
+            ]
+        });
+        
+        // Custom search
+        $('#stockSearch').on('keyup', function() {
+            stockTable.search(this.value).draw();
+        });
+    } catch(e) {
+        console.log('DataTable not available, using basic functionality');
+    }
+    @endif
+
+    // Select All functionality
+    $('#selectAll').change(function() {
+        $('.medicine-checkbox').prop('checked', $(this).prop('checked'));
+        updateSelectedCount();
+    });
+
+    $('.medicine-checkbox').change(function() {
+        updateSelectedCount();
+    });
+
+    function updateSelectedCount() {
+        var count = $('.medicine-checkbox:checked').length;
+        if ($('#selectedCount').length) {
+            $('#selectedCount').text(count);
+        }
+        var totalCheckboxes = $('.medicine-checkbox').length;
+        if (totalCheckboxes > 0) {
+            $('#selectAll').prop('indeterminate', count > 0 && count < totalCheckboxes);
+            $('#selectAll').prop('checked', count === totalCheckboxes);
+        }
+    }
+    
+    // Modal focus handling
+    $('#stockInputModal').on('shown.bs.modal', function() {
+        $('#stockInputQuantity').focus();
+    });
+
+    // Stock Add/Subtract buttons
+    $(document).on('click', '.stock-add', function(e) {
+        e.preventDefault();
+        console.log('Add stock button clicked');
+        openQuickStockModal($(this), 'add');
+    });
+
+    $(document).on('click', '.stock-subtract', function(e) {
+        e.preventDefault();
+        console.log('Subtract stock button clicked');
+        openQuickStockModal($(this), 'subtract');
+    });
+
+    function openQuickStockModal(button, operation) {
+        console.log('Opening quick stock modal:', operation);
+        var medicineId = button.data('id');
+        var medicineName = button.data('name');
+        var currentStock = button.data('current');
+        var unit = button.data('unit');
+        
+        console.log('Medicine data:', { id: medicineId, name: medicineName, stock: currentStock, unit: unit });
+        
+        $('#quickMedicineId').val(medicineId);
+        $('#quickOperation').val(operation);
+        $('#quickMedicineName').text(medicineName);
+        $('#quickCurrentStock').text(currentStock);
+        $('#quickStockUnit, #quantityUnit').text(unit);
+        $('#quickQuantity').val('');
+        $('#quickNotes').val('');
+        
+        var operationText = operation === 'add' ? 'Add' : 'Subtract';
+        $('#operationText').text(operationText);
+        
+        if (operation === 'subtract' && currentStock <= 0) {
+            alert('Cannot subtract from zero stock');
+            return;
+        }
+        
+        console.log('Showing modal...');
+        $('#quickStockModal').modal('show');
+        $('#newStockPreview').hide();
+    }
+
+    // Preview stock calculation
+    $('#quickQuantity').on('input', function() {
+        var currentStock = parseInt($('#quickCurrentStock').text());
+        var quantity = parseInt($(this).val()) || 0;
+        var operation = $('#quickOperation').val();
+        
+        if (quantity > 0) {
+            var newStock = operation === 'add' ? currentStock + quantity : Math.max(0, currentStock - quantity);
+            $('#previewStock').text(newStock + ' ' + $('#quickStockUnit').text());
+            $('#newStockPreview').show();
+        } else {
+            $('#newStockPreview').hide();
+        }
+    });
+
+    // Confirm stock update
+    $(document).on('click', '#confirmStockUpdate', function(e) {
+        e.preventDefault();
+        console.log('Confirm stock update clicked');
+        
+        var medicineId = $('#quickMedicineId').val();
+        var operation = $('#quickOperation').val();
+        var quantity = $('#quickQuantity').val();
+        var notes = $('#quickNotes').val();
+
+        console.log('Form data:', { medicineId, operation, quantity, notes });
+
+        if (!quantity || quantity < 1) {
+            alert('Please enter a valid quantity');
+            return;
+        }
+
+        updateMedicineStock(medicineId, operation, quantity, notes);
+    });
+
+    // Bulk actions
+    $(document).on('click', '#bulkAddStock', function(e) {
+        e.preventDefault();
+        console.log('Bulk add stock button clicked');
+        var selectedMedicines = $('.medicine-checkbox:checked');
+        console.log('Selected medicines count:', selectedMedicines.length);
+        if (selectedMedicines.length === 0) {
+            alert('Please select medicines to update');
+            return;
+        }
+        
+        showBulkUpdateModal();
+    });
+    
+    // Confirm bulk update
+    $(document).on('click', '#confirmBulkUpdate', function(e) {
+        e.preventDefault();
+        console.log('Confirm bulk update clicked');
+        var selectedMedicines = $('.medicine-checkbox:checked');
+        var operation = $('#bulkOperation').val();
+        var quantity = $('#bulkQuantity').val();
+        var notes = $('#bulkNotes').val();
+        
+        if (!operation || !quantity || quantity < 0) {
+            alert('Please fill in all required fields');
+            return;
+        }
+        
+        if (selectedMedicines.length === 0) {
+            alert('Please select medicines to update');
+            return;
+        }
+        
+        // Prepare updates array
+        var updates = [];
+        selectedMedicines.each(function() {
+            updates.push({
+                medicine_id: $(this).val(),
+                action: operation,
+                quantity: parseInt(quantity)
+            });
+        });
+        
+        // Perform bulk update
+        performBulkUpdate(updates, notes);
+    });
+
+    function showBulkUpdateModal() {
+        var selectedMedicines = $('.medicine-checkbox:checked');
+        var html = '<h6>Selected Medicines:</h6><ul class="list-unstyled">';
+        
+        selectedMedicines.each(function() {
+            var row = $(this).closest('tr');
+            var name = row.find('strong').first().text();
+            html += '<li><i class="fas fa-pills mr-2"></i>' + name + '</li>';
+        });
+        html += '</ul>';
+        
+        $('#selectedMedicines').html(html);
+        $('#bulkUpdateModal').modal('show');
+    }
+
+    // Stock update AJAX function
+    function updateMedicineStock(medicineId, operation, quantity, notes) {
+        console.log('Updating stock for medicine:', medicineId, 'Operation:', operation, 'Quantity:', quantity);
+        
+        $.ajax({
+            url: '{{ url("medicines") }}/' + medicineId + '/update-stock',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                action: operation,
+                operation: operation, // Keep both for compatibility
+                quantity: quantity,
+                notes: notes,
+                reason: notes
+            },
+            beforeSend: function() {
+                console.log('Sending stock update request...');
+                $('#confirmStockUpdate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating...');
+            },
+            success: function(response) {
+                console.log('Stock update response:', response);
+                if (response.success) {
+                    // Update the display
+                    var stockSpan = $('.stock-quantity[data-id="' + medicineId + '"]');
+                    var newQuantity = response.new_quantity;
+                    var colorClass = response.stock_status_color;
+                    
+                    stockSpan.find('strong').removeClass('text-success text-warning text-danger').addClass('text-' + colorClass);
+                    stockSpan.find('strong').text(newQuantity);
+                    
+                    $('#status_' + medicineId).removeClass('badge-success badge-warning badge-danger').addClass('badge-' + colorClass);
+                    $('#status_' + medicineId).text(response.stock_status);
+                    
+                    $('#quickStockModal').modal('hide');
+                    
+                    // Show success message
+                    showAlert('success', response.message);
+                    
+                    // Refresh the page after a short delay to ensure all data is updated
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    console.error('Update failed:', response.message);
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr, status, error);
+                var errorMessage = 'Error updating stock. Please try again.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    errorMessage = 'Server error: ' + xhr.status + ' - ' + xhr.statusText;
+                }
+                alert(errorMessage);
+            },
+            complete: function() {
+                $('#confirmStockUpdate').prop('disabled', false).html('<i class="fas fa-check mr-2"></i>Update Stock');
+            }
+        });
+    }
+
+    function showAlert(type, message) {
+        var alertHtml = '<div class="alert alert-' + type + ' alert-dismissible">' +
+            '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>' +
+            '<i class="icon fas fa-check"></i> ' + message +
+            '</div>';
+        
+        $('#content').prepend(alertHtml);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(function() {
+            $('.alert').first().fadeOut();
+        }, 5000);
+    }
+
+    // Bulk update AJAX function
+    function performBulkUpdate(updates, reason) {
+        $.ajax({
+            url: '{{ route("medicines.bulkUpdateStock") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                updates: updates,
+                reason: reason
+            },
+            beforeSend: function() {
+                $('#confirmBulkUpdate').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating...');
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#bulkUpdateModal').modal('hide');
+                    showAlert('success', response.message);
+                    // Refresh the page to show updated stock levels
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    alert('Error: ' + (response.message || 'Update failed'));
+                }
+            },
+            error: function(xhr) {
+                var errorMessage = 'Error updating stock. Please try again.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    errorMessage = xhr.responseJSON.errors.join('\n');
+                }
+                alert(errorMessage);
+            },
+            complete: function() {
+                $('#confirmBulkUpdate').prop('disabled', false).html('<i class="fas fa-check mr-2"></i>Update Selected');
+            }
+        });
+    }
+
+    // Export and print functions
+    $(document).on('click', '#exportLowStock', function(e) {
+        e.preventDefault();
+        console.log('Export low stock clicked');
+        window.open('{{ route("medicines.exportStock") }}?format=csv', '_blank');
+    });
+
+    $(document).on('click', '#printStockReport', function(e) {
+        e.preventDefault();
+        console.log('Print stock report clicked');
+        window.print();
+    });
+    
+    // Stock history functionality
+    $(document).on('click', '.stock-history', function(e) {
+        e.preventDefault();
+        console.log('Stock history button clicked');
+        var medicineId = $(this).data('id');
+        var medicineName = $(this).data('name');
+        
+        $('#stockHistoryModal .modal-title').text('Stock History - ' + medicineName);
+        $('#stockHistoryContent').html('<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading stock history...</p></div>');
+        $('#stockHistoryModal').modal('show');
+        
+        // Load stock history
+        $.ajax({
+            url: '{{ url("medicines") }}/' + medicineId + '/stock-history',
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    var html = '<div class="alert alert-info">';
+                    html += '<i class="fas fa-info-circle mr-2"></i>';
+                    html += 'Stock history functionality is currently in development. ';
+                    html += 'For now, you can view current stock levels and make updates as needed.';
+                    html += '</div>';
+                    html += '<div class="card">';
+                    html += '<div class="card-header"><h6><i class="fas fa-chart-line mr-2"></i>Current Stock Information</h6></div>';
+                    html += '<div class="card-body">';
+                    html += '<p><strong>Medicine:</strong> ' + response.medicine + '</p>';
+                    html += '<p><strong>Note:</strong> Full stock movement tracking will be implemented in a future update.</p>';
+                    html += '</div></div>';
+                    $('#stockHistoryContent').html(html);
+                } else {
+                    $('#stockHistoryContent').html('<div class="alert alert-danger">Failed to load stock history.</div>');
+                }
+            },
+            error: function() {
+                $('#stockHistoryContent').html('<div class="alert alert-danger">Error loading stock history. Please try again.</div>');
+            }
+        });
+    });
+    
+    // Debug: Test button detection
+    setTimeout(function() {
+        console.log('Button detection test:');
+        console.log('Add buttons found:', $('.stock-add').length);
+        console.log('Subtract buttons found:', $('.stock-subtract').length);
+        console.log('History buttons found:', $('.stock-history').length);
+        console.log('Bulk add button found:', $('#bulkAddStock').length);
+        console.log('Export button found:', $('#exportLowStock').length);
+        
+        // Add a simple test click handler
+        $('.stock-add').each(function(index) {
+            console.log('Add button ' + index + ' data:', $(this).data());
+        });
+        
+        // Add simple working click handlers for immediate testing
+        $('.stock-add').off('click.test').on('click.test', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('SIMPLE ADD CLICKED!');
+            alert('Add button clicked! Medicine ID: ' + $(this).data('id'));
+        });
+        
+        $('.stock-subtract').off('click.test').on('click.test', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('SIMPLE SUBTRACT CLICKED!');
+            alert('Subtract button clicked! Medicine ID: ' + $(this).data('id'));
+        });
+        
+        $('.stock-history').off('click.test').on('click.test', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('SIMPLE HISTORY CLICKED!');
+            alert('History button clicked! Medicine ID: ' + $(this).data('id'));
+        });
+        
+        $('#bulkAddStock').off('click.test').on('click.test', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('SIMPLE BULK ADD CLICKED!');
+            alert('Bulk add stock button clicked!');
+        });
+        
+        $('#exportLowStock').off('click.test').on('click.test', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('SIMPLE EXPORT CLICKED!');
+            alert('Export button clicked!');
+        });
+    }, 1000);
+});
+</script>
+@endsection

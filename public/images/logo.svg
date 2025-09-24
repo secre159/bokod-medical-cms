@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <defs>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grayGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#9ca3af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e5e7eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background gear left -->
+  <g transform="translate(50,100) rotate(15)">
+    <circle cx="0" cy="0" r="35" fill="url(#blueGradient)" opacity="0.9"/>
+    <path d="M-40,-10 L-30,-10 L-30,10 L-40,10 Z M-10,-40 L-10,-30 L10,-30 L10,-40 Z M30,-10 L40,-10 L40,10 L30,10 Z M-10,30 L-10,40 L10,40 L10,30 Z" fill="url(#blueGradient)"/>
+    <circle cx="0" cy="0" r="15" fill="white"/>
+  </g>
+  
+  <!-- Background gear right -->
+  <g transform="translate(250,100) rotate(-15)">
+    <circle cx="0" cy="0" r="35" fill="url(#grayGradient)" opacity="0.8"/>
+    <path d="M-40,-10 L-30,-10 L-30,10 L-40,10 Z M-10,-40 L-10,-30 L10,-30 L10,-40 Z M30,-10 L40,-10 L40,10 L30,10 Z M-10,30 L-10,40 L10,40 L10,30 Z" fill="url(#grayGradient)"/>
+    <circle cx="0" cy="0" r="15" fill="white"/>
+  </g>
+  
+  <!-- Open book -->
+  <g transform="translate(150,140)">
+    <path d="M-60,-20 L-60,20 L-5,15 L0,20 L5,15 L60,20 L60,-20 L0,-25 Z" fill="white" stroke="#d1d5db" stroke-width="2"/>
+    <path d="M-60,-20 L0,-25 L60,-20" fill="none" stroke="#d1d5db" stroke-width="1"/>
+    <path d="M0,-25 L0,20" fill="none" stroke="#d1d5db" stroke-width="1"/>
+    <!-- Book pages -->
+    <path d="M-50,-15 L-10,-12" stroke="#e5e7eb" stroke-width="1"/>
+    <path d="M-50,-10 L-15,-8" stroke="#e5e7eb" stroke-width="1"/>
+    <path d="M-50,-5 L-20,-4" stroke="#e5e7eb" stroke-width="1"/>
+    <path d="M10,-12 L50,-15" stroke="#e5e7eb" stroke-width="1"/>
+    <path d="M15,-8 L50,-10" stroke="#e5e7eb" stroke-width="1"/>
+    <path d="M20,-4 L50,-5" stroke="#e5e7eb" stroke-width="1"/>
+  </g>
+  
+  <!-- Caduceus symbol -->
+  <g transform="translate(150,70)">
+    <!-- Staff -->
+    <line x1="0" y1="-30" x2="0" y2="30" stroke="#1e3a8a" stroke-width="3"/>
+    
+    <!-- Wings -->
+    <path d="M0,-25 C-15,-35 -25,-25 -20,-15 C-15,-20 -5,-25 0,-25" fill="url(#blueGradient)" opacity="0.9"/>
+    <path d="M0,-25 C15,-35 25,-25 20,-15 C15,-20 5,-25 0,-25" fill="url(#grayGradient)" opacity="0.8"/>
+    
+    <!-- Serpents -->
+    <path d="M0,-20 C10,-15 -10,-5 10,5 C-10,15 10,25 0,30" fill="none" stroke="#1e3a8a" stroke-width="2.5"/>
+    <path d="M0,-20 C-10,-15 10,-5 -10,5 C10,15 -10,25 0,30" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+    
+    <!-- Serpent heads -->
+    <circle cx="8" cy="28" r="2" fill="#1e3a8a"/>
+    <circle cx="-8" cy="28" r="2" fill="#3b82f6"/>
+    
+    <!-- Top sphere -->
+    <circle cx="0" cy="-30" r="3" fill="#1e3a8a"/>
+  </g>
+  
+  <!-- Medical cross (small) -->
+  <g transform="translate(120,45)">
+    <rect x="-2" y="-8" width="4" height="16" fill="#dc2626"/>
+    <rect x="-8" y="-2" width="16" height="4" fill="#dc2626"/>
+  </g>
+  
+  <g transform="translate(180,45)">
+    <rect x="-2" y="-8" width="4" height="16" fill="#9ca3af"/>
+    <rect x="-8" y="-2" width="16" height="4" fill="#9ca3af"/>
+  </g>
+</svg>

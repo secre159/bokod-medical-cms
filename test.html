@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Browser Test</title>
+</head>
+<body>
+    <h1>Browser Test</h1>
+    <p>If you can see this, your browser works fine.</p>
+    
+    <h2>Test Links:</h2>
+    <ul>
+        <li><a href="http://127.0.0.1:8001/simple-test">Simple Test</a></li>
+        <li><a href="http://127.0.0.1:8001/test-calendar">Calendar Test</a></li>
+        <li><a href="http://127.0.0.1:8001/login">Login Page</a></li>
+        <li><a href="http://127.0.0.1:8001/appointments/calendar">Calendar (Direct)</a></li>
+    </ul>
+    
+    <script>
+        console.log('JavaScript works');
+        
+        // Test fetch
+        fetch('http://127.0.0.1:8001/simple-test')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('fetch-result').innerText = 'Fetch result: ' + data;
+            })
+            .catch(error => {
+                document.getElementById('fetch-result').innerText = 'Fetch error: ' + error;
+            });
+    </script>
+    
+    <div id="fetch-result">Fetch test loading...</div>
+</body>
+</html>

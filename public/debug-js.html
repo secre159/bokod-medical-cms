@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug JavaScript Test</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>JavaScript Debug Test</h1>
+    
+    <p>Open console (F12) and check for errors</p>
+    
+    <button onclick="testAddStock(1, 'Test Medicine', 50, 'pcs')" id="testBtn">Test Add Stock</button>
+    <button onclick="testSubtractStock(1, 'Test Medicine', 50, 'pcs')" id="testBtn2">Test Subtract Stock</button>
+    
+    <div id="output" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;">
+        <p>Check console for any JavaScript errors...</p>
+    </div>
+    
+    <script>
+        console.log('🧪 Debug test script loading...');
+        
+        // Simple test functions
+        window.testAddStock = function(id, name, currentStock, unit) {
+            console.log('testAddStock called:', {id: id, name: name, currentStock: currentStock, unit: unit});
+            document.getElementById('output').innerHTML = '<p>✅ testAddStock called successfully!</p>';
+        };
+        
+        window.testSubtractStock = function(id, name, currentStock, unit) {
+            console.log('testSubtractStock called:', {id: id, name: name, currentStock: currentStock, unit: unit});
+            document.getElementById('output').innerHTML = '<p>✅ testSubtractStock called successfully!</p>';
+        };
+        
+        console.log('Functions defined:', {
+            testAddStock: typeof window.testAddStock,
+            testSubtractStock: typeof window.testSubtractStock
+        });
+        
+        console.log('✅ Debug test script loaded successfully');
+    </script>
+</body>
+</html>
