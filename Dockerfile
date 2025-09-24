@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     # Database drivers
     libpq-dev \
+    postgresql-client \
     # Image processing (for intervention/image)
     libpng-dev \
     libjpeg62-turbo-dev \
@@ -74,40 +75,8 @@ RUN chmod -R 755 storage bootstrap/cache
 # Expose port
 EXPOSE $PORT
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-echo "Starting Laravel application..."\n\
-\n\
-# Wait for database connection\n\
-echo "Waiting for database connection..."\n\
-for i in {1..30}; do\n\
-    if php artisan tinker --execute="DB::connection()->getPdo(); echo \"Connected\";" 2>/dev/null; then\n\
-        echo "Database connection established!"\n\
-        break\n\
-    fi\n\
-    echo "Attempt $i: Database not ready, waiting..."\n\
-    sleep 2\n\
-done\n\
-\n\
-# Run database migrations\n\
-echo "Running database migrations..."\n\
-php artisan migrate --force\n\
-\n\
-# Force clear all caches and refresh config\n\
-echo "Clearing all caches and refreshing config..."\n\
-php artisan config:clear || true\n\
-php artisan cache:clear || true\n\
-php artisan view:clear || true\n\
-php artisan route:clear || true\n\
-\n\
-# Show database configuration for debugging\n\
-echo "Database configuration:"\n\
-php artisan tinker --execute="echo \"DB_CONNECTION: \" . config('database.default'); echo \"\nDB_HOST: \" . config('database.connections.pgsql.host');" || true\n\
-\n\
-echo "Laravel application ready!"\n\
-echo "Starting Laravel server..."\n\
-php artisan serve --host=0.0.0.0 --port=$PORT' > /start.sh && chmod +x /start.sh
+# Create startup script with database setup
+RUN echo '#!/bin/bash\nset -e\necho "Setting up database tables..."\n\n# Wait for database\nfor i in {1..30}; do\n    if php artisan tinker --execute="DB::connection()->getPdo(); echo \"Connected\";" 2>/dev/null; then\n        echo "Database connected!"\n        break\n    fi\n    echo "Waiting for database... ($i/30)"\n    sleep 2\ndone\n\n# Create tables using psql\nif [ ! -z "$DATABASE_URL" ]; then\n    echo "Running table creation SQL..."\n    psql "$DATABASE_URL" -f /var/www/html/create_tables.sql || echo "SQL execution completed"\nfi\n\n# Clear caches\necho "Clearing caches..."\nphp artisan config:clear || true\nphp artisan cache:clear || true\n\necho "Starting Laravel server..."\nphp artisan serve --host=0.0.0.0 --port=$PORT' > /start.sh && chmod +x /start.sh
 
 # Start command
 CMD ["/start.sh"]
