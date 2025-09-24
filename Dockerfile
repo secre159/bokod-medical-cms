@@ -52,14 +52,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files first for better caching
-COPY composer.json composer.lock ./
+# Copy all application files
+COPY . .
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-
-# Copy rest of application files
-COPY . .
 
 # Generate app key if needed
 RUN if [ ! -f .env ]; then cp .env.example .env; fi
