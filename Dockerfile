@@ -75,8 +75,8 @@ RUN chmod -R 755 storage bootstrap/cache
 # Expose port
 EXPOSE $PORT
 
-# Create startup script with database setup
-RUN echo '#!/bin/bash\nset -e\necho "Setting up database tables..."\n\n# Wait for database\nfor i in {1..30}; do\n    if php artisan tinker --execute="DB::connection()->getPdo(); echo \"Connected\";" 2>/dev/null; then\n        echo "Database connected!"\n        break\n    fi\n    echo "Waiting for database... ($i/30)"\n    sleep 2\ndone\n\n# Create tables using psql\nif [ ! -z "$DATABASE_URL" ]; then\n    echo "Running table creation SQL..."\n    psql "$DATABASE_URL" -f /var/www/html/create_tables.sql || echo "SQL execution completed"\nfi\n\n# Clear caches\necho "Clearing caches..."\nphp artisan config:clear || true\nphp artisan cache:clear || true\n\necho "Starting Laravel server..."\nphp artisan serve --host=0.0.0.0 --port=$PORT' > /start.sh && chmod +x /start.sh
+# Create startup script with forced migrations
+RUN echo '#!/bin/bash\nset -e\necho "=== STARTING LARAVEL DEPLOYMENT ==="\n\n# Wait for database connection\necho "Waiting for database..."\nfor i in {1..60}; do\n    if timeout 5 php artisan migrate:status >/dev/null 2>&1; then\n        echo "Database connected successfully!"\n        break\n    fi\n    echo "Attempt $i: Database not ready, waiting 3 seconds..."\n    sleep 3\ndone\n\n# Force run all migrations\necho "=== RUNNING MIGRATIONS ==="\nphp artisan migrate --force || echo "Migration completed with errors"\n\n# Clear all caches\necho "=== CLEARING CACHES ==="\nphp artisan config:clear || true\nphp artisan cache:clear || true\nphp artisan view:clear || true\n\necho "=== STARTING LARAVEL SERVER ==="\nexec php artisan serve --host=0.0.0.0 --port=$PORT' > /start.sh && chmod +x /start.sh
 
 # Start command
 CMD ["/start.sh"]
