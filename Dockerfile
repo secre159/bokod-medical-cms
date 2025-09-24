@@ -1,13 +1,47 @@
 FROM php:8.2-cli
 
-# Install system dependencies
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
+    # Basic tools
     git \
     zip \
     unzip \
+    curl \
+    wget \
+    # Database drivers
     libpq-dev \
+    # Image processing (for intervention/image)
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libgd-dev \
+    libwebp-dev \
+    # XML/DOM processing (for dompdf)
+    libxml2-dev \
+    # Zip support
     libzip-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    # Other common extensions
+    libonig-dev \
+    libicu-dev \
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_pgsql \
+        zip \
+        gd \
+        xml \
+        dom \
+        mbstring \
+        intl \
+        bcmath \
+        exif \
+        pcntl
 
 # Set composer environment variables
 ENV COMPOSER_ALLOW_SUPERUSER=1
