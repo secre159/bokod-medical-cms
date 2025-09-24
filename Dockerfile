@@ -58,8 +58,10 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Generate app key if needed
-RUN if [ ! -f .env ]; then cp .env.example .env; fi
+# Remove any .env files to force environment variable usage
+RUN rm -f .env .env.example
+
+# Generate app key if needed (only if APP_KEY not set)
 RUN php artisan key:generate --no-interaction || true
 
 # Run migrations (will happen at runtime when DB is available)
@@ -92,10 +94,16 @@ done\n\
 echo "Running database migrations..."\n\
 php artisan migrate --force\n\
 \n\
-# Clear caches\n\
-echo "Clearing caches..."\n\
+# Force clear all caches and refresh config\n\
+echo "Clearing all caches and refreshing config..."\n\
 php artisan config:clear || true\n\
 php artisan cache:clear || true\n\
+php artisan view:clear || true\n\
+php artisan route:clear || true\n\
+\n\
+# Show database configuration for debugging\n\
+echo "Database configuration:"\n\
+php artisan tinker --execute="echo \"DB_CONNECTION: \" . config('database.default'); echo \"\nDB_HOST: \" . config('database.connections.pgsql.host');" || true\n\
 \n\
 echo "Laravel application ready!"\n\
 echo "Starting Laravel server..."\n\
