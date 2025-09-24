@@ -6,8 +6,6 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Auth\Events\Login;
 use App\Listeners\UpdateLastLoginAt;
 
@@ -27,9 +25,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Gates are defined in AdminLTEServiceProvider
-        
-        // Ensure critical tables exist (for Render deployment)
-        $this->ensureCriticalTablesExist();
         
         // Register login event listener to update last login timestamp
         Event::listen(Login::class, UpdateLastLoginAt::class);
