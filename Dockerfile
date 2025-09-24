@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.2-cli
 
 # Set working directory
 WORKDIR /var/www/html
@@ -34,10 +34,12 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Create entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
+# Copy and set up entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port 8000 for Laravel
 EXPOSE 8000
-CMD ["/usr/local/bin/docker-entrypoint.sh"]
+
+# Use entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
