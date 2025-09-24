@@ -31,6 +31,12 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# Generate app key first if needed
+if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "" ]; then
+    echo "Generating application key..."
+    php artisan key:generate --force
+fi
+
 # Run database migrations
 echo "Running database migrations..."
 php artisan migrate --force
