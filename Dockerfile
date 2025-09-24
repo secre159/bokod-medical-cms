@@ -74,8 +74,30 @@ EXPOSE $PORT
 
 # Create startup script
 RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Starting Laravel application..."\n\
+\n\
+# Wait for database connection\n\
+echo "Waiting for database connection..."\n\
+for i in {1..30}; do\n\
+    if php artisan tinker --execute="DB::connection()->getPdo(); echo \"Connected\";" 2>/dev/null; then\n\
+        echo "Database connection established!"\n\
+        break\n\
+    fi\n\
+    echo "Attempt $i: Database not ready, waiting..."\n\
+    sleep 2\n\
+done\n\
+\n\
+# Run database migrations\n\
 echo "Running database migrations..."\n\
 php artisan migrate --force\n\
+\n\
+# Clear caches\n\
+echo "Clearing caches..."\n\
+php artisan config:clear || true\n\
+php artisan cache:clear || true\n\
+\n\
+echo "Laravel application ready!"\n\
 echo "Starting Laravel server..."\n\
 php artisan serve --host=0.0.0.0 --port=$PORT' > /start.sh && chmod +x /start.sh
 
