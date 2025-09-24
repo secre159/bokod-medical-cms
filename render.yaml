@@ -7,7 +7,6 @@ databases:
 services:
   - type: web
     name: bokod-cms-php
-    runtime: php
     buildCommand: "chmod +x ./render-build.sh && ./render-build.sh"
     startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
     plan: free
