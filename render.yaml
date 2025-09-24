@@ -8,7 +8,7 @@ services:
   - type: web
     name: bokod-cms
     runtime: php
-    buildCommand: "./render-build.sh"
+    buildCommand: "composer install --no-dev --optimize-autoloader --no-interaction && php artisan config:clear && php artisan cache:clear && php artisan migrate --force && chmod -R 755 storage bootstrap/cache"
     startCommand: "php artisan serve --host=0.0.0.0 --port=$PORT"
     plan: free
     region: oregon
