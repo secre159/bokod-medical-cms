@@ -80,5 +80,5 @@ RUN chmod -R 755 storage bootstrap/cache
 EXPOSE $PORT
 
 
-# Start command
-CMD ["/start.sh"]
+# Start command - use ENTRYPOINT to ensure it cannot be overridden
+ENTRYPOINT ["/start.sh"]
