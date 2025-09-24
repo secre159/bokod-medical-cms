@@ -53,6 +53,10 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
+# Copy startup script first
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
 # Copy all application files
 COPY . .
 
@@ -75,8 +79,6 @@ RUN chmod -R 755 storage bootstrap/cache
 # Expose port
 EXPOSE $PORT
 
-# Create startup script with forced migrations
-RUN echo '#!/bin/bash\nset -e\necho "=== STARTING LARAVEL DEPLOYMENT ==="\n\n# Wait for database connection\necho "Waiting for database..."\nfor i in {1..60}; do\n    if timeout 5 php artisan migrate:status >/dev/null 2>&1; then\n        echo "Database connected successfully!"\n        break\n    fi\n    echo "Attempt $i: Database not ready, waiting 3 seconds..."\n    sleep 3\ndone\n\n# Force run all migrations\necho "=== RUNNING MIGRATIONS ==="\nphp artisan migrate --force || echo "Migration completed with errors"\n\n# Clear all caches\necho "=== CLEARING CACHES ==="\nphp artisan config:clear || true\nphp artisan cache:clear || true\nphp artisan view:clear || true\n\necho "=== STARTING LARAVEL SERVER ==="\nexec php artisan serve --host=0.0.0.0 --port=$PORT' > /start.sh && chmod +x /start.sh
 
 # Start command
 CMD ["/start.sh"]
