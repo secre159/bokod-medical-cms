@@ -472,21 +472,66 @@ Route::get('/test-cloudinary-config', function () {
             'cloudinary_disk_config' => config('filesystems.disks.cloudinary'),
         ];
         
-        // Try to access Cloudinary storage
-        $testResult = [];
+        // Test results array
+        $testResults = [];
+        
+        // Test 1: Try to access Cloudinary storage disk
         try {
             $cloudinary = \Storage::disk('cloudinary');
-            $testResult['disk_accessible'] = true;
-            $testResult['message'] = 'Cloudinary disk accessible';
+            $testResults['storage_disk'] = [
+                'accessible' => true,
+                'message' => 'Cloudinary disk accessible'
+            ];
         } catch (\Exception $e) {
-            $testResult['disk_accessible'] = false;
-            $testResult['error'] = $e->getMessage();
+            $testResults['storage_disk'] = [
+                'accessible' => false,
+                'error' => $e->getMessage()
+            ];
         }
+        
+        // Test 2: Try to use Cloudinary SDK directly
+        try {
+            // Try to create Cloudinary instance directly
+            $cloudinaryConfig = [
+                'cloud' => [
+                    'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                    'api_key' => env('CLOUDINARY_API_KEY'),
+                    'api_secret' => env('CLOUDINARY_API_SECRET'),
+                    'secure' => true
+                ]
+            ];
+            
+            // Test if we can initialize the Cloudinary class
+            if (class_exists('\\Cloudinary\\Cloudinary')) {
+                $cld = new \Cloudinary\Cloudinary($cloudinaryConfig);
+                $testResults['sdk_direct'] = [
+                    'accessible' => true,
+                    'message' => 'Cloudinary SDK accessible'
+                ];
+            } else {
+                $testResults['sdk_direct'] = [
+                    'accessible' => false,
+                    'error' => 'Cloudinary SDK class not found'
+                ];
+            }
+        } catch (\Exception $e) {
+            $testResults['sdk_direct'] = [
+                'accessible' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+        
+        // Test 3: Check Laravel config files
+        $configFiles = [
+            'cloudinary.php' => file_exists(config_path('cloudinary.php')),
+            'cloudinary_config' => config('cloudinary'),
+        ];
         
         return response()->json([
             'success' => true,
             'config' => $config,
-            'test_result' => $testResult,
+            'test_results' => $testResults,
+            'config_files' => $configFiles,
             'timestamp' => now()->toDateTimeString()
         ], 200, [], JSON_PRETTY_PRINT);
         
