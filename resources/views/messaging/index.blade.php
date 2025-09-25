@@ -3494,19 +3494,7 @@ body.modal-open {
                                                     @php $otherUser = $conversation->patient; @endphp
                                                 @endif
                                                 
-                                                @if($otherUser && $otherUser->profile_picture)
-                                                    <img src="{{ asset('storage/' . $otherUser->profile_picture) }}" 
-                                                         alt="{{ $otherUser->name }}" 
-                                                         class="conversation-avatar-img">
-                                                @else
-                                                    <div class="default-avatar" style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
-                                                        @if(Auth::user()->role === 'patient')
-                                                            {{ strtoupper(substr($conversation->admin->name ?? 'MS', 0, 2)) }}
-                                                        @else
-                                                            {{ strtoupper(substr($conversation->patient->patient_name ?? 'PA', 0, 2)) }}
-                                                        @endif
-                                                    </div>
-                                                @endif
+                                                <x-user-avatar :user="$otherUser" size="thumbnail" width="40px" height="40px" class="conversation-avatar-img" />
                                             </div>
                                             <div class="flex-grow-1 conversation-content">
                                                 <h6 class="mb-1">
@@ -3573,19 +3561,7 @@ body.modal-open {
                                                 @php $chatUser = $selectedConversation->patient; @endphp
                                             @endif
                                             
-                                            @if($chatUser && $chatUser->profile_picture)
-                                                <img src="{{ asset('storage/' . $chatUser->profile_picture) }}" 
-                                                     alt="{{ $chatUser->name }}" 
-                                                     class="chat-header-avatar-img">
-                                            @else
-                                                <div class="default-avatar" style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">
-                                                    @if(Auth::user()->role === 'patient')
-                                                        {{ strtoupper(substr($selectedConversation->admin->name ?? 'MS', 0, 2)) }}
-                                                    @else
-                                                        {{ strtoupper(substr($selectedConversation->patient->patient_name ?? 'PA', 0, 2)) }}
-                                                    @endif
-                                                </div>
-                                            @endif
+                                            <x-user-avatar :user="$chatUser" size="thumbnail" width="45px" height="45px" class="chat-header-avatar-img" />
                                         </div>
                                         <div>
                                             <h6 class="mb-0">

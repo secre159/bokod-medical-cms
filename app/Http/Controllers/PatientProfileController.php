@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PatientProfileUpdateRequest;
-use App\Models\Patient;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Facades\Image;
 use Illuminate\Support\Str;
-use Intervention\Image\Laravel\Facades\Image;
+use App\Models\Patient;
+use App\Services\ProfilePictureService;
 
 class PatientProfileController extends Controller
 {
@@ -49,26 +50,16 @@ class PatientProfileController extends Controller
             
             // Check if user wants to remove current profile picture
             if ($request->input('remove_profile_picture') == '1') {
-                if ($patient->user->profile_picture) {
-                    Storage::disk('public')->delete($patient->user->profile_picture);
-                }
-                $patient->user->update(['profile_picture' => null]);
+                ProfilePictureService::deleteUserProfilePicture($patient->user);
             }
             // Handle new profile picture upload
             elseif ($request->hasFile('profile_picture')) {
-                \Log::info('Profile picture upload started for patient ID: ' . $patient->id);
-                
-                $profilePicturePath = $this->handleProfilePictureUpload($request->file('profile_picture'), $patient);
-                
-                // Update the user's profile_picture field
-                if ($profilePicturePath) {
-                    $patient->user->update([
-                        'profile_picture' => $profilePicturePath
-                    ]);
-                    \Log::info('Profile picture updated successfully: ' . $profilePicturePath);
-                } else {
-                    \Log::error('Profile picture upload failed for patient ID: ' . $patient->id);
-                    return back()->withErrors(['profile_picture' => 'Failed to upload profile picture. Please try again.'])
+                try {
+                    ProfilePictureService::uploadProfilePicture($request->file('profile_picture'), $patient->user);
+                    \Log::info('Profile picture updated successfully for patient ID: ' . $patient->id);
+                } catch (\Exception $e) {
+                    \Log::error('Profile picture upload failed for patient ID: ' . $patient->id . ': ' . $e->getMessage());
+                    return back()->withErrors(['profile_picture' => 'Failed to upload profile picture: ' . $e->getMessage()])
                                 ->withInput();
                 }
             }

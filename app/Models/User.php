@@ -213,21 +213,7 @@ class User extends Authenticatable
      */
     public function getProfilePictureUrlAttribute()
     {
-        // Priority: profile_picture -> avatar -> patient profile_picture -> default
-        if ($this->profile_picture) {
-            return asset('storage/' . $this->profile_picture);
-        }
-        
-        if ($this->avatar) {
-            return asset('storage/' . $this->avatar);
-        }
-        
-        // For patient users, check if patient record has profile picture
-        if ($this->role === 'patient' && $this->patient && $this->patient->profile_picture) {
-            return asset('storage/' . $this->patient->profile_picture);
-        }
-        
-        return asset('images/default-avatar.svg');
+        return \App\Services\ProfilePictureService::getProfilePictureUrl($this);
     }
     
     /**
@@ -235,21 +221,32 @@ class User extends Authenticatable
      */
     public function adminlte_image()
     {
-        // Use the same priority logic
-        if ($this->profile_picture) {
-            return asset('storage/' . $this->profile_picture);
+        return $this->getProfilePictureUrlAttribute();
+    }
+    
+    /**
+     * Get avatar HTML with initials fallback
+     */
+    public function getAvatarHtml($size = 'default', $cssClasses = '')
+    {
+        return \App\Services\ProfilePictureService::getAvatarHtml($this, $size, $cssClasses);
+    }
+    
+    /**
+     * Get user initials
+     */
+    public function getInitials()
+    {
+        if (!$this->name) {
+            return '??';
         }
         
-        if ($this->avatar) {
-            return asset('storage/' . $this->avatar);
+        $names = explode(' ', trim($this->name));
+        if (count($names) >= 2) {
+            return strtoupper(substr($names[0], 0, 1) . substr($names[1], 0, 1));
         }
         
-        // For patient users, check if patient record has profile picture
-        if ($this->role === 'patient' && $this->patient && $this->patient->profile_picture) {
-            return asset('storage/' . $this->patient->profile_picture);
-        }
-        
-        return asset('images/default-avatar.svg');
+        return strtoupper(substr($names[0], 0, 2));
     }
     
     /**
