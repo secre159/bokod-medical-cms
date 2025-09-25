@@ -9,7 +9,7 @@ use App\Models\User;
 
 class ProfilePictureService
 {
-    const STORAGE_PATH = 'profile_pictures';
+    const STORAGE_PATH = 'avatars';
     const DEFAULT_SIZE = 200;
     const THUMBNAIL_SIZE = 50;
     
@@ -38,13 +38,13 @@ class ProfilePictureService
      */
     private static function getUserImagePath($user)
     {
-        // Priority: profile_picture -> avatar -> patient.profile_picture
-        if (!empty($user->profile_picture)) {
-            return $user->profile_picture;
-        }
-        
+        // Priority: avatar -> profile_picture -> patient.profile_picture
         if (!empty($user->avatar)) {
             return $user->avatar;
+        }
+        
+        if (!empty($user->profile_picture)) {
+            return $user->profile_picture;
         }
         
         // For patient users, check patient record
@@ -145,8 +145,8 @@ class ProfilePictureService
                 $path = $storedPath;
             }
             
-            // Update user record
-            $user->update(['profile_picture' => $path]);
+            // Update user record with avatar field
+            $user->update(['avatar' => $path, 'profile_picture' => $path]);
             
             // Also update patient record if user is a patient
             if ($user->role === 'patient' && $user->patient) {
@@ -194,8 +194,8 @@ class ProfilePictureService
             Storage::disk('public')->delete($imagePath);
         }
         
-        // Clear from user record
-        $user->update(['profile_picture' => null, 'avatar' => null]);
+        // Clear from user record (set both to null for consistency)
+        $user->update(['avatar' => null, 'profile_picture' => null]);
         
         // Clear from patient record if exists
         if ($user->role === 'patient' && $user->patient) {

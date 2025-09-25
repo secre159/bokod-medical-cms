@@ -102,14 +102,17 @@
                             <div class="profile-preview-container" style="position: relative; display: inline-block;">
                                 <img id="profilePreview" 
                                      class="profile-user-img img-fluid img-circle" 
-                                     src="{{ $patient->user->profile_picture ? asset('storage/' . $patient->user->profile_picture) . '?v=' . time() : asset('images/default-avatar.svg') }}"
+                                     src="{{ $patient->user->getProfilePictureUrlAttribute() }}"
                                      alt="Profile picture preview" 
                                      style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #adb5bd;"
                                      onerror="this.src='{{ asset('images/default-avatar.svg') }}'; console.log('Profile image failed to load, using default');">
                             </div>
                             <div class="mt-3">
                                 <small class="text-muted d-block">Current profile picture</small>
-                                @if($patient->user->profile_picture)
+                                @php
+                                    $hasProfilePicture = !empty($patient->user->avatar) || !empty($patient->user->profile_picture);
+                                @endphp
+                                @if($hasProfilePicture)
                                     <small class="text-success d-block">
                                         <i class="fas fa-check-circle mr-1"></i>
                                         Profile picture uploaded
@@ -157,7 +160,7 @@
                             </ul>
                         </div>
                         
-                        @if($patient->user->profile_picture)
+                        @if($hasProfilePicture)
                         <div class="form-group">
                             <button type="button" class="btn btn-warning btn-sm" onclick="removeProfilePicture()">
                                 <i class="fas fa-trash mr-1"></i>

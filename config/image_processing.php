@@ -28,7 +28,7 @@ return [
         'allowed_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         
         // Storage settings
-        'directory' => 'profile-pictures',
+        'directory' => 'avatars',
         'disk' => 'public',
         
         // Processing settings
