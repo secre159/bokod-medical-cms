@@ -1,0 +1,16 @@
+RENDER ENVIRONMENT VARIABLES FOR RESEND EMAIL
+
+Add these environment variables to your Render service:
+
+1. MAIL_MAILER=resend
+2. RESEND_API_KEY=re_axaZaCT1_MQHxHKjn7vfEW82sWJAsMvs3
+3. MAIL_FROM_ADDRESS=admin@bokod-medical-cms.com
+4. MAIL_FROM_NAME=Bokod Medical CMS
+5. QUEUE_CONNECTION=sync
+
+IMPORTANT: 
+- Remove or keep the old SMTP variables as backup
+- Resend uses HTTP API instead of SMTP (no port blocking issues)
+- 3,000 emails/month free tier
+
+After adding these variables, Render will auto-redeploy and emails should work immediately!
