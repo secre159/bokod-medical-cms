@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -9,17 +10,16 @@ use Illuminate\Support\Facades\Auth;
 
 class DatabaseFixController extends Controller
 {
-    public function __construct()
-    {
-        // Only allow admin access
-        $this->middleware(['auth', 'role:admin']);
-    }
-
     /**
      * Show database fix dashboard
      */
     public function index()
     {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            abort(403, 'Access denied. Admin access required.');
+        }
+        
         $checks = $this->runChecks();
         return view('admin.database-fixes', compact('checks'));
     }
@@ -143,7 +143,8 @@ class DatabaseFixController extends Controller
      */
     public function fixMessaging(Request $request)
     {
-        if (!Auth::user()->isAdmin()) {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -202,7 +203,8 @@ class DatabaseFixController extends Controller
      */
     public function fixPrescriptions(Request $request)
     {
-        if (!Auth::user()->isAdmin()) {
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
