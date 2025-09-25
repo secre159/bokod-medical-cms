@@ -179,7 +179,7 @@ class User extends Authenticatable
     /**
      * Get appointments associated with the user (if they're a patient)
      */
-    public function appointments(): HasMany
+    public function appointments(): HasManyThrough
     {
         // This relationship assumes patients have appointments linked through the patient record
         return $this->hasManyThrough(
