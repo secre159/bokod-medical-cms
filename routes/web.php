@@ -258,6 +258,63 @@ Route::middleware(['auth'])->group(function () {
 
 require __DIR__.'/auth.php';
 
+// Debug routes for email diagnosis (admin only)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/debug/email-config', function () {
+        $diagnostics = [];
+        
+        // 1. Check email configuration
+        $diagnostics['email_config'] = [
+            'MAIL_MAILER' => config('mail.default'),
+            'MAIL_HOST' => config('mail.mailers.smtp.host'),
+            'MAIL_PORT' => config('mail.mailers.smtp.port'),
+            'MAIL_USERNAME' => config('mail.mailers.smtp.username'),
+            'MAIL_PASSWORD' => config('mail.mailers.smtp.password') ? '[SET]' : '[NOT SET]',
+            'MAIL_ENCRYPTION' => config('mail.mailers.smtp.scheme') ?? 'Not set',
+            'MAIL_FROM_ADDRESS' => config('mail.from.address'),
+            'MAIL_FROM_NAME' => config('mail.from.name'),
+        ];
+        
+        // 2. Check queue configuration
+        $diagnostics['queue_config'] = [
+            'QUEUE_CONNECTION' => config('queue.default'),
+        ];
+        
+        // 3. Environment variables check
+        $diagnostics['env_vars'] = [
+            'APP_ENV' => env('APP_ENV'),
+            'APP_DEBUG' => env('APP_DEBUG'),
+            'RENDER_SERVICE_ID' => env('RENDER_SERVICE_ID', 'Not on Render'),
+        ];
+        
+        // Return as JSON for easy reading
+        return response()->json($diagnostics, 200, [], JSON_PRETTY_PRINT);
+    });
+    
+    Route::post('/debug/send-test-email', function () {
+        try {
+            $appointment = App\Models\Appointment::with('patient')->first();
+            if (!$appointment || !$appointment->patient) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No appointments with patients found'
+                ]);
+            }
+            
+            $emailService = app(App\Services\EnhancedEmailService::class);
+            $result = $emailService->sendAppointmentNotification($appointment, 'approved');
+            
+            return response()->json($result);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    });
+});
+
 // Debug routes (only in development)
 if (app()->environment(['local', 'development'])) {
     Route::get('/debug/appointments', function() {
