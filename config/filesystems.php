@@ -14,6 +14,9 @@ return [
     */
 
     'default' => env('FILESYSTEM_DISK', 'public'),
+    
+    // Custom fallback disk for image uploads
+    'fallback_disk' => env('STORAGE_DISK', 'cloudinary'),
 
     /*
     |--------------------------------------------------------------------------
