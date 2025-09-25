@@ -375,27 +375,33 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     
     Route::get('/debug/test-resend-direct', function () {
         try {
-            // Test Resend directly without EmailService
-            $resend = new \Resend\Resend(env('RESEND_API_KEY'));
-            
-            $result = $resend->emails->send([
-                'from' => 'noreply@resend.dev',
-                'to' => 'axlchanh159@gmail.com',
-                'subject' => 'Test Email from Resend - BOKOD CMS',
-                'html' => '<h1>Test Email</h1><p>This is a test email sent directly via Resend API to verify the integration.</p><p>Time: ' . now()->toDateTimeString() . '</p>',
-            ]);
+            // Test Resend via Laravel Mail system
+            \Illuminate\Support\Facades\Mail::raw(
+                '<h1>Test Email from Resend</h1><p>This is a test email sent via Laravel Mail with Resend driver.</p><p>Time: ' . now()->toDateTimeString() . '</p>',
+                function ($message) {
+                    $message->to('axlchanh159@gmail.com')
+                           ->subject('Test Email from Resend - BOKOD CMS')
+                           ->from('noreply@resend.dev', 'BOKOD CMS Test');
+                }
+            );
             
             return response()->json([
                 'success' => true,
-                'message' => 'Direct Resend test completed',
-                'resend_response' => $result->toArray(),
+                'message' => 'Laravel Mail with Resend test completed',
+                'mail_driver' => config('mail.default'),
+                'to_email' => 'axlchanh159@gmail.com',
                 'timestamp' => now()->toDateTimeString()
             ]);
             
         } catch (\Exception $e) {
+            \Log::error('Direct Resend test failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
+                'mail_driver' => config('mail.default'),
                 'api_key_set' => env('RESEND_API_KEY') ? 'yes' : 'no',
                 'timestamp' => now()->toDateTimeString()
             ]);
