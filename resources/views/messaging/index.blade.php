@@ -3500,7 +3500,11 @@ body.modal-open {
                                                          class="conversation-avatar-img">
                                                 @else
                                                     <div class="default-avatar" style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
-                                                        {{ strtoupper(substr($otherUser->name ?? 'U', 0, 2)) }}
+                                                        @if(Auth::user()->role === 'patient')
+                                                            {{ strtoupper(substr($conversation->admin->name ?? 'MS', 0, 2)) }}
+                                                        @else
+                                                            {{ strtoupper(substr($conversation->patient->patient_name ?? 'PA', 0, 2)) }}
+                                                        @endif
                                                     </div>
                                                 @endif
                                             </div>
@@ -3509,7 +3513,7 @@ body.modal-open {
                                                     @if(Auth::user()->role === 'patient')
                                                         {{ $conversation->admin->name ?? 'Medical Staff' }}
                                                     @else
-                                                        {{ $conversation->patient->name }}
+                                                        {{ $conversation->patient->patient_name ?? 'Unknown Patient' }}
                                                     @endif
                                                 </h6>
                                                 <p class="mb-1 text-muted small">
@@ -3575,7 +3579,11 @@ body.modal-open {
                                                      class="chat-header-avatar-img">
                                             @else
                                                 <div class="default-avatar" style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px;">
-                                                    {{ strtoupper(substr($chatUser->name ?? 'U', 0, 2)) }}
+                                                    @if(Auth::user()->role === 'patient')
+                                                        {{ strtoupper(substr($selectedConversation->admin->name ?? 'MS', 0, 2)) }}
+                                                    @else
+                                                        {{ strtoupper(substr($selectedConversation->patient->patient_name ?? 'PA', 0, 2)) }}
+                                                    @endif
                                                 </div>
                                             @endif
                                         </div>
@@ -3584,17 +3592,15 @@ body.modal-open {
                                                 @if(Auth::user()->role === 'patient')
                                                     {{ $selectedConversation->admin->name ?? 'Medical Staff' }}
                                                 @else
-                                                    {{ $selectedConversation->patient->name }}
+                                                    {{ $selectedConversation->patient->patient_name ?? 'Unknown Patient' }}
                                                 @endif
                                             </h6>
                                             <small class="text-muted">
                                                 <span id="user-status">
                                                     @if(Auth::user()->role === 'admin')
-                                                        Patient ID: {{ $selectedConversation->patient->id }}
+                                                        Student ID: {{ $selectedConversation->patient->position ?? 'N/A' }}
                                                     @else
-                                                        @if($chatUser && $chatUser->role === 'admin')
-                                                            Medical Staff
-                                                        @endif
+                                                        Medical Staff
                                                     @endif
                                                 </span>
                                                 <span id="typing-status" class="chat-header-typing" style="display: none;">

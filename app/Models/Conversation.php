@@ -107,7 +107,7 @@ class Conversation extends Model
 
         // Generate title based on participants
         if (auth()->user()->role === 'admin') {
-            return $this->patient->name ?? 'Unknown Patient';
+            return $this->patient->patient_name ?? 'Unknown Patient';
         } else {
             return $this->admin->name ?? 'Medical Staff';
         }
