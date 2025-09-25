@@ -527,6 +527,32 @@ Route::get('/test-cloudinary-config', function () {
             'cloudinary_config' => config('cloudinary'),
         ];
         
+        // Test 4: Try actual file operations
+        try {
+            // Create a simple test text file
+            $testContent = 'Test file created at ' . now()->toDateTimeString();
+            $testResult = \Storage::disk('cloudinary')->put('test/test.txt', $testContent);
+            
+            $testResults['file_upload'] = [
+                'success' => true,
+                'uploaded_path' => $testResult,
+                'message' => 'Successfully uploaded test file'
+            ];
+            
+            // Try to check if file exists
+            $exists = \Storage::disk('cloudinary')->exists($testResult);
+            $testResults['file_exists'] = [
+                'exists' => $exists,
+                'path' => $testResult
+            ];
+            
+        } catch (\Exception $e) {
+            $testResults['file_upload'] = [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+        
         return response()->json([
             'success' => true,
             'config' => $config,
