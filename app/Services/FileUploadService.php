@@ -11,6 +11,21 @@ use Exception;
 class FileUploadService
 {
     /**
+     * Get the appropriate storage disk
+     */
+    private function getStorageDisk()
+    {
+        // Use Cloudinary if configured, otherwise use local public disk
+        $defaultDisk = config('filesystems.default');
+        
+        if ($defaultDisk === 'cloudinary' && config('filesystems.disks.cloudinary.cloud_name')) {
+            return Storage::disk('cloudinary');
+        }
+        
+        return Storage::disk('public');
+    }
+    
+    /**
      * Upload a file and return file information
      */
     public function uploadFile(UploadedFile $file, $conversationId)
@@ -28,8 +43,11 @@ class FileUploadService
             // Create directory path based on conversation
             $directoryPath = 'attachments/' . date('Y/m') . '/' . $conversationId;
             
+            // Get the appropriate storage disk
+            $disk = $this->getStorageDisk();
+            
             // Store file
-            $filePath = $file->storeAs($directoryPath, $uniqueFilename, 'public');
+            $filePath = $file->storeAs($directoryPath, $uniqueFilename, $disk->getName());
             
             if (!$filePath) {
                 throw new Exception('Failed to store file');
@@ -87,8 +105,9 @@ class FileUploadService
     public function deleteFile($filePath)
     {
         try {
-            if ($filePath && Storage::disk('public')->exists($filePath)) {
-                return Storage::disk('public')->delete($filePath);
+            $disk = $this->getStorageDisk();
+            if ($filePath && $disk->exists($filePath)) {
+                return $disk->delete($filePath);
             }
             return true;
         } catch (Exception $e) {
@@ -103,8 +122,19 @@ class FileUploadService
      */
     public function getPreviewUrl($filePath, $fileType)
     {
-        if ($fileType === Message::FILE_TYPE_IMAGE && Storage::disk('public')->exists($filePath)) {
-            return asset('storage/' . $filePath);
+        if ($fileType === Message::FILE_TYPE_IMAGE) {
+            $disk = $this->getStorageDisk();
+            
+            if ($disk->exists($filePath)) {
+                // For Cloudinary, return the URL directly
+                if (config('filesystems.default') === 'cloudinary') {
+                    return $disk->url($filePath);
+                }
+                // For local storage, return the asset URL
+                else {
+                    return asset('storage/' . $filePath);
+                }
+            }
         }
         
         return null;

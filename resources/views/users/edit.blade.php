@@ -147,9 +147,9 @@
                             <label for="avatar">Profile Picture</label>
                             <div class="text-center">
                                 <div class="avatar-preview mb-3">
-                                    <img id="avatar-preview" 
-                                         src="{{ $user->avatar ? asset('storage/' . $user->avatar) : 'https://via.placeholder.com/150x150/cccccc/ffffff?text=No+Image' }}" 
-                                         alt="Avatar Preview" class="img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                                    <div id="avatar-preview">
+                                        <x-user-avatar :user="$user" width="150px" height="150px" class="img-thumbnail" />
+                                    </div>
                                 </div>
                                 <input type="file" class="form-control-file @error('avatar') is-invalid @enderror" 
                                        id="avatar" name="avatar" accept="image/*">

@@ -6,15 +6,7 @@
 <div class="message {{ $isSent ? 'sent' : 'received' }} {{ $isSystem ? 'system' : '' }}" data-message-id="{{ $message->id }}">
     @if(!$isSent && !$isSystem)
         <div class="user-avatar">
-            @if($message->sender->profile_picture)
-                <img src="{{ asset('storage/' . $message->sender->profile_picture) }}" 
-                     alt="{{ $message->sender->name }}" 
-                     class="avatar-img">
-            @else
-                <div class="default-avatar" style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
-                    {{ strtoupper(substr($message->sender->name, 0, 2)) }}
-                </div>
-            @endif
+            <x-user-avatar :user="$message->sender" size="thumbnail" class="avatar-img" />
         </div>
     @endif
     
@@ -124,15 +116,7 @@
     
     @if($isSent && !$isSystem)
         <div class="user-avatar">
-            @if($message->sender->profile_picture)
-                <img src="{{ asset('storage/' . $message->sender->profile_picture) }}" 
-                     alt="{{ $message->sender->name }}" 
-                     class="avatar-img">
-            @else
-                <div class="default-avatar" style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
-                    {{ strtoupper(substr($message->sender->name, 0, 2)) }}
-                </div>
-            @endif
+            <x-user-avatar :user="$message->sender" size="thumbnail" class="avatar-img" />
         </div>
     @endif
 </div>

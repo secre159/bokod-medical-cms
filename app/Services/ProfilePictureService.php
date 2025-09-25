@@ -25,12 +25,39 @@ class ProfilePictureService
         // Check for existing profile picture
         $imagePath = self::getUserImagePath($user);
         
-        if ($imagePath && Storage::disk('public')->exists($imagePath)) {
-            return asset('storage/' . $imagePath);
+        if ($imagePath) {
+            // Check if we're using cloud storage
+            $disk = self::getStorageDisk();
+            
+            if ($disk->exists($imagePath)) {
+                // For Cloudinary, return the URL directly
+                if (config('filesystems.default') === 'cloudinary') {
+                    return $disk->url($imagePath);
+                }
+                // For local storage, return the asset URL
+                else {
+                    return asset('storage/' . $imagePath);
+                }
+            }
         }
         
         // Fallback to initials avatar
         return self::getDefaultAvatarUrl(self::getUserInitials($user), $size);
+    }
+    
+    /**
+     * Get the appropriate storage disk
+     */
+    private static function getStorageDisk()
+    {
+        // Use Cloudinary if configured, otherwise use local public disk
+        $defaultDisk = config('filesystems.default');
+        
+        if ($defaultDisk === 'cloudinary' && config('filesystems.disks.cloudinary.cloud_name')) {
+            return Storage::disk('cloudinary');
+        }
+        
+        return Storage::disk('public');
     }
     
     /**
@@ -123,17 +150,20 @@ class ProfilePictureService
             $filename = $user->id . '_' . time() . '.jpg';
             $path = self::STORAGE_PATH . '/' . $filename;
             
-            // Create directory if it doesn't exist
-            if (!Storage::disk('public')->exists(self::STORAGE_PATH)) {
-                Storage::disk('public')->makeDirectory(self::STORAGE_PATH);
+            // Get the appropriate storage disk
+            $disk = self::getStorageDisk();
+            
+            // Create directory if it doesn't exist (only for local storage)
+            if ($disk === Storage::disk('public') && !$disk->exists(self::STORAGE_PATH)) {
+                $disk->makeDirectory(self::STORAGE_PATH);
             }
             
             // Try to use Intervention Image if available, otherwise store directly
             if (class_exists('\Intervention\Image\Facades\Image')) {
-                self::processWithIntervention($file, $path);
+                self::processWithIntervention($file, $path, $disk);
             } else {
                 // Store file directly
-                $storedPath = Storage::disk('public')->putFileAs(
+                $storedPath = $disk->putFileAs(
                     self::STORAGE_PATH,
                     $file,
                     $filename
@@ -164,9 +194,14 @@ class ProfilePictureService
     /**
      * Process image with Intervention Image if available
      */
-    private static function processWithIntervention(UploadedFile $file, $path)
+    private static function processWithIntervention(UploadedFile $file, $path, $disk = null)
     {
         $Image = \Intervention\Image\Facades\Image::class;
+        
+        // Use provided disk or get default
+        if (!$disk) {
+            $disk = self::getStorageDisk();
+        }
         
         // Process and store the image
         $image = $Image::make($file->getRealPath());
@@ -180,7 +215,7 @@ class ProfilePictureService
         $image->encode('jpg', 85);
         
         // Store the processed image
-        Storage::disk('public')->put($path, $image->stream());
+        $disk->put($path, $image->stream());
     }
     
     /**
@@ -189,9 +224,10 @@ class ProfilePictureService
     public static function deleteUserProfilePicture(User $user)
     {
         $imagePath = self::getUserImagePath($user);
+        $disk = self::getStorageDisk();
         
-        if ($imagePath && Storage::disk('public')->exists($imagePath)) {
-            Storage::disk('public')->delete($imagePath);
+        if ($imagePath && $disk->exists($imagePath)) {
+            $disk->delete($imagePath);
         }
         
         // Clear from user record (set both to null for consistency)
@@ -229,13 +265,14 @@ class ProfilePictureService
      */
     public static function cleanupOrphanedPictures()
     {
-        $allFiles = Storage::disk('public')->files(self::STORAGE_PATH);
+        $disk = self::getStorageDisk();
+        $allFiles = $disk->files(self::STORAGE_PATH);
         $activeFiles = User::whereNotNull('profile_picture')->pluck('profile_picture')->toArray();
         
         $orphaned = array_diff($allFiles, $activeFiles);
         
         foreach ($orphaned as $file) {
-            Storage::disk('public')->delete($file);
+            $disk->delete($file);
         }
         
         return count($orphaned);

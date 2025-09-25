@@ -25,9 +25,7 @@
             <div class="card card-primary card-outline">
                 <div class="card-body box-profile">
                     <div class="text-center">
-                        <img class="profile-user-img img-fluid img-circle" 
-                             src="{{ $user->avatar ? asset('storage/' . $user->avatar) : 'https://via.placeholder.com/150x150/cccccc/ffffff?text=' . substr($user->name, 0, 1) }}" 
-                             alt="User profile picture">
+                        <x-user-avatar :user="$user" class="profile-user-img img-fluid img-circle" width="150px" height="150px" />
                     </div>
 
                     <h3 class="profile-username text-center">{{ $user->name }}</h3>

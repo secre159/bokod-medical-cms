@@ -177,6 +177,18 @@ class Message extends Model
             return null;
         }
         
+        // Check if we're using Cloudinary
+        $defaultDisk = config('filesystems.default');
+        
+        if ($defaultDisk === 'cloudinary' && config('filesystems.disks.cloudinary.cloud_name')) {
+            // For Cloudinary, get the URL from the cloudinary disk
+            $disk = \Illuminate\Support\Facades\Storage::disk('cloudinary');
+            if ($disk->exists($this->file_path)) {
+                return $disk->url($this->file_path);
+            }
+        }
+        
+        // For local storage or fallback, use asset URL
         return asset('storage/' . $this->file_path);
     }
     

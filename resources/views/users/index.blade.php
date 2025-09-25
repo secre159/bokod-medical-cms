@@ -184,20 +184,7 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="user-avatar mr-2">
-                                        @if($user->profile_picture || $user->avatar || ($user->role === 'patient' && $user->patient && $user->patient->profile_picture))
-                                            <img src="{{ $user->profile_picture_url }}" 
-                                                 alt="{{ $user->name }}" 
-                                                 class="img-circle elevation-1" 
-                                                 width="32" height="32"
-                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                            <div class="avatar-placeholder" style="display: none;">
-                                                <i class="fas fa-user-circle fa-2x text-muted"></i>
-                                            </div>
-                                        @else
-                                            <div class="avatar-placeholder">
-                                                <i class="fas fa-user-circle fa-2x text-muted"></i>
-                                            </div>
-                                        @endif
+                                        <x-user-avatar :user="$user" size="thumbnail" width="32px" height="32px" class="img-circle elevation-1" />
                                     </div>
                                     <div>
                                         <strong>{{ $user->name }}</strong>

@@ -288,13 +288,7 @@
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <div class="d-flex align-items-center mb-1">
-                                                @if($message->sender->profile_picture)
-                                                    <img src="{{ asset('storage/' . $message->sender->profile_picture) }}" class="rounded-circle mr-2" width="24" height="24" alt="{{ $message->sender->name }}">
-                                                @else
-                                                    <div class="bg-primary rounded-circle mr-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px; color: white;">
-                                                        {{ strtoupper(substr($message->sender->name, 0, 1)) }}
-                                                    </div>
-                                                @endif
+                                                <x-user-avatar :user="$message->sender" size="thumbnail" width="24px" height="24px" class="rounded-circle mr-2" />
                                                 <strong class="small">{{ $message->sender->name }}</strong>
                                             </div>
                                             <p class="mb-0 small text-muted" style="font-size: 0.8rem;">

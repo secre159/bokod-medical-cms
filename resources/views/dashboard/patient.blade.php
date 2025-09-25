@@ -191,13 +191,7 @@
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div class="flex-grow-1">
                                                 <div class="d-flex align-items-center mb-1">
-                                                    @if($message->sender->profile_picture)
-                                                        <img src="{{ asset('storage/' . $message->sender->profile_picture) }}" class="rounded-circle mr-2" width="24" height="24" alt="{{ $message->sender->name }}">
-                                                    @else
-                                                        <div class="bg-success rounded-circle mr-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px; color: white;">
-                                                            {{ strtoupper(substr($message->sender->name, 0, 1)) }}
-                                                        </div>
-                                                    @endif
+                                                    <x-user-avatar :user="$message->sender" size="thumbnail" width="24px" height="24px" class="rounded-circle mr-2" />
                                                     <strong class="small">{{ $message->sender->name }}</strong>
                                                     @if($message->sender->role === 'admin')
                                                         <span class="badge badge-success badge-sm ml-1" style="font-size: 0.6em;">Staff</span>
@@ -231,27 +225,7 @@
                 <div class="card card-primary card-outline">
                     <div class="card-body box-profile">
                         <div class="text-center profile-picture-container">
-                            @if($patient->user && $patient->user->profile_picture)
-                                <img id="profileImage" 
-                                     class="profile-user-img img-fluid img-circle" 
-                                     src="{{ asset('storage/' . $patient->user->profile_picture) . '?v=' . time() }}"
-                                     alt="{{ $patient->patient_name }}" 
-                                     style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #adb5bd; margin: 0 auto; display: block;"
-                                     onerror="document.getElementById('profileImage').style.display='none'; document.getElementById('profileFallback').style.display='flex';">
-                                <div id="profileFallback" 
-                                     class="profile-user-img img-fluid img-circle d-inline-flex align-items-center justify-content-center" 
-                                     style="width: 100px; height: 100px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; font-size: 2rem; font-weight: bold; margin: 0 auto; display: none;"
-                                     title="Profile picture failed to load">
-                                    {{ strtoupper(substr($patient->patient_name, 0, 1)) }}
-                                </div>
-                            @else
-                                <div id="profileFallback" 
-                                     class="profile-user-img img-fluid img-circle d-inline-flex align-items-center justify-content-center" 
-                                     style="width: 100px; height: 100px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; font-size: 2rem; font-weight: bold; margin: 0 auto; display: flex;"
-                                     title="No profile picture uploaded">
-                                    {{ strtoupper(substr($patient->patient_name, 0, 1)) }}
-                                </div>
-                            @endif
+                            <x-user-avatar :user="$patient->user" class="profile-user-img img-fluid img-circle" width="100px" height="100px" style="border: 3px solid #adb5bd; margin: 0 auto;" />
                         </div>
                         
                         <h3 class="profile-username text-center">{{ $patient->patient_name }}</h3>
@@ -387,28 +361,6 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
     
-    /* Profile picture container to ensure only one image shows */
-    .profile-picture-container {
-        position: relative;
-    }
-    
-    .profile-picture-container img,
-    .profile-picture-container div {
-        position: relative;
-        z-index: 1;
-    }
-    
-    /* Ensure fallback div is properly hidden when image loads */
-    .profile-picture-container img + div {
-        display: none !important;
-    }
-    
-    /* When image fails to load and is hidden, show fallback */
-    .profile-picture-container img[style*="display: none"] + div,
-    .profile-picture-container img[style*="display:none"] + div {
-        display: flex !important;
-    }
-    
     /* Patient Message Notifications */
     .notification-dot {
         position: absolute;
@@ -528,45 +480,6 @@ $(document).ready(function() {
     // Initialize patient dashboard
     console.log('Patient dashboard loaded');
     
-    // PROFILE PICTURE FIX: Ensure only one profile picture is visible
-    function handleProfilePicture() {
-        const profileImage = document.getElementById('profileImage');
-        const profileFallback = document.getElementById('profileFallback');
-        
-        if (profileImage && profileFallback) {
-            // Set up load event to hide fallback when image loads successfully
-            profileImage.onload = function() {
-                profileFallback.style.display = 'none';
-                profileImage.style.display = 'block';
-                console.log('Profile image loaded successfully');
-            };
-            
-            // Set up error event to show fallback when image fails
-            profileImage.onerror = function() {
-                profileImage.style.display = 'none';
-                profileFallback.style.display = 'flex';
-                console.log('Profile image failed to load, showing fallback');
-            };
-            
-            // Check if image is already loaded (cached)
-            if (profileImage.complete) {
-                if (profileImage.naturalWidth > 0) {
-                    // Image loaded successfully
-                    profileFallback.style.display = 'none';
-                    profileImage.style.display = 'block';
-                    console.log('Profile image was cached and loaded');
-                } else {
-                    // Image failed to load
-                    profileImage.style.display = 'none';
-                    profileFallback.style.display = 'flex';
-                    console.log('Cached profile image failed, showing fallback');
-                }
-            }
-        }
-    }
-    
-    // Initialize profile picture handling
-    handleProfilePicture();
     
     // Start polling for new messages
     startPatientMessagePolling();
