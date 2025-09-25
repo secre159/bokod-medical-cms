@@ -372,6 +372,35 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
             ]);
         }
     });
+    
+    Route::get('/debug/test-resend-direct', function () {
+        try {
+            // Test Resend directly without EmailService
+            $resend = new \Resend\Resend(env('RESEND_API_KEY'));
+            
+            $result = $resend->emails->send([
+                'from' => 'noreply@resend.dev',
+                'to' => 'edite7866@gmail.com',
+                'subject' => 'Test Email from Resend - BOKOD CMS',
+                'html' => '<h1>Test Email</h1><p>This is a test email sent directly via Resend API to verify the integration.</p><p>Time: ' . now()->toDateTimeString() . '</p>',
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Direct Resend test completed',
+                'resend_response' => $result->toArray(),
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'api_key_set' => env('RESEND_API_KEY') ? 'yes' : 'no',
+                'timestamp' => now()->toDateTimeString()
+            ]);
+        }
+    });
 });
 
 // Debug routes (only in development)
