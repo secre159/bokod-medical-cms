@@ -380,7 +380,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
             
             $result = $resend->emails->send([
                 'from' => 'noreply@resend.dev',
-                'to' => 'edite7866@gmail.com',
+                'to' => 'axlchanh159@gmail.com',
                 'subject' => 'Test Email from Resend - BOKOD CMS',
                 'html' => '<h1>Test Email</h1><p>This is a test email sent directly via Resend API to verify the integration.</p><p>Time: ' . now()->toDateTimeString() . '</p>',
             ]);
