@@ -33,11 +33,19 @@ class Conversation extends Model
     ];
 
     /**
-     * Get the patient user
+     * Get the patient record
      */
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'patient_id');
+        return $this->belongsTo(\App\Models\Patient::class, 'patient_id');
+    }
+    
+    /**
+     * Get the patient user (through patient record)
+     */
+    public function patientUser()
+    {
+        return $this->patient->user ?? null;
     }
 
     /**
@@ -140,12 +148,21 @@ class Conversation extends Model
 
     /**
      * Create or get conversation between patient and admin
+     * @param int $patientUserId - The user.id of the patient
+     * @param int $adminId - The admin user.id (optional)
      */
-    public static function findOrCreateBetween($patientId, $adminId = null)
+    public static function findOrCreateBetween($patientUserId, $adminId = null)
     {
+        // First, find the patient record from patients table using user_id
+        $patient = \App\Models\Patient::where('user_id', $patientUserId)->first();
+        
+        if (!$patient) {
+            throw new \Exception('Patient record not found for user ID: ' . $patientUserId);
+        }
+        
         // If no admin specified, find any available admin
         if (!$adminId) {
-            $adminUser = User::where('role', 'admin')->first();
+            $adminUser = User::where('role', 'admin')->where('status', 'active')->first();
             
             if (!$adminUser) {
                 throw new \Exception('No admin users available to start conversation.');
@@ -156,7 +173,7 @@ class Conversation extends Model
 
         return static::firstOrCreate(
             [
-                'patient_id' => $patientId,
+                'patient_id' => $patient->id, // Use patients.id instead of users.id
                 'admin_id' => $adminId,
                 'type' => 'patient_admin'
             ],

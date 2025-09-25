@@ -13,19 +13,11 @@ class Message extends Model
         'conversation_id',
         'sender_id',
         'message',
-        'message_type',
-        'attachments',
-        'file_name',
-        'file_path',
-        'file_type',
-        'file_size',
-        'mime_type',
-        'has_attachment',
-        'priority',
         'is_read',
         'read_at',
-        'is_system_message',
-        'reactions',
+        // Note: Removed columns that don't exist in production database:
+        // 'message_type', 'attachments', 'file_name', 'file_path', 'file_type', 
+        // 'file_size', 'mime_type', 'has_attachment', 'priority', 'is_system_message', 'reactions'
     ];
 
     protected $casts = [
@@ -150,24 +142,23 @@ class Message extends Model
             ]);
         }
     }
-
+    
     /**
-     * Create a system message
+     * Create a system message with only existing columns
      */
     public static function createSystemMessage($conversationId, $message)
     {
         // Use the first admin user as sender for system messages
-        $adminUser = User::where('role', 'admin')->first();
+        $adminUser = User::where('role', 'admin')->where('status', 'active')->first();
         
         return static::create([
             'conversation_id' => $conversationId,
             'sender_id' => $adminUser ? $adminUser->id : auth()->id(),
             'message' => $message,
-            'message_type' => self::TYPE_SYSTEM,
-            'is_system_message' => true,
             'is_read' => false,
         ]);
     }
+
     
     /**
      * Check if message has file attachment

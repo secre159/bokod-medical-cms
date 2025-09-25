@@ -198,8 +198,23 @@ class MessagingController extends Controller
                 ], 503);
             }
             
+            // First, ensure the user has a patient record
+            $patient = \App\Models\Patient::where('user_id', $user->id)->first();
+            
+            if (!$patient) {
+                \Log::warning('Patient record not found for user', [
+                    'user_id' => $user->id,
+                    'user_name' => $user->name
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Patient record not found. Please contact support to complete your profile setup.'
+                ], 404);
+            }
+            
             // Check if patient already has an active conversation
-            $existingConversation = Conversation::where('patient_id', $user->id)
+            $existingConversation = Conversation::where('patient_id', $patient->id)
                 ->where('is_active', true)
                 ->first();
                 
@@ -473,21 +488,31 @@ class MessagingController extends Controller
             'initial_message' => 'nullable|string|max:1000'
         ]);
         
-        // Verify the patient_id belongs to a patient
-        $patient = User::where('id', $request->patient_id)
-                      ->where('role', 'patient')
-                      ->first();
+        // Verify the patient_id belongs to a patient user, then find patient record
+        $patientUser = User::where('id', $request->patient_id)
+                          ->where('role', 'patient')
+                          ->first();
+        
+        if (!$patientUser) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Patient user not found or invalid patient ID'
+            ], 404);
+        }
+        
+        // Find the corresponding patient record
+        $patient = \App\Models\Patient::where('user_id', $patientUser->id)->first();
         
         if (!$patient) {
             return response()->json([
                 'success' => false,
-                'error' => 'Patient not found or invalid patient ID'
+                'error' => 'Patient record not found. Patient profile may be incomplete.'
             ], 404);
         }
         
         try {
             // Find or create conversation between admin and patient
-            $conversation = Conversation::findOrCreateBetween($patient->id, $user->id);
+            $conversation = Conversation::findOrCreateBetween($patientUser->id, $user->id);
             
             // Send initial message if provided
             if ($request->filled('initial_message') && !empty(trim($request->initial_message))) {
@@ -516,7 +541,7 @@ class MessagingController extends Controller
                 'success' => true,
                 'conversation_id' => $conversation->id,
                 'redirect_url' => route('admin.messages.index', ['conversation' => $conversation->id]),
-                'message' => 'Conversation started successfully with ' . $patient->name
+                'message' => 'Conversation started successfully with ' . $patientUser->name
             ]);
             
         } catch (\Exception $e) {
@@ -561,15 +586,22 @@ class MessagingController extends Controller
             ->get();
         
         // Add existing conversation info
-        $patients = $patients->map(function($patient) use ($user) {
-            $existingConversation = Conversation::where('patient_id', $patient->id)
-                ->where('admin_id', $user->id)
-                ->first();
+        $patients = $patients->map(function($patientUser) use ($user) {
+            // Find the patient record for this user
+            $patient = \App\Models\Patient::where('user_id', $patientUser->id)->first();
             
-            $patient->has_existing_conversation = (bool) $existingConversation;
-            $patient->conversation_id = $existingConversation ? $existingConversation->id : null;
+            $existingConversation = null;
+            if ($patient) {
+                $existingConversation = Conversation::where('patient_id', $patient->id)
+                    ->where('admin_id', $user->id)
+                    ->first();
+            }
             
-            return $patient;
+            $patientUser->has_existing_conversation = (bool) $existingConversation;
+            $patientUser->conversation_id = $existingConversation ? $existingConversation->id : null;
+            $patientUser->has_patient_record = (bool) $patient;
+            
+            return $patientUser;
         });
         
         return response()->json([

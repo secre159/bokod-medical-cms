@@ -44,6 +44,7 @@ class User extends Authenticatable
         'allergies',
         'notes',
         'created_by',
+        'updated_by',
         'last_login_at',
     ];
 

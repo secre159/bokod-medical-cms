@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title')->nullable(); // Optional conversation title
             $table->string('type')->default('patient_admin'); // patient_admin, group, etc.
-            $table->foreignId('patient_id')->constrained('users')->onDelete('cascade'); // Patient user
+            $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade'); // Patient record
             $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('set null'); // Admin user
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_message_at')->nullable();
