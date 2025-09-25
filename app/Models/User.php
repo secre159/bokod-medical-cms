@@ -83,7 +83,11 @@ class User extends Authenticatable
      * Status constants
      */
     const STATUS_ACTIVE = 'active';
-    const STATUS_ARCHIVED = 'archived';
+    const STATUS_INACTIVE = 'inactive';
+    const STATUS_SUSPENDED = 'suspended';
+    
+    // Legacy constant for backward compatibility
+    const STATUS_ARCHIVED = 'inactive'; // Maps to inactive in database
     
     /**
      * Registration status constants

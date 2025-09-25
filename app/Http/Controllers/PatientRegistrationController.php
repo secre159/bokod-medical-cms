@@ -66,7 +66,7 @@ class PatientRegistrationController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => 'patient',
-                'status' => User::STATUS_ARCHIVED, // Inactive until approved
+                'status' => 'inactive', // Inactive until approved (matches DB constraint)
                 'registration_status' => User::REGISTRATION_PENDING,
                 'registration_source' => User::SOURCE_SELF,
                 // approved_at will default to null automatically
