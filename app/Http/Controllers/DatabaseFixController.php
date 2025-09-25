@@ -110,13 +110,9 @@ class DatabaseFixController extends Controller
                 return ['status' => 'error', 'issues' => $issues, 'fixes' => []];
             }
 
-            $requiredColumns = [
-                'prescribed_by' => 'BIGINT UNSIGNED NULL',
-                'frequency' => "VARCHAR(255) DEFAULT 'once_daily'",
-                'duration_days' => 'INTEGER NULL',
-                'dispensed_quantity' => 'INTEGER DEFAULT 0',
-                'remaining_quantity' => 'INTEGER NULL'
-            ];
+            // Get database driver to use appropriate syntax
+            $driver = DB::getDriverName();
+            $requiredColumns = $this->getColumnDefinitions($driver);
 
             foreach (array_keys($requiredColumns) as $column) {
                 if (!Schema::hasColumn('prescriptions', $column)) {
@@ -211,13 +207,9 @@ class DatabaseFixController extends Controller
         try {
             DB::beginTransaction();
 
-            $requiredColumns = [
-                'prescribed_by' => 'BIGINT UNSIGNED NULL',
-                'frequency' => "VARCHAR(255) DEFAULT 'once_daily'",
-                'duration_days' => 'INTEGER NULL',
-                'dispensed_quantity' => 'INTEGER DEFAULT 0',
-                'remaining_quantity' => 'INTEGER NULL'
-            ];
+            // Get database driver to use appropriate syntax
+            $driver = DB::getDriverName();
+            $requiredColumns = $this->getColumnDefinitions($driver);
 
             $addedColumns = [];
 
@@ -231,14 +223,9 @@ class DatabaseFixController extends Controller
             // Add foreign key constraint for prescribed_by if it was added
             if (in_array('prescribed_by', $addedColumns)) {
                 // Check if constraint already exists first
-                $constraintExists = DB::select("
-                    SELECT constraint_name 
-                    FROM information_schema.table_constraints 
-                    WHERE table_name = 'prescriptions' 
-                    AND constraint_name = 'prescriptions_prescribed_by_foreign'
-                ");
+                $constraintExists = $this->checkConstraintExists($driver, 'prescriptions', 'prescriptions_prescribed_by_foreign');
 
-                if (empty($constraintExists)) {
+                if (!$constraintExists) {
                     DB::statement("ALTER TABLE prescriptions ADD CONSTRAINT prescriptions_prescribed_by_foreign FOREIGN KEY (prescribed_by) REFERENCES users(id) ON DELETE SET NULL");
                 }
             }
@@ -271,5 +258,59 @@ class DatabaseFixController extends Controller
                 'error' => 'Error fixing prescriptions system: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Get column definitions based on database driver
+     */
+    private function getColumnDefinitions($driver)
+    {
+        if ($driver === 'pgsql') {
+            // PostgreSQL syntax
+            return [
+                'prescribed_by' => 'BIGINT NULL',
+                'frequency' => "VARCHAR(255) DEFAULT 'once_daily'",
+                'duration_days' => 'INTEGER NULL',
+                'dispensed_quantity' => 'INTEGER DEFAULT 0',
+                'remaining_quantity' => 'INTEGER NULL'
+            ];
+        } else {
+            // MySQL syntax (default)
+            return [
+                'prescribed_by' => 'BIGINT UNSIGNED NULL',
+                'frequency' => "VARCHAR(255) DEFAULT 'once_daily'",
+                'duration_days' => 'INTEGER NULL',
+                'dispensed_quantity' => 'INTEGER DEFAULT 0',
+                'remaining_quantity' => 'INTEGER NULL'
+            ];
+        }
+    }
+
+    /**
+     * Check if a foreign key constraint exists
+     */
+    private function checkConstraintExists($driver, $tableName, $constraintName)
+    {
+        if ($driver === 'pgsql') {
+            // PostgreSQL query
+            $result = DB::select("
+                SELECT constraint_name 
+                FROM information_schema.table_constraints 
+                WHERE table_name = ? 
+                AND constraint_name = ?
+                AND table_schema = current_schema()
+            ", [$tableName, $constraintName]);
+        } else {
+            // MySQL query
+            $result = DB::select("
+                SELECT constraint_name 
+                FROM information_schema.table_constraints 
+                WHERE table_name = ? 
+                AND constraint_name = ?
+                AND table_schema = DATABASE()
+            ", [$tableName, $constraintName]);
+        }
+        
+        return !empty($result);
     }
 }
