@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
@@ -158,11 +159,21 @@ class UserController extends Controller
     public function show(User $user)
     {
         try {
-            $user->load(['patient', 'prescriptions', 'appointments']);
+            // Load relationships safely - prescriptions might not work if schema is incomplete
+            $relationships = ['patient', 'appointments'];
+            
+            // Only load prescriptions if the prescribed_by column exists
+            if (Schema::hasColumn('prescriptions', 'prescribed_by')) {
+                $relationships[] = 'prescriptions';
+            }
+            
+            $user->load($relationships);
             
             // Get user activity statistics
             $stats = [
-                'prescriptions_count' => $user->prescriptions()->count(),
+                'prescriptions_count' => Schema::hasColumn('prescriptions', 'prescribed_by') 
+                    ? $user->prescriptions()->count() 
+                    : 0,
                 'appointments_count' => $user->appointments()->count(),
                 'last_login' => $user->last_login_at,
                 'account_age' => $user->created_at->diffInDays(now()),
