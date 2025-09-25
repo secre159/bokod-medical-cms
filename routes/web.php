@@ -462,11 +462,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // Temporary unauthenticated Cloudinary debug route
 Route::get('/test-cloudinary-config', function () {
     try {
+        // Generate CLOUDINARY_URL if not set
+        $cloudinaryUrl = env('CLOUDINARY_URL');
+        if (!$cloudinaryUrl && env('CLOUDINARY_CLOUD_NAME') && env('CLOUDINARY_API_KEY') && env('CLOUDINARY_API_SECRET')) {
+            $cloudinaryUrl = 'cloudinary://' . env('CLOUDINARY_API_KEY') . ':' . env('CLOUDINARY_API_SECRET') . '@' . env('CLOUDINARY_CLOUD_NAME');
+        }
+        
         // Test Cloudinary configuration
         $config = [
             'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
             'api_key' => env('CLOUDINARY_API_KEY'),
             'api_secret' => env('CLOUDINARY_API_SECRET') ? 'SET' : 'NOT_SET',
+            'cloudinary_url' => $cloudinaryUrl ? 'SET' : 'NOT_SET',
+            'cloudinary_url_constructed' => $cloudinaryUrl,
             'filesystem_default' => config('filesystems.default'),
             'fallback_disk' => config('filesystems.fallback_disk'),
             'cloudinary_disk_config' => config('filesystems.disks.cloudinary'),
@@ -548,6 +556,38 @@ Route::get('/test-cloudinary-config', function () {
             
         } catch (\Exception $e) {
             $testResults['file_upload'] = [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+        
+        // Test 5: Try configuring disk with CLOUDINARY_URL temporarily
+        try {
+            if ($cloudinaryUrl) {
+                // Temporarily set the CLOUDINARY_URL environment variable
+                putenv("CLOUDINARY_URL={$cloudinaryUrl}");
+                $_ENV['CLOUDINARY_URL'] = $cloudinaryUrl;
+                
+                // Clear Laravel config cache to pick up the new env var
+                \Illuminate\Support\Facades\Artisan::call('config:clear');
+                
+                // Try storage operation with URL set
+                $testContent2 = 'Test file with URL at ' . now()->toDateTimeString();
+                $testResult2 = \Storage::disk('cloudinary')->put('test/test-with-url.txt', $testContent2);
+                
+                $testResults['file_upload_with_url'] = [
+                    'success' => true,
+                    'uploaded_path' => $testResult2,
+                    'message' => 'Successfully uploaded test file with CLOUDINARY_URL'
+                ];
+            } else {
+                $testResults['file_upload_with_url'] = [
+                    'success' => false,
+                    'error' => 'Could not construct CLOUDINARY_URL'
+                ];
+            }
+        } catch (\Exception $e) {
+            $testResults['file_upload_with_url'] = [
                 'success' => false,
                 'error' => $e->getMessage()
             ];
