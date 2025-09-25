@@ -2359,7 +2359,7 @@
         min-height: 430px !important;
     }
     
-    .messaging-body .row.h-100 {
+.messaging-body .row.h-100 {
         max-height: 85vh !important;
         min-height: 620px !important;
     }
@@ -2369,6 +2369,84 @@
         width: 100% !important;
         max-width: none !important;
     }
+
+/* Enhanced Patient Search Styles */
+#patientSearch {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+#patientSearch.searching {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23667eea" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px 20px;
+    padding-right: 35px;
+    animation: searchPulse 1s ease-in-out infinite;
+}
+
+@keyframes searchPulse {
+    0%, 100% { background-color: #ffffff; }
+    50% { background-color: #f8f9ff; }
+}
+
+.patient-item {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.patient-item:hover {
+    border-left-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.patient-item:active {
+    transform: scale(0.98);
+}
+
+/* Search results container */
+#patientResults {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    background: white;
+}
+
+/* Custom scrollbar for search results */
+#patientResults::-webkit-scrollbar {
+    width: 6px;
+}
+
+#patientResults::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#patientResults::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 3px;
+}
+
+#patientResults::-webkit-scrollbar-thumb:hover {
+    background: #5a6fd8;
+}
+
+/* Loading animation for search */
+.search-loading {
+    animation: fadeInUp 0.3s ease;
+}
+
+/* Search highlight mark styling */
+mark {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    padding: 2px 3px !important;
+    border-radius: 3px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px rgba(133, 100, 4, 0.2);
+}
     
     .conversations-panel {
         flex: 0 0 30% !important;
@@ -3797,63 +3875,130 @@ function showNewConversationModal() {
 }
 
 function searchPatients(query) {
-    if (query.length < 2) {
+    // Clear any existing search requests
+    if (window.currentSearchRequest) {
+        window.currentSearchRequest.abort();
+    }
+    
+    if (query.length < 1) {
         $('#patientResults').hide();
         $('#patientList').empty();
         return;
     }
     
-    $.ajax({
+    // Show loading indicator
+    $('#patientList').html('<div class="p-3 text-center text-muted"><i class="fas fa-spinner fa-spin mr-2"></i>Searching patients...</div>');
+    $('#patientResults').show();
+    
+    // Make AJAX request with abort capability
+    window.currentSearchRequest = $.ajax({
         url: '{{ route("admin.messages.patientsList") }}',
         type: 'GET',
         data: {
             search: query,
-            limit: 20
+            limit: 10 // Reduced limit for faster response
+        },
+        beforeSend: function() {
+            // Add search indicator to the input
+            $('#patientSearch').addClass('searching');
         },
         success: function(response) {
-            displayPatientResults(response.patients);
+            $('#patientSearch').removeClass('searching');
+            displayPatientResults(response.patients, query);
+            window.currentSearchRequest = null;
         },
         error: function(xhr, status, error) {
-            console.error('Error searching patients:', error);
-            showNotification('Failed to search patients. Please try again.', 'error');
+            $('#patientSearch').removeClass('searching');
+            
+            // Don't show error if request was aborted (user is still typing)
+            if (status !== 'abort') {
+                console.error('Error searching patients:', error);
+                $('#patientList').html('<div class="p-3 text-center text-danger"><i class="fas fa-exclamation-triangle mr-2"></i>Failed to search patients. Please try again.</div>');
+            }
+            
+            window.currentSearchRequest = null;
         }
     });
 }
 
-function displayPatientResults(patients) {
+function displayPatientResults(patients, searchQuery) {
     const patientList = $('#patientList');
     patientList.empty();
     
     if (patients.length === 0) {
-        patientList.append('<div class="p-3 text-center text-muted">No patients found matching your search</div>');
+        patientList.append(`
+            <div class="p-3 text-center text-muted">
+                <i class="fas fa-search mb-2" style="font-size: 2rem; opacity: 0.5;"></i>
+                <div>No patients found matching "<strong>${searchQuery}</strong>"</div>
+                <small class="text-muted mt-1">Try searching by name or email</small>
+            </div>
+        `);
     } else {
+        // Add results count header
+        patientList.append(`
+            <div class="p-2 bg-light border-bottom">
+                <small class="text-muted">
+                    <i class="fas fa-users mr-1"></i>
+                    Found ${patients.length} patient${patients.length !== 1 ? 's' : ''}
+                </small>
+            </div>
+        `);
+        
         patients.forEach(function(patient) {
+            // Highlight matching text in name and email
+            const highlightedName = highlightSearchTerm(patient.name, searchQuery);
+            const highlightedEmail = highlightSearchTerm(patient.email, searchQuery);
+            
             const patientItem = $(`
-                <div class="patient-item p-3 border-bottom" data-patient-id="${patient.id}" style="cursor: pointer;">
+                <div class="patient-item p-3 border-bottom position-relative" data-patient-id="${patient.id}" style="cursor: pointer; transition: all 0.2s ease;">
                     <div class="d-flex align-items-center">
-                        <div class="patient-avatar mr-3">
+                        <div class="patient-avatar mr-3 position-relative">
                             ${patient.profile_picture ? 
                                 `<img src="{{ asset('storage/') }}/${patient.profile_picture}" 
                                       alt="${patient.name}" 
-                                      style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` :
-                                `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                                      style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; transition: all 0.2s ease;">` :
+                                `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid transparent; transition: all 0.2s ease;">
                                     ${patient.name.substring(0, 2).toUpperCase()}
                                 </div>`
                             }
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="font-weight-bold">${patient.name}</div>
-                            <div class="text-muted small">${patient.email}</div>
                             ${patient.has_existing_conversation ? 
-                                '<span class="badge badge-info mt-1">Existing Conversation</span>' : 
-                                '<span class="badge badge-success mt-1">New</span>'
+                                '<div class="position-absolute" style="top: -5px; right: -5px; width: 16px; height: 16px; background: #ffc107; border-radius: 50%; border: 2px solid white;"><i class="fas fa-comments" style="font-size: 8px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i></div>' :
+                                ''
                             }
+                        </div>
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="font-weight-bold text-truncate" style="color: #2d3748;">${highlightedName}</div>
+                            <div class="text-muted small text-truncate" style="font-size: 0.875rem;">${highlightedEmail}</div>
+                            <div class="mt-1">
+                                ${patient.has_existing_conversation ? 
+                                    '<span class="badge badge-warning" style="font-size: 0.75rem;"><i class="fas fa-comment-dots mr-1"></i>Continue Chat</span>' : 
+                                    '<span class="badge badge-success" style="font-size: 0.75rem;"><i class="fas fa-plus-circle mr-1"></i>Start New</span>'
+                                }
+                            </div>
+                        </div>
+                        <div class="ml-2">
+                            <i class="fas fa-chevron-right text-muted"></i>
                         </div>
                     </div>
                 </div>
             `);
             
+            // Add hover effects
+            patientItem.on('mouseenter', function() {
+                $(this).css('background-color', '#f8f9fa');
+                $(this).find('.patient-avatar img, .patient-avatar div').first().css('border-color', '#667eea');
+            }).on('mouseleave', function() {
+                $(this).css('background-color', '');
+                $(this).find('.patient-avatar img, .patient-avatar div').first().css('border-color', 'transparent');
+            });
+            
             patientItem.on('click', function() {
+                // Add click animation
+                $(this).css('transform', 'scale(0.98)');
+                setTimeout(() => {
+                    $(this).css('transform', '');
+                }, 150);
+                
                 selectPatient(patient);
             });
             
@@ -3862,6 +4007,21 @@ function displayPatientResults(patients) {
     }
     
     $('#patientResults').show();
+}
+
+// Helper function to highlight search terms
+function highlightSearchTerm(text, searchTerm) {
+    if (!searchTerm || searchTerm.length === 0) {
+        return text;
+    }
+    
+    const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+    return text.replace(regex, '<mark style="background-color: #fff3cd; padding: 1px 2px; border-radius: 2px;">$1</mark>');
+}
+
+// Helper function to escape regex special characters
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function selectPatient(patient) {
@@ -3967,7 +4127,7 @@ $('#newConversationModal').on('hidden.bs.modal', function() {
     selectedPatientData = null;
 });
 
-// Patient search with debounce
+// Enhanced patient search with real-time response
 $('#patientSearch').on('input', function() {
     const query = $(this).val().trim();
     
@@ -3984,10 +4144,19 @@ $('#patientSearch').on('input', function() {
         $('#startConversationBtn').prop('disabled', true);
     }
     
-    // Set new timeout
-    patientSearchTimeout = setTimeout(function() {
+    // Immediate search for first character, then debounced
+    if (query.length === 1) {
         searchPatients(query);
-    }, 300);
+    } else if (query.length > 1) {
+        // Reduced timeout for faster response
+        patientSearchTimeout = setTimeout(function() {
+            searchPatients(query);
+        }, 150); // Reduced from 300ms to 150ms
+    } else {
+        // Clear results if empty
+        $('#patientResults').hide();
+        $('#patientList').empty();
+    }
 });
 
 // Start conversation button click

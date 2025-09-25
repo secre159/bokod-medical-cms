@@ -177,19 +177,72 @@ class MessagingController extends Controller
         
         // Only patients can start new conversations
         if ($user->role !== 'patient') {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized. Only patients can start conversations.'
+            ], 403);
         }
         
         try {
+            // First, check if admin users exist
+            $adminCount = User::where('role', 'admin')->where('status', 'active')->count();
+            if ($adminCount === 0) {
+                \Log::warning('No active admin users found for conversation creation', [
+                    'patient_id' => $user->id,
+                    'patient_name' => $user->name
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No medical staff available at the moment. Please try again later or contact support.'
+                ], 503);
+            }
+            
+            // Check if patient already has an active conversation
+            $existingConversation = Conversation::where('patient_id', $user->id)
+                ->where('is_active', true)
+                ->first();
+                
+            if ($existingConversation) {
+                \Log::info('Patient already has active conversation', [
+                    'patient_id' => $user->id,
+                    'conversation_id' => $existingConversation->id
+                ]);
+                
+                return response()->json([
+                    'success' => true,
+                    'conversation_id' => $existingConversation->id,
+                    'redirect_url' => route('patient.messages.index', ['conversation' => $existingConversation->id]),
+                    'message' => 'Redirecting to your existing conversation.'
+                ]);
+            }
+            
             // Find or create conversation with any admin
             $conversation = Conversation::findOrCreateBetween($user->id);
             
+            if (!$conversation) {
+                throw new \Exception('Failed to create conversation - database error');
+            }
+            
+            \Log::info('Conversation created/found', [
+                'conversation_id' => $conversation->id,
+                'patient_id' => $user->id,
+                'admin_id' => $conversation->admin_id,
+                'was_recently_created' => $conversation->wasRecentlyCreated
+            ]);
+            
             // Create welcome system message if this is a new conversation
             if ($conversation->wasRecentlyCreated) {
-                Message::createSystemMessage(
+                $systemMessage = Message::createSystemMessage(
                     $conversation->id,
                     'Conversation started. A medical staff member will respond to you shortly.'
                 );
+                
+                if (!$systemMessage) {
+                    \Log::warning('Failed to create system message, but conversation exists', [
+                        'conversation_id' => $conversation->id
+                    ]);
+                }
                 
                 $conversation->update(['last_message_at' => now()]);
             }
@@ -197,7 +250,8 @@ class MessagingController extends Controller
             return response()->json([
                 'success' => true,
                 'conversation_id' => $conversation->id,
-                'redirect_url' => route('patient.messages.index', ['conversation' => $conversation->id])
+                'redirect_url' => route('patient.messages.index', ['conversation' => $conversation->id]),
+                'message' => 'Conversation started successfully!'
             ]);
             
         } catch (\Exception $e) {
@@ -205,14 +259,23 @@ class MessagingController extends Controller
             \Log::error('Failed to start conversation: ' . $e->getMessage(), [
                 'user_id' => $user->id,
                 'user_role' => $user->role,
+                'admin_count' => User::where('role', 'admin')->where('status', 'active')->count(),
                 'trace' => $e->getTraceAsString()
             ]);
             
+            // Return user-friendly error message
+            $errorMessage = 'Failed to start conversation. Please try again.';
+            
+            if (str_contains($e->getMessage(), 'No admin users available')) {
+                $errorMessage = 'No medical staff available at the moment. Please try again later.';
+            } elseif (str_contains($e->getMessage(), 'database')) {
+                $errorMessage = 'Database error. Please contact support if the problem persists.';
+            }
+            
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage() === 'No admin users available to start conversation.' 
-                    ? 'No medical staff available. Please try again later.'
-                    : 'Failed to start conversation. Please try again.'
+                'error' => $errorMessage,
+                'debug' => app()->environment('local') ? $e->getMessage() : null
             ], 500);
         }
     }
