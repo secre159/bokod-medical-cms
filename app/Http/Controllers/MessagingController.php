@@ -306,11 +306,8 @@ class MessagingController extends Controller
             ->with(['patient', 'admin'])
             ->findOrFail($conversationId);
         
-        // Load messages with reactions if requested
+        // Load messages with sender information
         $messagesQuery = $conversation->messages()->with(['sender']);
-        
-        // Always load with reactions for enhanced real-time updates
-        $messagesQuery->with('reactions');
         
         $messages = $messagesQuery->orderBy('created_at', 'asc')->get();
         
