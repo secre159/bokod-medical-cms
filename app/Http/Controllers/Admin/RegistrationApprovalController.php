@@ -136,7 +136,7 @@ class RegistrationApprovalController extends Controller
             // Update user status
             $user->update([
                 'registration_status' => User::REGISTRATION_REJECTED,
-                'status' => User::STATUS_ARCHIVED,
+                'status' => 'inactive', // Keep inactive instead of archived
                 'approved_at' => now(),
                 'approved_by' => auth()->id(),
                 'rejection_reason' => $request->rejection_reason,

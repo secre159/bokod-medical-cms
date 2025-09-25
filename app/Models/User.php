@@ -312,4 +312,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(\App\Models\Notification::class);
     }
+    
+    /**
+     * Get the user who approved this registration
+     */
+    public function approvedBy(): HasOne
+    {
+        return $this->hasOne(User::class, 'id', 'approved_by');
+    }
 }
