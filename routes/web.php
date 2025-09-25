@@ -270,7 +270,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
             'MAIL_PORT' => config('mail.mailers.smtp.port'),
             'MAIL_USERNAME' => config('mail.mailers.smtp.username'),
             'MAIL_PASSWORD' => config('mail.mailers.smtp.password') ? '[SET]' : '[NOT SET]',
-            'MAIL_ENCRYPTION' => config('mail.mailers.smtp.scheme') ?? 'Not set',
+            'MAIL_ENCRYPTION' => config('mail.mailers.smtp.encryption') ?? 'Not set',
             'MAIL_FROM_ADDRESS' => config('mail.from.address'),
             'MAIL_FROM_NAME' => config('mail.from.name'),
         ];
