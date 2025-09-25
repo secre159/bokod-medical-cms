@@ -107,9 +107,9 @@
                             <div class="input-group mb-3">
                                 <select name="gender" class="form-control @error('gender') is-invalid @enderror" required>
                                     <option value="">Select Gender</option>
-                                    <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
-                                    <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
-                                    <option value="other" {{ old('gender') == 'other' ? 'selected' : '' }}>Other</option>
+                                    <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                                    <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                                    <option value="Other" {{ old('gender') == 'Other' ? 'selected' : '' }}>Other</option>
                                 </select>
                                 @error('gender')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -189,10 +189,10 @@
                             <div class="input-group mb-3">
                                 <select name="civil_status" class="form-control @error('civil_status') is-invalid @enderror">
                                     <option value="">Civil Status (Optional)</option>
-                                    <option value="single" {{ old('civil_status') == 'single' ? 'selected' : '' }}>Single</option>
-                                    <option value="married" {{ old('civil_status') == 'married' ? 'selected' : '' }}>Married</option>
-                                    <option value="divorced" {{ old('civil_status') == 'divorced' ? 'selected' : '' }}>Divorced</option>
-                                    <option value="widowed" {{ old('civil_status') == 'widowed' ? 'selected' : '' }}>Widowed</option>
+                                    <option value="Single" {{ old('civil_status') == 'Single' ? 'selected' : '' }}>Single</option>
+                                    <option value="Married" {{ old('civil_status') == 'Married' ? 'selected' : '' }}>Married</option>
+                                    <option value="Divorced" {{ old('civil_status') == 'Divorced' ? 'selected' : '' }}>Divorced</option>
+                                    <option value="Widowed" {{ old('civil_status') == 'Widowed' ? 'selected' : '' }}>Widowed</option>
                                 </select>
                                 @error('civil_status')
                                     <div class="invalid-feedback">{{ $message }}</div>

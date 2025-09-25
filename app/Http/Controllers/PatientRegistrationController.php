@@ -36,7 +36,7 @@ class PatientRegistrationController extends Controller
             'course' => ['required', 'string', 'max:255'],
             'year_level' => ['required', 'string', 'max:20'],
             'date_of_birth' => ['required', 'date', 'before:today'],
-            'gender' => ['required', 'in:male,female,other'],
+            'gender' => ['required', 'in:Male,Female,Other'],
             'phone_number' => ['required', 'string', 'max:15'],
             'address' => ['required', 'string', 'max:500'],
             
@@ -49,7 +49,7 @@ class PatientRegistrationController extends Controller
             // Optional health info
             'height' => ['nullable', 'numeric', 'min:50', 'max:250'],
             'weight' => ['nullable', 'numeric', 'min:20', 'max:300'],
-            'civil_status' => ['nullable', 'in:single,married,divorced,widowed'],
+            'civil_status' => ['nullable', 'in:Single,Married,Divorced,Widowed'],
             
             // Agreement
             'terms_agreement' => ['required', 'accepted'],
@@ -97,7 +97,7 @@ class PatientRegistrationController extends Controller
                 'height' => $request->height,
                 'weight' => $request->weight,
                 'bmi' => $bmi,
-                'civil_status' => $request->civil_status ?? 'single',
+                'civil_status' => $request->civil_status ?? 'Single',
                 'user_id' => $user->id,
                 'archived' => false,
             ]);
@@ -111,9 +111,26 @@ class PatientRegistrationController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             
+            // Log the actual error for debugging
+            \Log::error('Patient registration failed', [
+                'error' => $e->getMessage(),
+                'email' => $request->email,
+                'name' => $request->name,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Show more specific error message if it's a database constraint issue
+            $errorMessage = 'Registration failed. Please try again.';
+            
+            if (str_contains($e->getMessage(), 'Duplicate entry') || str_contains($e->getMessage(), 'unique constraint')) {
+                $errorMessage = 'This email address or student ID is already registered. Please use a different email or contact support if you believe this is an error.';
+            } elseif (str_contains($e->getMessage(), 'foreign key constraint')) {
+                $errorMessage = 'Database relationship error. Please contact support for assistance.';
+            }
+            
             return back()
                 ->withInput()
-                ->with('error', 'Registration failed. Please try again. If the problem persists, contact the health center.');
+                ->with('error', $errorMessage . ' If the problem persists, contact the health center.');
         }
     }
 
