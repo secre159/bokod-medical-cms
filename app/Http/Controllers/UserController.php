@@ -259,10 +259,11 @@ class UserController extends Controller
 
             // Update patient record if exists and role is patient
             if ($request->role === 'patient' && $user->patient) {
-                $user->patient->update([
+                $patientData = [
                     'patient_name' => $request->name,
                     'email' => $request->email,
                     'phone' => $request->phone,
+                    'phone_number' => $request->phone, // Also update phone_number for consistency
                     'date_of_birth' => $request->date_of_birth,
                     'gender' => $request->gender,
                     'address' => $request->address,
@@ -273,7 +274,9 @@ class UserController extends Controller
                     'notes' => $request->notes,
                     'status' => $request->status,
                     'updated_by' => Auth::id(),
-                ]);
+                ];
+                
+                $user->patient->update($patientData);
             }
 
             DB::commit();

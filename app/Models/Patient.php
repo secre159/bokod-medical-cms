@@ -27,10 +27,18 @@ class Patient extends Model
         'emergency_contact_address',
         'date_of_birth',
         'phone_number',
+        'phone', // Additional phone field used by UserController
         'email',
         'gender',
         'user_id',
         'archived',
+        'emergency_contact', // Used by UserController
+        'emergency_phone', // Used by UserController
+        'medical_history',
+        'allergies', 
+        'notes',
+        'status',
+        'updated_by',
     ];
     
     protected $casts = [
