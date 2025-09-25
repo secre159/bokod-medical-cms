@@ -69,7 +69,7 @@ class PatientRegistrationController extends Controller
                 'status' => User::STATUS_ARCHIVED, // Inactive until approved
                 'registration_status' => User::REGISTRATION_PENDING,
                 'registration_source' => User::SOURCE_SELF,
-                'approved_at' => null,
+                // approved_at will default to null automatically
                 'email_verified_at' => null,
             ]);
 

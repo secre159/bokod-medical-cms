@@ -145,7 +145,7 @@ class ReportsController extends Controller
             'prescriptions' => [
                 'total' => Prescription::whereBetween('prescribed_date', [$dateFrom, $dateTo])->count(),
                 'today' => Prescription::whereDate('prescribed_date', now())->count(),
-                'dispensed' => Prescription::where('dispensed_quantity', '>', 0)->count(),
+                'dispensed' => Prescription::where('status', 'completed')->count(),
                 'active' => Prescription::where('status', 'active')->count()
             ],
             'medicines' => [
@@ -159,10 +159,8 @@ class ReportsController extends Controller
                     ->toArray()
             ],
             'financial' => [
-                'revenue_month' => Prescription::whereBetween('prescribed_date', [$dateFrom, $dateTo])
-                    ->sum('total_amount'),
-                'revenue_today' => Prescription::whereDate('prescribed_date', now())
-                    ->sum('total_amount')
+                'revenue_month' => 0, // TODO: Implement when pricing system is added
+                'revenue_today' => 0 // TODO: Implement when pricing system is added
             ]
         ];
     }
@@ -258,7 +256,7 @@ class ReportsController extends Controller
                     'dosage' => $prescription->dosage,
                     'quantity' => $prescription->quantity,
                     'status' => $prescription->status,
-                    'total_value' => $prescription->total_amount
+                    'total_value' => 'N/A' // TODO: Calculate when pricing system is implemented
                 ];
             });
     }
@@ -289,8 +287,6 @@ class ReportsController extends Controller
     {
         return Prescription::with(['patient', 'medicine'])
             ->whereBetween('prescribed_date', [$dateFrom, $dateTo])
-            ->whereNotNull('total_amount')
-            ->where('total_amount', '>', 0)
             ->get()
             ->map(function ($prescription) {
                 return [
@@ -298,8 +294,8 @@ class ReportsController extends Controller
                     'patient_name' => $prescription->patient->patient_name ?? 'N/A',
                     'medicine_name' => $prescription->medicine->medicine_name ?? 'N/A',
                     'quantity' => $prescription->quantity ?? 0,
-                    'unit_price' => $prescription->medicine->unit_price ?? $prescription->unit_price ?? 0,
-                    'total_amount' => $prescription->total_amount ?? 0,
+                    'unit_price' => 0, // TODO: Implement when pricing system is added
+                    'total_amount' => 0, // TODO: Implement when pricing system is added
                     'status' => $prescription->status ?? 'active'
                 ];
             });
