@@ -217,14 +217,6 @@ class User extends Authenticatable
     }
     
     /**
-     * Get the best available profile picture URL
-     */
-    public function getProfilePictureUrlAttribute()
-    {
-        return \App\Services\ProfilePictureService::getProfilePictureUrl($this);
-    }
-    
-    /**
      * Get the profile picture URL for AdminLTE
      */
     public function adminlte_image()
