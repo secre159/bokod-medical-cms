@@ -164,7 +164,7 @@ function fixMessaging() {
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Fixing...';
     
-    fetch('{{ route("admin.database-fixes.messaging") }}', {
+    fetch('{{ route("database-fixes.messaging") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -218,7 +218,7 @@ function fixPrescriptions() {
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Fixing...';
     
-    fetch('{{ route("admin.database-fixes.prescriptions") }}', {
+    fetch('{{ route("database-fixes.prescriptions") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
