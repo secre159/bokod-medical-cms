@@ -459,6 +459,47 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 });
 
+// Temporary unauthenticated Cloudinary debug route
+Route::get('/test-cloudinary-config', function () {
+    try {
+        // Test Cloudinary configuration
+        $config = [
+            'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+            'api_key' => env('CLOUDINARY_API_KEY'),
+            'api_secret' => env('CLOUDINARY_API_SECRET') ? 'SET' : 'NOT_SET',
+            'filesystem_default' => config('filesystems.default'),
+            'fallback_disk' => config('filesystems.fallback_disk'),
+            'cloudinary_disk_config' => config('filesystems.disks.cloudinary'),
+        ];
+        
+        // Try to access Cloudinary storage
+        $testResult = [];
+        try {
+            $cloudinary = \Storage::disk('cloudinary');
+            $testResult['disk_accessible'] = true;
+            $testResult['message'] = 'Cloudinary disk accessible';
+        } catch (\Exception $e) {
+            $testResult['disk_accessible'] = false;
+            $testResult['error'] = $e->getMessage();
+        }
+        
+        return response()->json([
+            'success' => true,
+            'config' => $config,
+            'test_result' => $testResult,
+            'timestamp' => now()->toDateTimeString()
+        ], 200, [], JSON_PRETTY_PRINT);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'timestamp' => now()->toDateTimeString()
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+});
+
 // Debug routes (only in development)
 if (app()->environment(['local', 'development'])) {
     Route::get('/debug/appointments', function() {
