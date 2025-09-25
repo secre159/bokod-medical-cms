@@ -264,28 +264,63 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         $diagnostics = [];
         
         // 1. Check email configuration
+        $currentMailer = config('mail.default');
         $diagnostics['email_config'] = [
-            'MAIL_MAILER' => config('mail.default'),
-            'MAIL_HOST' => config('mail.mailers.smtp.host'),
-            'MAIL_PORT' => config('mail.mailers.smtp.port'),
-            'MAIL_USERNAME' => config('mail.mailers.smtp.username'),
-            'MAIL_PASSWORD' => config('mail.mailers.smtp.password') ? '[SET]' : '[NOT SET]',
-            'MAIL_ENCRYPTION' => config('mail.mailers.smtp.encryption') ?? 'Not set',
+            'MAIL_MAILER' => $currentMailer,
             'MAIL_FROM_ADDRESS' => config('mail.from.address'),
             'MAIL_FROM_NAME' => config('mail.from.name'),
         ];
         
-        // 2. Check queue configuration
+        // 2. Check specific mailer configuration
+        if ($currentMailer === 'resend') {
+            $diagnostics['resend_config'] = [
+                'RESEND_API_KEY' => env('RESEND_API_KEY') ? '[SET - ' . substr(env('RESEND_API_KEY'), 0, 8) . '...]' : '[NOT SET]',
+                'resend_config_exists' => file_exists(config_path('resend.php')),
+            ];
+        } else {
+            $diagnostics['smtp_config'] = [
+                'MAIL_HOST' => config('mail.mailers.smtp.host'),
+                'MAIL_PORT' => config('mail.mailers.smtp.port'),
+                'MAIL_USERNAME' => config('mail.mailers.smtp.username'),
+                'MAIL_PASSWORD' => config('mail.mailers.smtp.password') ? '[SET]' : '[NOT SET]',
+                'MAIL_ENCRYPTION' => config('mail.mailers.smtp.encryption') ?? 'Not set',
+            ];
+        }
+        
+        // 3. Check queue configuration
         $diagnostics['queue_config'] = [
             'QUEUE_CONNECTION' => config('queue.default'),
         ];
         
-        // 3. Environment variables check
+        // 4. Environment variables check
         $diagnostics['env_vars'] = [
             'APP_ENV' => env('APP_ENV'),
             'APP_DEBUG' => env('APP_DEBUG'),
             'RENDER_SERVICE_ID' => env('RENDER_SERVICE_ID', 'Not on Render'),
         ];
+        
+        // 5. Test appointment data
+        try {
+            $appointment = App\Models\Appointment::with('patient')->first();
+            if ($appointment && $appointment->patient) {
+                $diagnostics['test_data'] = [
+                    'appointment_id' => $appointment->appointment_id,
+                    'patient_name' => $appointment->patient->patient_name,
+                    'patient_email' => $appointment->patient->email,
+                    'has_valid_test_data' => true,
+                ];
+            } else {
+                $diagnostics['test_data'] = [
+                    'has_valid_test_data' => false,
+                    'message' => 'No appointments with patients found for testing'
+                ];
+            }
+        } catch (\Exception $e) {
+            $diagnostics['test_data'] = [
+                'has_valid_test_data' => false,
+                'error' => $e->getMessage()
+            ];
+        }
         
         // Return as JSON for easy reading
         return response()->json($diagnostics, 200, [], JSON_PRETTY_PRINT);
@@ -293,6 +328,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     
     Route::post('/debug/send-test-email', function () {
         try {
+            // Get test appointment
             $appointment = App\Models\Appointment::with('patient')->first();
             if (!$appointment || !$appointment->patient) {
                 return response()->json([
@@ -301,15 +337,38 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
                 ]);
             }
             
+            $diagnostics = [
+                'mail_driver' => config('mail.default'),
+                'appointment_id' => $appointment->appointment_id,
+                'patient_email' => $appointment->patient->email,
+                'patient_name' => $appointment->patient->patient_name,
+            ];
+            
+            // Test the email service
+            \Log::info('Debug: Testing email with Resend', $diagnostics);
+            
             $emailService = app(App\Services\EnhancedEmailService::class);
             $result = $emailService->sendAppointmentNotification($appointment, 'approved');
             
-            return response()->json($result);
+            \Log::info('Debug: Email service result', ['result' => $result]);
+            
+            return response()->json([
+                'diagnostics' => $diagnostics,
+                'email_result' => $result,
+                'timestamp' => now()->toDateTimeString()
+            ]);
             
         } catch (\Exception $e) {
+            \Log::error('Debug: Email test failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => 'Error: ' . $e->getMessage(),
+                'mail_driver' => config('mail.default'),
+                'timestamp' => now()->toDateTimeString()
             ]);
         }
     });
