@@ -193,6 +193,14 @@ class User extends Authenticatable
     }
     
     /**
+     * Get the profile picture URL
+     */
+    public function getProfilePictureUrlAttribute(): string
+    {
+        return \App\Services\ProfilePictureService::getProfilePictureUrl($this);
+    }
+    
+    /**
      * Get medical notes created by this user
      */
     public function createdMedicalNotes(): HasMany
