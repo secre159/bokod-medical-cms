@@ -13,6 +13,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\EmailTestController;
 use App\Http\Controllers\MessagingController;
+use App\Http\Controllers\DatabaseFixController;
 use App\Http\Controllers\LandingController;
 use Illuminate\Support\Facades\Route;
 
@@ -176,9 +177,16 @@ Route::middleware(['auth'])->group(function () {
             // Message reactions
             Route::post('/messages/{message}/react', [MessagingController::class, 'toggleReaction'])->name('react');
             
-            // Admin-initiated conversations
+        // Admin-initiated conversations
             Route::post('/start-with-patient', [MessagingController::class, 'startConversationWithPatient'])->name('startWithPatient');
             Route::get('/patients-list', [MessagingController::class, 'getPatientsList'])->name('patientsList');
+        });
+        
+        // Database Fixes Management
+        Route::prefix('database-fixes')->name('database-fixes.')->group(function () {
+            Route::get('/', [DatabaseFixController::class, 'index'])->name('index');
+            Route::post('/messaging', [DatabaseFixController::class, 'fixMessaging'])->name('messaging');
+            Route::post('/prescriptions', [DatabaseFixController::class, 'fixPrescriptions'])->name('prescriptions');
         });
     });
     
