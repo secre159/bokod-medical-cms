@@ -3841,31 +3841,67 @@ function showChatView() {
 }
 
 function startNewConversation() {
+    console.log('🚀 startNewConversation() called');
+    
+    // Check if jQuery is loaded
+    if (typeof $ === 'undefined') {
+        console.error('❌ jQuery not loaded!');
+        alert('Page not fully loaded. Please refresh and try again.');
+        return;
+    }
+    
+    console.log('✓ jQuery loaded, proceeding with AJAX...');
+    
+    // Show loading state
+    const button = $('button[onclick="startNewConversation()"]');
+    const originalText = button.html();
+    button.html('<i class="fas fa-spinner fa-spin mr-1"></i>Starting...');
+    button.prop('disabled', true);
+    
     $.ajax({
         url: '{{ route("patient.messages.start") }}',
         type: 'POST',
         data: {
             _token: '{{ csrf_token() }}'
         },
+        beforeSend: function() {
+            console.log('📤 Sending AJAX request to:', '{{ route("patient.messages.start") }}');
+        },
         success: function(response) {
-            console.log('Response:', response);
+            console.log('✅ Success Response:', response);
             if (response.success) {
+                console.log('🔄 Redirecting to:', response.redirect_url);
                 window.location.href = response.redirect_url;
             } else {
+                console.error('❌ Server returned error:', response.error);
                 alert('Failed to start conversation: ' + response.error);
+                // Restore button
+                button.html(originalText).prop('disabled', false);
             }
         },
         error: function(xhr, status, error) {
-            console.error('AJAX Error:', xhr, status, error);
-            console.error('Response Text:', xhr.responseText);
+            console.error('❌ AJAX Error Details:');
+            console.error('  Status:', xhr.status);
+            console.error('  Status Text:', xhr.statusText);
+            console.error('  Response Text:', xhr.responseText);
+            console.error('  Error:', error);
             
             let errorMessage = 'Failed to start conversation. Please try again.';
             
-            if (xhr.responseJSON && xhr.responseJSON.error) {
+            // Handle specific error cases
+            if (xhr.status === 419) {
+                errorMessage = 'Session expired. Please refresh the page and try again.';
+            } else if (xhr.status === 403) {
+                errorMessage = 'Access denied. Please make sure you are logged in as a patient.';
+            } else if (xhr.responseJSON && xhr.responseJSON.error) {
                 errorMessage = xhr.responseJSON.error;
+            } else if (xhr.status === 500) {
+                errorMessage = 'Server error. Please contact support if the problem persists.';
             }
             
             alert(errorMessage);
+            // Restore button
+            button.html(originalText).prop('disabled', false);
         }
     });
 }

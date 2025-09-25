@@ -141,8 +141,15 @@ class Conversation extends Model
     public function scopeForUser($query, $userId)
     {
         return $query->where(function ($q) use ($userId) {
-            $q->where('patient_id', $userId)
-              ->orWhere('admin_id', $userId);
+            // For admin users, check admin_id directly
+            $q->where('admin_id', $userId)
+              // For patient users, join with patients table to check user_id
+              ->orWhereExists(function ($subQuery) use ($userId) {
+                  $subQuery->select(\DB::raw(1))
+                          ->from('patients')
+                          ->whereColumn('patients.id', 'conversations.patient_id')
+                          ->where('patients.user_id', $userId);
+              });
         });
     }
 
