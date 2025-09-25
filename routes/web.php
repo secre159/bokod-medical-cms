@@ -292,7 +292,16 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
             'QUEUE_CONNECTION' => config('queue.default'),
         ];
         
-        // 4. Environment variables check
+        // 4. Storage configuration check
+        $diagnostics['storage_config'] = [
+            'FILESYSTEM_DISK' => config('filesystems.default'),
+            'CLOUDINARY_CLOUD_NAME' => env('CLOUDINARY_CLOUD_NAME') ? '[SET]' : '[NOT SET]',
+            'CLOUDINARY_API_KEY' => env('CLOUDINARY_API_KEY') ? '[SET]' : '[NOT SET]',
+            'CLOUDINARY_API_SECRET' => env('CLOUDINARY_API_SECRET') ? '[SET]' : '[NOT SET]',
+            'cloudinary_config_exists' => file_exists(config_path('cloudinary.php')),
+        ];
+        
+        // 5. Environment variables check
         $diagnostics['env_vars'] = [
             'APP_ENV' => env('APP_ENV'),
             'APP_DEBUG' => env('APP_DEBUG'),
