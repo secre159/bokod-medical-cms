@@ -26,18 +26,26 @@ class ProfilePictureService
         $imagePath = self::getUserImagePath($user);
         
         if ($imagePath) {
-            // Check if we're using cloud storage
-            $disk = self::getStorageDisk();
-            
-            if ($disk->exists($imagePath)) {
-                // For Cloudinary, return the URL directly
-                if (config('filesystems.default') === 'cloudinary') {
-                    return $disk->url($imagePath);
+            try {
+                // Check if we're using cloud storage
+                $disk = self::getStorageDisk();
+                
+                if ($disk->exists($imagePath)) {
+                    // For Cloudinary, return the URL directly
+                    if (config('filesystems.default') === 'cloudinary') {
+                        return $disk->url($imagePath);
+                    }
+                    // For local storage, return the asset URL
+                    else {
+                        return asset('storage/' . $imagePath);
+                    }
                 }
-                // For local storage, return the asset URL
-                else {
-                    return asset('storage/' . $imagePath);
-                }
+            } catch (\Exception $e) {
+                \Log::warning('Error accessing storage disk, falling back to default avatar', [
+                    'error' => $e->getMessage(),
+                    'user_id' => $user->id ?? 'unknown'
+                ]);
+                // Fall through to default avatar
             }
         }
         
@@ -54,7 +62,18 @@ class ProfilePictureService
         $defaultDisk = config('filesystems.default');
         
         if ($defaultDisk === 'cloudinary' && config('filesystems.disks.cloudinary.cloud_name')) {
-            return Storage::disk('cloudinary');
+            try {
+                // Test if Cloudinary is properly configured
+                $cloudinaryDisk = Storage::disk('cloudinary');
+                // Try to access the configuration to trigger any errors
+                $cloudinaryDisk->url('test');
+                return $cloudinaryDisk;
+            } catch (\Exception $e) {
+                \Log::warning('Cloudinary not properly configured, falling back to local storage', [
+                    'error' => $e->getMessage()
+                ]);
+                // Fall through to return local storage
+            }
         }
         
         return Storage::disk('public');
