@@ -124,6 +124,23 @@ class Patient extends Model
         return 'Unknown';
     }
     
+    /**
+     * Get patient initials from patient_name
+     */
+    public function getInitials()
+    {
+        if (!$this->patient_name) {
+            return '??';
+        }
+        
+        $names = explode(' ', trim($this->patient_name));
+        if (count($names) >= 2) {
+            return strtoupper(substr($names[0], 0, 1) . substr($names[1], 0, 1));
+        }
+        
+        return strtoupper(substr($names[0], 0, 2));
+    }
+    
     // Scopes
     public function scopeActive($query)
     {
