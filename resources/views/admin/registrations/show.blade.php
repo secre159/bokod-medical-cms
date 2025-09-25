@@ -5,7 +5,7 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <h1>Registration Details</h1>
-        <a href="{{ route('admin.registrations.index') }}" class="btn btn-secondary">
+        <a href="{{ route('registrations.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to Registrations
         </a>
     </div>
@@ -226,7 +226,7 @@
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <!-- Approve Button -->
-                    <form action="{{ route('admin.registrations.approve', $user) }}" method="POST" class="d-inline">
+                    <form action="{{ route('registrations.approve', $user) }}" method="POST" class="d-inline">
                         @csrf
                         @method('PATCH')
                         <button type="submit" class="btn btn-success btn-block" 
@@ -288,7 +288,7 @@
 <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form action="{{ route('admin.registrations.reject', $user) }}" method="POST">
+            <form action="{{ route('registrations.reject', $user) }}" method="POST">
                 @csrf
                 @method('PATCH')
                 <div class="modal-header">
