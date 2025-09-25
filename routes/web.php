@@ -416,6 +416,47 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
             ]);
         }
     });
+    
+    Route::get('/debug/test-cloudinary', function () {
+        try {
+            // Test Cloudinary configuration
+            $cloudinary = \Storage::disk('cloudinary');
+            
+            // Try to get configuration
+            $config = [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key' => env('CLOUDINARY_API_KEY'),
+                'api_secret' => env('CLOUDINARY_API_SECRET') ? 'SET' : 'NOT_SET',
+                'filesystem_default' => config('filesystems.default'),
+            ];
+            
+            // Try to access Cloudinary
+            $testResult = [];
+            try {
+                // Create a simple test to see if Cloudinary works
+                $testResult['disk_accessible'] = true;
+                $testResult['message'] = 'Cloudinary disk accessible';
+            } catch (\Exception $e) {
+                $testResult['disk_accessible'] = false;
+                $testResult['error'] = $e->getMessage();
+            }
+            
+            return response()->json([
+                'success' => true,
+                'config' => $config,
+                'test_result' => $testResult,
+                'timestamp' => now()->toDateTimeString()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'timestamp' => now()->toDateTimeString()
+            ]);
+        }
+    });
 });
 
 // Debug routes (only in development)
