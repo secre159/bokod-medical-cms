@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use App\Services\ProfilePictureService;
 
 class ProfileController extends Controller
 {
@@ -36,20 +37,18 @@ class ProfileController extends Controller
         $user = $request->user();
         $validatedData = $request->validated();
         
-        // Handle avatar upload
+        // Handle avatar upload using ProfilePictureService (supports Cloudinary)
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
+            try {
+                $avatarPath = ProfilePictureService::uploadProfilePicture($request->file('avatar'), $user);
+                $validatedData['avatar'] = $avatarPath;
+                $validatedData['profile_picture'] = $avatarPath;
+                \Log::info('Profile picture updated via ProfileController for user: ' . $user->id);
+            } catch (\Exception $e) {
+                \Log::error('Profile picture upload failed in ProfileController for user: ' . $user->id . ': ' . $e->getMessage());
+                return Redirect::route('profile.edit')
+                    ->withErrors(['avatar' => 'Failed to upload profile picture: ' . $e->getMessage()]);
             }
-            if ($user->profile_picture) {
-                Storage::disk('public')->delete($user->profile_picture);
-            }
-            
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-            $validatedData['avatar'] = $avatarPath;
-            // Also set profile_picture for consistency
-            $validatedData['profile_picture'] = $avatarPath;
         }
         
         $user->fill($validatedData);
