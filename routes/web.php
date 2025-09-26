@@ -622,6 +622,57 @@ Route::get('/test-storage-disk', function () {
     }
 });
 
+// Debug route to check actual URLs being used in HTML
+Route::get('/debug-image-urls', function () {
+    try {
+        $results = [];
+        
+        // Check system settings
+        $logoPath = \App\Models\Setting::get('app_logo');
+        $faviconPath = \App\Models\Setting::get('app_favicon');
+        
+        // Check what AdminLTE configs are set to
+        $results['adminlte_configs'] = [
+            'logo_img' => config('adminlte.logo_img'),
+            'auth_logo_path' => config('adminlte.auth_logo.img.path'),
+            'favicon_config' => config('app.favicon'),
+        ];
+        
+        // Check current user profile picture
+        if (auth()->check()) {
+            $user = auth()->user();
+            $profileUrl = \App\Services\ProfilePictureService::getProfilePictureUrl($user);
+            $results['current_user_profile'] = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'avatar_field' => $user->avatar,
+                'profile_picture_field' => $user->profile_picture,
+                'generated_url' => $profileUrl
+            ];
+        }
+        
+        // Test URLs are actually accessible
+        $results['url_tests'] = [];
+        if ($logoPath) {
+            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
+            $logoUrl = $disk->url($logoPath);
+            $results['url_tests']['logo'] = [
+                'path' => $logoPath,
+                'url' => $logoUrl,
+                'accessible' => !empty($logoUrl)
+            ];
+        }
+        
+        return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+});
+
 // Cloudinary is now fully configured and working! 🎉
 
 // Debug routes (only in development)
