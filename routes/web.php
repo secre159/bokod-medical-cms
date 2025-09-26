@@ -464,51 +464,31 @@ Route::get('/test-upload-verification', function () {
     try {
         $results = [];
         
-        // Check current system settings files
-        $logoPath = \App\Models\Setting::get('app_logo');
-        $faviconPath = \App\Models\Setting::get('app_favicon');
-        
-        if ($logoPath) {
-            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
-            $results['logo'] = [
-                'path' => $logoPath,
-                'exists' => $disk->exists($logoPath),
-                'url' => $disk->exists($logoPath) ? $disk->url($logoPath) : 'File not found',
-                'disk_used' => config('filesystems.fallback_disk', 'public')
-            ];
-        }
-        
-        if ($faviconPath) {
-            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
-            $results['favicon'] = [
-                'path' => $faviconPath,
-                'exists' => $disk->exists($faviconPath),
-                'url' => $disk->exists($faviconPath) ? $disk->url($faviconPath) : 'File not found',
-                'disk_used' => config('filesystems.fallback_disk', 'public')
-            ];
-        }
-        
-        // Check some user profile pictures
-        $users = \App\Models\User::whereNotNull('avatar')->limit(3)->get();
-        foreach ($users as $user) {
-            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
-            $results['users'][] = [
-                'user_id' => $user->id,
-                'user_name' => $user->name,
-                'avatar_path' => $user->avatar,
-                'exists' => $disk->exists($user->avatar),
-                'url' => $disk->exists($user->avatar) ? $disk->url($user->avatar) : 'File not found',
-                'disk_used' => config('filesystems.fallback_disk', 'public')
-            ];
-        }
-        
-        // Show current disk configuration
+        // Show current disk configuration first
         $results['configuration'] = [
             'default_disk' => config('filesystems.default'),
             'fallback_disk' => config('filesystems.fallback_disk'),
-            'cloudinary_configured' => config('filesystems.disks.cloudinary.cloud_name') ? true : false,
+            'cloudinary_cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+            'cloudinary_configured' => env('CLOUDINARY_CLOUD_NAME') ? true : false,
             'storage_disk_env' => env('STORAGE_DISK')
         ];
+        
+        // Test disk access
+        try {
+            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
+            $testUrl = $disk->url('test-file.jpg');
+            $results['disk_test'] = [
+                'disk_name' => config('filesystems.fallback_disk', 'public'),
+                'accessible' => true,
+                'sample_url' => $testUrl
+            ];
+        } catch (\Exception $e) {
+            $results['disk_test'] = [
+                'disk_name' => config('filesystems.fallback_disk', 'public'),
+                'accessible' => false,
+                'error' => $e->getMessage()
+            ];
+        }
         
         return response()->json($results, 200, [], JSON_PRETTY_PRINT);
         
