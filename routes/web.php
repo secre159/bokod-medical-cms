@@ -500,6 +500,60 @@ Route::get('/test-upload-verification', function () {
     }
 });
 
+// Test route to debug actual file uploads
+Route::get('/test-storage-disk', function () {
+    try {
+        $results = [];
+        
+        // Check actual disk configuration 
+        $results['config'] = [
+            'default_disk' => config('filesystems.default'),
+            'fallback_disk' => config('filesystems.fallback_disk'),
+            'cloudinary_env' => [
+                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+                'api_key' => env('CLOUDINARY_API_KEY') ? 'SET' : 'NOT_SET',
+                'api_secret' => env('CLOUDINARY_API_SECRET') ? 'SET' : 'NOT_SET',
+                'url' => env('CLOUDINARY_URL') ? 'SET' : 'NOT_SET'
+            ]
+        ];
+        
+        // Test which disk the SettingsController would use
+        $settingsController = new \App\Http\Controllers\SettingsController();
+        $reflection = new \ReflectionClass($settingsController);
+        $method = $reflection->getMethod('getStorageDisk');
+        $method->setAccessible(true);
+        $disk = $method->invoke($settingsController);
+        
+        $results['settings_controller_disk'] = [
+            'disk_class' => get_class($disk),
+            'disk_name' => method_exists($disk, 'getName') ? $disk->getName() : 'getName method not available',
+            'sample_url' => $disk->url('test-file.jpg')
+        ];
+        
+        // Test direct Cloudinary access
+        try {
+            $cloudinaryDisk = \Storage::disk('cloudinary');
+            $results['direct_cloudinary'] = [
+                'accessible' => true,
+                'sample_url' => $cloudinaryDisk->url('test-file.jpg')
+            ];
+        } catch (\Exception $e) {
+            $results['direct_cloudinary'] = [
+                'accessible' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+        
+        return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+});
+
 // Cloudinary is now fully configured and working! 🎉
 
 // Debug routes (only in development)

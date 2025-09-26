@@ -57,7 +57,8 @@ class SettingsController extends Controller
                     $this->getStorageDisk()->delete($oldLogo);
                 }
                 
-                $logoPath = $request->file('logo')->store('settings', config('filesystems.fallback_disk', 'public'));
+                $disk = $this->getStorageDisk();
+                $logoPath = $request->file('logo')->store('settings', $disk);
                 Setting::set('app_logo', $logoPath, 'System logo', 'string', true);
             }
             
@@ -69,7 +70,8 @@ class SettingsController extends Controller
                     $this->getStorageDisk()->delete($oldFavicon);
                 }
                 
-                $faviconPath = $request->file('favicon')->store('settings', config('filesystems.fallback_disk', 'public'));
+                $disk = $this->getStorageDisk();
+                $faviconPath = $request->file('favicon')->store('settings', $disk);
                 Setting::set('app_favicon', $faviconPath, 'System favicon', 'string', true);
             }
             
