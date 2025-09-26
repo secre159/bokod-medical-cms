@@ -31,14 +31,34 @@ class ProfilePictureService
                 $disk = self::getStorageDisk();
                 
                 if ($disk->exists($imagePath)) {
-                    // For Cloudinary, return the URL directly
-                    if (config('filesystems.default') === 'cloudinary') {
-                        return $disk->url($imagePath);
+                    // Always get URL from the disk object (handles Cloudinary or local automatically)
+                    $url = $disk->url($imagePath);
+                    
+                    // Debug: Log what URL is generated
+                    \Log::info('ProfilePictureService: Generated URL', [
+                        'image_path' => $imagePath,
+                        'generated_url' => $url,
+                        'disk_class' => get_class($disk),
+                        'url_empty' => empty($url)
+                    ]);
+                    
+                    // If URL is empty (Cloudinary issue), construct manually
+                    if (empty($url) && (config('filesystems.default') === 'cloudinary' || config('filesystems.fallback_disk') === 'cloudinary')) {
+                        $cloudName = env('CLOUDINARY_CLOUD_NAME');
+                        $manualUrl = "https://res.cloudinary.com/{$cloudName}/image/upload/{$imagePath}";
+                        \Log::info('ProfilePictureService: Constructing manual Cloudinary URL', [
+                            'image_path' => $imagePath,
+                            'manual_url' => $manualUrl
+                        ]);
+                        return $manualUrl;
                     }
-                    // For local storage, return the asset URL
-                    else {
+                    
+                    // If still empty, fall back to local storage URL
+                    if (empty($url)) {
                         return asset('storage/' . $imagePath);
                     }
+                    
+                    return $url;
                 }
             } catch (\Exception $e) {
                 \Log::warning('Error accessing storage disk, falling back to default avatar', [
@@ -58,24 +78,38 @@ class ProfilePictureService
      */
     private static function getStorageDisk()
     {
-        // Use Cloudinary if configured, otherwise use local public disk
-        $defaultDisk = config('filesystems.default');
-        
-        if ($defaultDisk === 'cloudinary' && config('filesystems.disks.cloudinary.cloud_name')) {
+        // Use fallback_disk if configured, otherwise check default disk
+        $fallbackDisk = config('filesystems.fallback_disk');
+        if ($fallbackDisk) {
             try {
-                // Test if Cloudinary is properly configured
-                $cloudinaryDisk = Storage::disk('cloudinary');
-                // Try to access the configuration to trigger any errors
-                $cloudinaryDisk->url('test');
-                return $cloudinaryDisk;
+                $disk = Storage::disk($fallbackDisk);
+                // Test if disk is accessible
+                $disk->url('test');
+                return $disk;
             } catch (\Exception $e) {
-                \Log::warning('Cloudinary not properly configured, falling back to local storage', [
+                \Log::warning('Fallback disk not accessible in ProfilePictureService, using public disk', [
+                    'fallback_disk' => $fallbackDisk,
                     'error' => $e->getMessage()
                 ]);
-                // Fall through to return local storage
             }
         }
         
+        // Check if default disk is cloudinary
+        $defaultDisk = config('filesystems.default');
+        if ($defaultDisk === 'cloudinary') {
+            try {
+                $disk = Storage::disk('cloudinary');
+                // Test if disk is accessible
+                $disk->url('test');
+                return $disk;
+            } catch (\Exception $e) {
+                \Log::warning('Cloudinary not accessible in ProfilePictureService, falling back to public disk', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        // Fallback to public disk
         return Storage::disk('public');
     }
     
