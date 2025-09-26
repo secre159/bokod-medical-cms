@@ -53,11 +53,11 @@ class SettingsController extends Controller
             if ($request->hasFile('logo')) {
                 // Delete old logo if exists
                 $oldLogo = Setting::get('app_logo');
-                if ($oldLogo && Storage::disk('public')->exists($oldLogo)) {
-                    Storage::disk('public')->delete($oldLogo);
+                if ($oldLogo && $this->getStorageDisk()->exists($oldLogo)) {
+                    $this->getStorageDisk()->delete($oldLogo);
                 }
                 
-                $logoPath = $request->file('logo')->store('settings', 'public');
+                $logoPath = $request->file('logo')->store('settings', $this->getStorageDisk()->getName());
                 Setting::set('app_logo', $logoPath, 'System logo', 'string', true);
             }
             
@@ -65,11 +65,11 @@ class SettingsController extends Controller
             if ($request->hasFile('favicon')) {
                 // Delete old favicon if exists
                 $oldFavicon = Setting::get('app_favicon');
-                if ($oldFavicon && Storage::disk('public')->exists($oldFavicon)) {
-                    Storage::disk('public')->delete($oldFavicon);
+                if ($oldFavicon && $this->getStorageDisk()->exists($oldFavicon)) {
+                    $this->getStorageDisk()->delete($oldFavicon);
                 }
                 
-                $faviconPath = $request->file('favicon')->store('settings', 'public');
+                $faviconPath = $request->file('favicon')->store('settings', $this->getStorageDisk()->getName());
                 Setting::set('app_favicon', $faviconPath, 'System favicon', 'string', true);
             }
             
@@ -1203,5 +1203,45 @@ class SettingsController extends Controller
         );
         
         Cache::forget("setting_{$key}");
+    }
+    
+    /**
+     * Get the appropriate storage disk (Cloudinary if configured, otherwise public)
+     */
+    private function getStorageDisk()
+    {
+        // Use fallback_disk if configured, otherwise check default disk
+        $fallbackDisk = config('filesystems.fallback_disk');
+        if ($fallbackDisk) {
+            try {
+                $disk = Storage::disk($fallbackDisk);
+                // Test if disk is accessible
+                $disk->url('test');
+                return $disk;
+            } catch (\Exception $e) {
+                \Log::warning('Fallback disk not accessible, using public disk', [
+                    'fallback_disk' => $fallbackDisk,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        // Check if default disk is cloudinary
+        $defaultDisk = config('filesystems.default');
+        if ($defaultDisk === 'cloudinary') {
+            try {
+                $disk = Storage::disk('cloudinary');
+                // Test if disk is accessible
+                $disk->url('test');
+                return $disk;
+            } catch (\Exception $e) {
+                \Log::warning('Cloudinary not accessible, falling back to public disk', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        // Fallback to public disk
+        return Storage::disk('public');
     }
 }

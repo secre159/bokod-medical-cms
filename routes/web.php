@@ -459,6 +459,67 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     });
 });
 
+// Test route to verify Cloudinary file uploads and URLs
+Route::get('/test-upload-verification', function () {
+    try {
+        $results = [];
+        
+        // Check current system settings files
+        $logoPath = \App\Models\Setting::get('app_logo');
+        $faviconPath = \App\Models\Setting::get('app_favicon');
+        
+        if ($logoPath) {
+            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
+            $results['logo'] = [
+                'path' => $logoPath,
+                'exists' => $disk->exists($logoPath),
+                'url' => $disk->exists($logoPath) ? $disk->url($logoPath) : 'File not found',
+                'disk_used' => config('filesystems.fallback_disk', 'public')
+            ];
+        }
+        
+        if ($faviconPath) {
+            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
+            $results['favicon'] = [
+                'path' => $faviconPath,
+                'exists' => $disk->exists($faviconPath),
+                'url' => $disk->exists($faviconPath) ? $disk->url($faviconPath) : 'File not found',
+                'disk_used' => config('filesystems.fallback_disk', 'public')
+            ];
+        }
+        
+        // Check some user profile pictures
+        $users = \App\Models\User::whereNotNull('avatar')->limit(3)->get();
+        foreach ($users as $user) {
+            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
+            $results['users'][] = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'avatar_path' => $user->avatar,
+                'exists' => $disk->exists($user->avatar),
+                'url' => $disk->exists($user->avatar) ? $disk->url($user->avatar) : 'File not found',
+                'disk_used' => config('filesystems.fallback_disk', 'public')
+            ];
+        }
+        
+        // Show current disk configuration
+        $results['configuration'] = [
+            'default_disk' => config('filesystems.default'),
+            'fallback_disk' => config('filesystems.fallback_disk'),
+            'cloudinary_configured' => config('filesystems.disks.cloudinary.cloud_name') ? true : false,
+            'storage_disk_env' => env('STORAGE_DISK')
+        ];
+        
+        return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+});
+
 // Cloudinary is now fully configured and working! 🎉
 
 // Debug routes (only in development)
