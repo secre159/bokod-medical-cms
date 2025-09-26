@@ -543,14 +543,62 @@ Route::get('/test-storage-disk', function () {
             try {
                 $testContent = 'Test file content at ' . now();
                 $uploadPath = $cloudinaryDisk->put('debug/test.txt', $testContent);
-                $uploadedUrl = $cloudinaryDisk->url($uploadPath);
+                
+                // Try different ways to get the URL
+                $urlMethods = [];
+                
+                // Method 1: Standard url() method
+                try {
+                    $urlMethods['standard_url'] = $cloudinaryDisk->url($uploadPath);
+                } catch (\Exception $e) {
+                    $urlMethods['standard_url_error'] = $e->getMessage();
+                }
+                
+                // Method 2: Try to build URL manually if we know the path
+                if ($uploadPath) {
+                    $cloudName = env('CLOUDINARY_CLOUD_NAME');
+                    $urlMethods['manual_url'] = "https://res.cloudinary.com/{$cloudName}/raw/upload/{$uploadPath}";
+                }
+                
+                // Method 3: Check if the upload path is actually a URL already
+                $urlMethods['upload_path_analysis'] = [
+                    'is_url' => filter_var($uploadPath, FILTER_VALIDATE_URL) !== false,
+                    'starts_with_http' => strpos($uploadPath, 'http') === 0,
+                    'path_value' => $uploadPath
+                ];
                 
                 $results['cloudinary_upload_test'] = [
                     'upload_successful' => true,
                     'uploaded_path' => $uploadPath,
-                    'uploaded_url' => $uploadedUrl,
+                    'url_methods' => $urlMethods,
                     'file_exists_after_upload' => $cloudinaryDisk->exists($uploadPath)
                 ];
+                
+                // Test image upload specifically (like logo/favicon)
+                try {
+                    // Create a simple test image content (fake PNG header)
+                    $imageContent = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==');
+                    $imagePath = $cloudinaryDisk->put('settings/test-image.png', $imageContent);
+                    
+                    $imageUrlMethods = [];
+                    $imageUrlMethods['standard_url'] = $cloudinaryDisk->url($imagePath);
+                    if ($imagePath) {
+                        $cloudName = env('CLOUDINARY_CLOUD_NAME');
+                        $imageUrlMethods['manual_image_url'] = "https://res.cloudinary.com/{$cloudName}/image/upload/{$imagePath}";
+                    }
+                    
+                    $results['image_upload_test'] = [
+                        'upload_successful' => true,
+                        'uploaded_path' => $imagePath,
+                        'url_methods' => $imageUrlMethods,
+                        'file_exists_after_upload' => $cloudinaryDisk->exists($imagePath)
+                    ];
+                } catch (\Exception $imageError) {
+                    $results['image_upload_test'] = [
+                        'upload_successful' => false,
+                        'error' => $imageError->getMessage()
+                    ];
+                }
             } catch (\Exception $uploadError) {
                 $results['cloudinary_upload_test'] = [
                     'upload_successful' => false,
