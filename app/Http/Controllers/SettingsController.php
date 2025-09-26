@@ -49,7 +49,7 @@ class SettingsController extends Controller
             Setting::set('address', $request->address, 'System address', 'string', true);
             Setting::set('timezone', $request->timezone, 'System timezone', 'string', false);
             
-            // Handle logo upload
+            // Handle logo upload (fixed: using putFile method)
             if ($request->hasFile('logo')) {
                 // Delete old logo if exists
                 $oldLogo = Setting::get('app_logo');
@@ -58,11 +58,11 @@ class SettingsController extends Controller
                 }
                 
                 $disk = $this->getStorageDisk();
-                $logoPath = $request->file('logo')->store('settings', $disk);
+                $logoPath = $disk->putFile('settings', $request->file('logo'));
                 Setting::set('app_logo', $logoPath, 'System logo', 'string', true);
             }
             
-            // Handle favicon upload
+            // Handle favicon upload (fixed: using putFile method)
             if ($request->hasFile('favicon')) {
                 // Delete old favicon if exists
                 $oldFavicon = Setting::get('app_favicon');
@@ -71,7 +71,7 @@ class SettingsController extends Controller
                 }
                 
                 $disk = $this->getStorageDisk();
-                $faviconPath = $request->file('favicon')->store('settings', $disk);
+                $faviconPath = $disk->putFile('settings', $request->file('favicon'));
                 Setting::set('app_favicon', $faviconPath, 'System favicon', 'string', true);
             }
             
