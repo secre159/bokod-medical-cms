@@ -86,6 +86,11 @@ class AdminLTEServiceProvider extends ServiceProvider
             // If custom logo is uploaded, use proper storage disk URL, otherwise use default
             if ($appLogo && $appLogo !== 'images/logo.png') {
                 $logoUrl = $this->getStorageUrl($appLogo);
+                // Debug: Log the generated URL
+                \Log::info('AdminLTE: Logo URL generated', [
+                    'logo_path' => $appLogo,
+                    'generated_url' => $logoUrl
+                ]);
                 Config::set('adminlte.logo_img', $logoUrl);
                 Config::set('adminlte.auth_logo.img.path', $logoUrl);
                 Config::set('adminlte.preloader.img.path', $logoUrl);
@@ -102,9 +107,15 @@ class AdminLTEServiceProvider extends ServiceProvider
             
             // Enable favicon if configured
             if ($appFavicon) {
+                $faviconUrl = $this->getStorageUrl($appFavicon);
+                // Debug: Log the generated favicon URL
+                \Log::info('AdminLTE: Favicon URL generated', [
+                    'favicon_path' => $appFavicon,
+                    'generated_url' => $faviconUrl
+                ]);
                 Config::set('adminlte.use_full_favicon', true);
                 // Store favicon URL for use in views
-                Config::set('app.favicon', $this->getStorageUrl($appFavicon));
+                Config::set('app.favicon', $faviconUrl);
             } else {
                 Config::set('adminlte.use_full_favicon', false);
             }
@@ -124,7 +135,28 @@ class AdminLTEServiceProvider extends ServiceProvider
         try {
             // Use the configured fallback disk (should be Cloudinary)
             $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
-            return $disk->url($filePath);
+            $url = $disk->url($filePath);
+            
+            // Debug: Log the URL generation process
+            \Log::info('getStorageUrl debug', [
+                'file_path' => $filePath,
+                'fallback_disk' => config('filesystems.fallback_disk', 'public'),
+                'generated_url' => $url,
+                'url_empty' => empty($url)
+            ]);
+            
+            // If URL is empty, try to construct it manually
+            if (empty($url) && config('filesystems.fallback_disk') === 'cloudinary') {
+                $cloudName = env('CLOUDINARY_CLOUD_NAME');
+                $manualUrl = "https://res.cloudinary.com/{$cloudName}/image/upload/{$filePath}";
+                \Log::info('Constructing manual Cloudinary URL', [
+                    'file_path' => $filePath,
+                    'manual_url' => $manualUrl
+                ]);
+                return $manualUrl;
+            }
+            
+            return $url;
         } catch (\Exception $e) {
             // If there's an error, fall back to local storage URL
             \Log::warning('Error getting storage URL for ' . $filePath . ': ' . $e->getMessage());
