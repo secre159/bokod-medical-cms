@@ -83,11 +83,12 @@ class AdminLTEServiceProvider extends ServiceProvider
             Config::set('adminlte.logo', '<b>' . strtoupper(explode(' ', $appName)[0]) . '</b> ' . 
                        (count(explode(' ', $appName)) > 1 ? explode(' ', $appName)[1] : ''));
             
-            // If custom logo is uploaded, use storage path, otherwise use default
+            // If custom logo is uploaded, use proper storage disk URL, otherwise use default
             if ($appLogo && $appLogo !== 'images/logo.png') {
-                Config::set('adminlte.logo_img', 'storage/' . $appLogo);
-                Config::set('adminlte.auth_logo.img.path', 'storage/' . $appLogo);
-                Config::set('adminlte.preloader.img.path', 'storage/' . $appLogo);
+                $logoUrl = $this->getStorageUrl($appLogo);
+                Config::set('adminlte.logo_img', $logoUrl);
+                Config::set('adminlte.auth_logo.img.path', $logoUrl);
+                Config::set('adminlte.preloader.img.path', $logoUrl);
             } else {
                 Config::set('adminlte.logo_img', 'images/logo.png');
                 Config::set('adminlte.auth_logo.img.path', 'images/logo.png');
@@ -102,8 +103,8 @@ class AdminLTEServiceProvider extends ServiceProvider
             // Enable favicon if configured
             if ($appFavicon) {
                 Config::set('adminlte.use_full_favicon', true);
-                // Store favicon path for use in views
-                Config::set('app.favicon', 'storage/' . $appFavicon);
+                // Store favicon URL for use in views
+                Config::set('app.favicon', $this->getStorageUrl($appFavicon));
             } else {
                 Config::set('adminlte.use_full_favicon', false);
             }
@@ -112,6 +113,22 @@ class AdminLTEServiceProvider extends ServiceProvider
             // If database is not available or settings table doesn't exist,
             // keep default values
             \Log::warning('Could not load dynamic AdminLTE settings: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Get the proper storage URL for a file path
+     */
+    private function getStorageUrl($filePath)
+    {
+        try {
+            // Use the configured fallback disk (should be Cloudinary)
+            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
+            return $disk->url($filePath);
+        } catch (\Exception $e) {
+            // If there's an error, fall back to local storage URL
+            \Log::warning('Error getting storage URL for ' . $filePath . ': ' . $e->getMessage());
+            return 'storage/' . $filePath;
         }
     }
 }

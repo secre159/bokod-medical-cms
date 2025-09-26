@@ -535,8 +535,28 @@ Route::get('/test-storage-disk', function () {
             $cloudinaryDisk = \Storage::disk('cloudinary');
             $results['direct_cloudinary'] = [
                 'accessible' => true,
-                'sample_url' => $cloudinaryDisk->url('test-file.jpg')
+                'sample_url' => $cloudinaryDisk->url('test-file.jpg'),
+                'exists_test' => $cloudinaryDisk->exists('non-existent-file.jpg'),
             ];
+            
+            // Test actual file upload to Cloudinary
+            try {
+                $testContent = 'Test file content at ' . now();
+                $uploadPath = $cloudinaryDisk->put('debug/test.txt', $testContent);
+                $uploadedUrl = $cloudinaryDisk->url($uploadPath);
+                
+                $results['cloudinary_upload_test'] = [
+                    'upload_successful' => true,
+                    'uploaded_path' => $uploadPath,
+                    'uploaded_url' => $uploadedUrl,
+                    'file_exists_after_upload' => $cloudinaryDisk->exists($uploadPath)
+                ];
+            } catch (\Exception $uploadError) {
+                $results['cloudinary_upload_test'] = [
+                    'upload_successful' => false,
+                    'error' => $uploadError->getMessage()
+                ];
+            }
         } catch (\Exception $e) {
             $results['direct_cloudinary'] = [
                 'accessible' => false,
