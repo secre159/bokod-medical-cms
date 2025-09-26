@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
 // use Intervention\Image\Facades\Image;
 use App\Models\User;
+use App\Services\ImgBBService;
 
 class ProfilePictureService
 {
@@ -29,6 +30,14 @@ class ProfilePictureService
             try {
                 // Check if we're using cloud storage
                 $disk = self::getStorageDisk();
+                
+                // Check if imagePath is already a full URL (ImgBB/external service)
+                if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                    \Log::info('ProfilePictureService: Using external URL', [
+                        'image_path' => $imagePath
+                    ]);
+                    return $imagePath;
+                }
                 
                 if ($disk->exists($imagePath)) {
                     // Always get URL from the disk object (handles Cloudinary or local automatically)
@@ -111,6 +120,40 @@ class ProfilePictureService
         
         // Fallback to public disk
         return Storage::disk('public');
+    }
+    
+    /**
+     * Upload to storage disk (Cloudinary or local fallback)
+     */
+    private static function uploadToStorageDisk(UploadedFile $file, $filename, User $user)
+    {
+        // Get the appropriate storage disk
+        $disk = self::getStorageDisk();
+        
+        // Create directory if it doesn't exist (only for local storage)
+        if ($disk === Storage::disk('public') && !$disk->exists(self::STORAGE_PATH)) {
+            $disk->makeDirectory(self::STORAGE_PATH);
+        }
+        
+        // Try to use Intervention Image if available, otherwise store directly
+        if (class_exists('\Intervention\Image\Facades\Image')) {
+            $path = self::STORAGE_PATH . '/' . $filename;
+            self::processWithIntervention($file, $path, $disk);
+            return $path;
+        } else {
+            // Store file directly
+            $storedPath = $disk->putFileAs(
+                self::STORAGE_PATH,
+                $file,
+                $filename
+            );
+            
+            if (!$storedPath) {
+                throw new \Exception('Failed to store file');
+            }
+            
+            return $storedPath;
+        }
     }
     
     /**
@@ -203,29 +246,34 @@ class ProfilePictureService
             $filename = $user->id . '_' . time() . '.jpg';
             $path = self::STORAGE_PATH . '/' . $filename;
             
-            // Get the appropriate storage disk
-            $disk = self::getStorageDisk();
-            
-            // Create directory if it doesn't exist (only for local storage)
-            if ($disk === Storage::disk('public') && !$disk->exists(self::STORAGE_PATH)) {
-                $disk->makeDirectory(self::STORAGE_PATH);
-            }
-            
-            // Try to use Intervention Image if available, otherwise store directly
-            if (class_exists('\Intervention\Image\Facades\Image')) {
-                self::processWithIntervention($file, $path, $disk);
-            } else {
-                // Store file directly
-                $storedPath = $disk->putFileAs(
-                    self::STORAGE_PATH,
-                    $file,
-                    $filename
-                );
-                
-                if (!$storedPath) {
-                    throw new \Exception('Failed to store file');
+            // Try ImgBB first if configured
+            $imgbbService = new ImgBBService();
+            if ($imgbbService->isConfigured()) {
+                try {
+                    \Log::info('Attempting ImgBB upload for user: ' . $user->id);
+                    $imgbbResult = $imgbbService->uploadImage($file, 'user_' . $user->id . '_' . time());
+                    
+                    if ($imgbbResult['success']) {
+                        $path = $imgbbResult['url']; // Store the full URL as path
+                        \Log::info('ImgBB upload successful', [
+                            'user_id' => $user->id,
+                            'url' => $path
+                        ]);
+                    } else {
+                        throw new \Exception('ImgBB upload failed');
+                    }
+                } catch (\Exception $imgbbError) {
+                    \Log::warning('ImgBB upload failed, falling back to storage disk', [
+                        'user_id' => $user->id,
+                        'error' => $imgbbError->getMessage()
+                    ]);
+                    
+                    // Fallback to storage disk method
+                    $path = self::uploadToStorageDisk($file, $filename, $user);
                 }
-                $path = $storedPath;
+            } else {
+                // No ImgBB configured, use storage disk
+                $path = self::uploadToStorageDisk($file, $filename, $user);
             }
             
             // Update user record with avatar field

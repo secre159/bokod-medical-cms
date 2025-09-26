@@ -673,6 +673,31 @@ Route::get('/debug-image-urls', function () {
     }
 });
 
+// Test route for ImgBB
+Route::get('/test-imgbb', function () {
+    try {
+        $imgbbService = new \App\Services\ImgBBService();
+        
+        $results = [
+            'configured' => $imgbbService->isConfigured(),
+            'api_key_set' => env('IMGBB_API_KEY') ? 'YES (first 8 chars: ' . substr(env('IMGBB_API_KEY'), 0, 8) . '...)' : 'NO',
+        ];
+        
+        if ($imgbbService->isConfigured()) {
+            $connectionTest = $imgbbService->testConnection();
+            $results['connection_test'] = $connectionTest;
+        }
+        
+        return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500, [], JSON_PRETTY_PRINT);
+    }
+});
+
 // Cloudinary is now fully configured and working! 🎉
 
 // Debug routes (only in development)
