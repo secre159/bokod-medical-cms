@@ -580,7 +580,7 @@
     top: 20px;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
-    z-index: 100;
+    z-index: 10;
 }
 
 .sticky-toc .card {
@@ -668,8 +668,8 @@ h5 {
 @section('js')
 <script>
 $(document).ready(function() {
-    // Smooth scroll for table of contents links
-    $('.nav-link').click(function(e) {
+    // Smooth scroll for table of contents links (only within sticky-toc)
+    $('.sticky-toc .nav-link').click(function(e) {
         e.preventDefault();
         var target = $(this).attr('href');
         if (target.startsWith('#')) {
@@ -679,13 +679,13 @@ $(document).ready(function() {
         }
     });
 
-    // Highlight active section in table of contents
+    // Highlight active section in table of contents (only within sticky-toc)
     $(window).scroll(function() {
         var scrollPos = $(window).scrollTop() + 150;
-        $('.nav-link').removeClass('active');
+        $('.sticky-toc .nav-link').removeClass('active');
         
         $('div[id]').each(function() {
-            var currLink = $('a[href="#' + $(this).attr('id') + '"]');
+            var currLink = $('.sticky-toc a[href="#' + $(this).attr('id') + '"]');
             if ($(this).offset().top <= scrollPos && $(this).offset().top + $(this).height() > scrollPos) {
                 currLink.addClass('active');
             }
