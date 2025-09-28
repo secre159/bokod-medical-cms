@@ -372,31 +372,6 @@
         </div>
     </div>
 
-    {{-- System Status --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        System Information
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>Database Status:</strong>
-                            <span class="badge badge-success ml-2">Connected</span>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Laravel Version:</strong>
-                            <span class="ml-2">{{ app()->version() }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @stop
 
 @section('css')
