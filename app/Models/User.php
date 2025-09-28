@@ -24,6 +24,7 @@ class User extends Authenticatable
         'name',
         'display_name',
         'email',
+        'profile_picture',
         'password',
         'role',
         'status',
@@ -32,8 +33,6 @@ class User extends Authenticatable
         'approved_by',
         'rejection_reason',
         'registration_source',
-        'profile_picture',
-        'avatar',
         'phone',
         'date_of_birth',
         'gender',
@@ -84,7 +83,6 @@ class User extends Authenticatable
      */
     const STATUS_ACTIVE = 'active';
     const STATUS_INACTIVE = 'inactive';
-    const STATUS_SUSPENDED = 'suspended';
     
     // Legacy constant for backward compatibility
     const STATUS_ARCHIVED = 'inactive'; // Maps to inactive in database
@@ -192,13 +190,6 @@ class User extends Authenticatable
         );
     }
     
-    /**
-     * Get the profile picture URL
-     */
-    public function getProfilePictureUrlAttribute(): string
-    {
-        return \App\Services\ProfilePictureService::getProfilePictureUrl($this);
-    }
     
     /**
      * Get medical notes created by this user
@@ -216,21 +207,7 @@ class User extends Authenticatable
         return $value ?: $this->name;
     }
     
-    /**
-     * Get the profile picture URL for AdminLTE
-     */
-    public function adminlte_image()
-    {
-        return $this->getProfilePictureUrlAttribute();
-    }
     
-    /**
-     * Get avatar HTML with initials fallback
-     */
-    public function getAvatarHtml($size = 'default', $cssClasses = '')
-    {
-        return \App\Services\ProfilePictureService::getAvatarHtml($this, $size, $cssClasses);
-    }
     
     /**
      * Get user initials
@@ -247,6 +224,42 @@ class User extends Authenticatable
         }
         
         return strtoupper(substr($names[0], 0, 2));
+    }
+    
+    /**
+     * Get background color for initials avatar based on user's name
+     */
+    public function getInitialsColor()
+    {
+        $colors = [
+            '#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe', 
+            '#43e97b', '#38f9d7', '#ffecd2', '#fcb69f', '#a8edea', '#fed6e3',
+            '#ff9a9e', '#fecfef', '#ffeaa7', '#fab1a0', '#fd79a8', '#fdcb6e',
+            '#6c5ce7', '#a29bfe', '#74b9ff', '#0984e3', '#00b894', '#00cec9'
+        ];
+        
+        $initials = $this->getInitials();
+        $colorIndex = array_sum(array_map('ord', str_split($initials))) % count($colors);
+        
+        return $colors[$colorIndex];
+    }
+    
+    /**
+     * Generate SVG initials avatar as data URL
+     */
+    public function generateInitialsAvatar($size = 128)
+    {
+        $initials = $this->getInitials();
+        $backgroundColor = $this->getInitialsColor();
+        $fontSize = $size * 0.4; // Font size is 40% of the avatar size
+        
+        $svg = '<?xml version="1.0" encoding="UTF-8"?>';
+        $svg .= '<svg width="' . $size . '" height="' . $size . '" viewBox="0 0 ' . $size . ' ' . $size . '" xmlns="http://www.w3.org/2000/svg">';
+        $svg .= '<circle cx="' . ($size / 2) . '" cy="' . ($size / 2) . '" r="' . ($size / 2) . '" fill="' . $backgroundColor . '"/>';
+        $svg .= '<text x="50%" y="50%" font-family="Arial, sans-serif" font-size="' . $fontSize . '" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">' . htmlspecialchars($initials) . '</text>';
+        $svg .= '</svg>';
+        
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
     }
     
     /**
@@ -276,6 +289,47 @@ class User extends Authenticatable
     public function adminlte_full_name()
     {
         return $this->name;
+    }
+    
+    /**
+     * Get user image for AdminLTE
+     */
+    public function adminlte_image()
+    {
+        if ($this->profile_picture) {
+            return $this->profile_picture;
+        }
+        
+        // Return SVG initials avatar as fallback
+        return $this->generateInitialsAvatar(64);
+    }
+    
+    /**
+     * Get profile picture URL attribute
+     */
+    public function getProfilePictureUrlAttribute()
+    {
+        return $this->profile_picture;
+    }
+    
+    /**
+     * Check if user has a profile picture
+     */
+    public function hasProfilePicture()
+    {
+        return !empty($this->profile_picture);
+    }
+    
+    /**
+     * Get the avatar URL - either profile picture or initials SVG
+     */
+    public function getAvatarUrl($size = 64)
+    {
+        if ($this->profile_picture) {
+            return $this->profile_picture;
+        }
+        
+        return $this->generateInitialsAvatar($size);
     }
     
     /**

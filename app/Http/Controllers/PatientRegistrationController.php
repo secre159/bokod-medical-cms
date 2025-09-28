@@ -9,6 +9,8 @@ use Illuminate\Validation\Rules;
 use App\Models\User;
 use App\Models\Patient;
 use Carbon\Carbon;
+use App\Rules\PhoneNumberRule;
+use App\Rules\EmailValidationRule;
 
 class PatientRegistrationController extends Controller
 {
@@ -28,7 +30,7 @@ class PatientRegistrationController extends Controller
         $request->validate([
             // User account info
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'email' => ['required', new EmailValidationRule, 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             
             // Student/Patient specific info
@@ -37,13 +39,13 @@ class PatientRegistrationController extends Controller
             'year_level' => ['required', 'string', 'max:20'],
             'date_of_birth' => ['required', 'date', 'before:today'],
             'gender' => ['required', 'in:Male,Female,Other'],
-            'phone_number' => ['required', 'string', 'max:15'],
+            'phone_number' => ['required', new PhoneNumberRule],
             'address' => ['required', 'string', 'max:500'],
             
             // Emergency contact
             'emergency_contact_name' => ['required', 'string', 'max:255'],
             'emergency_contact_relationship' => ['required', 'string', 'max:100'],
-            'emergency_contact_phone' => ['required', 'string', 'max:15'],
+            'emergency_contact_phone' => ['required', new PhoneNumberRule],
             'emergency_contact_address' => ['required', 'string', 'max:500'],
             
             // Optional health info
@@ -60,15 +62,23 @@ class PatientRegistrationController extends Controller
             DB::beginTransaction();
 
             // All registrations require manual approval by admin
-            // Create user account
+            // Create user account with all relevant data
             $user = User::create([
                 'name' => $request->name,
+                'display_name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => 'patient',
                 'status' => 'inactive', // Inactive until approved (matches DB constraint)
                 'registration_status' => User::REGISTRATION_PENDING,
                 'registration_source' => User::SOURCE_SELF,
+                // Store additional user data
+                'phone' => $request->phone_number,
+                'date_of_birth' => $request->date_of_birth,
+                'gender' => $request->gender,
+                'address' => $request->address,
+                'emergency_contact' => $request->emergency_contact_name,
+                'emergency_phone' => $request->emergency_contact_phone,
                 // approved_at will default to null automatically
                 'email_verified_at' => null,
             ]);

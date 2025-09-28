@@ -374,9 +374,12 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="text-center">
-                                    <img class="profile-user-img img-fluid img-circle"
-                                         src="{{ asset('vendor/adminlte/dist/img/user4-128x128.jpg') }}"
-                                         alt="Patient profile picture">
+                                    <x-user-avatar 
+                                        :user="auth()->user()" 
+                                        size="large" 
+                                        width="100px" 
+                                        height="100px"
+                                        class="profile-user-img img-fluid img-circle" />
                                     <h3 class="profile-username">{{ $patient->patient_name }}</h3>
                                     <p class="text-muted">Patient ID: {{ $patient->id }}</p>
                                 </div>

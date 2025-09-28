@@ -140,19 +140,19 @@
                         </div>
                     </div>
 
-                    <!-- Avatar Upload -->
+                    <!-- Profile Picture Upload -->
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="avatar">Profile Picture</label>
+                            <label for="profile_picture">Profile Picture</label>
                             <div class="text-center">
                                 <div class="avatar-preview mb-3">
-                                    <img id="avatar-preview" src="https://via.placeholder.com/150x150/cccccc/ffffff?text=No+Image" 
-                                         alt="Avatar Preview" class="img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                                    <img id="profile-picture-preview" src="https://via.placeholder.com/150x150/cccccc/ffffff?text=No+Image" 
+                                         alt="Profile Picture Preview" class="img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
                                 </div>
-                                <input type="file" class="form-control-file @error('avatar') is-invalid @enderror" 
-                                       id="avatar" name="avatar" accept="image/*">
-                                <small class="form-text text-muted">Max size: 2MB. Supported formats: JPEG, PNG, JPG, GIF</small>
-                                @error('avatar')
+                                <input type="file" class="form-control-file @error('profile_picture') is-invalid @enderror" 
+                                       id="profile_picture" name="profile_picture" accept="image/*">
+                                <small class="form-text text-muted">Max size: 5MB. Supported formats: JPEG, PNG, JPG, GIF, WebP. Images uploaded to ImgBB CDN.</small>
+                                @error('profile_picture')
                                     <span class="invalid-feedback d-block">{{ $message }}</span>
                                 @enderror
                             </div>

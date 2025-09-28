@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use App\Services\ProfilePictureService;
 
 class ProfileController extends Controller
 {
@@ -37,19 +36,6 @@ class ProfileController extends Controller
         $user = $request->user();
         $validatedData = $request->validated();
         
-        // Handle avatar upload using ProfilePictureService (supports Cloudinary)
-        if ($request->hasFile('avatar')) {
-            try {
-                $avatarPath = ProfilePictureService::uploadProfilePicture($request->file('avatar'), $user);
-                $validatedData['avatar'] = $avatarPath;
-                $validatedData['profile_picture'] = $avatarPath;
-                \Log::info('Profile picture updated via ProfileController for user: ' . $user->id);
-            } catch (\Exception $e) {
-                \Log::error('Profile picture upload failed in ProfileController for user: ' . $user->id . ': ' . $e->getMessage());
-                return Redirect::route('profile.edit')
-                    ->withErrors(['avatar' => 'Failed to upload profile picture: ' . $e->getMessage()]);
-            }
-        }
         
         $user->fill($validatedData);
         $user->save();

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'imgbb' => [
+        'api_key' => env('IMGBB_API_KEY'),
+        'key' => env('IMGBB_API_KEY'), // Backward compatibility
+    ],
+
 ];

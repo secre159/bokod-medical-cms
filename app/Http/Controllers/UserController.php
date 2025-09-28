@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Services\ImgBBService;
+use App\Services\LocalProfilePictureService;
+use App\Rules\PhoneNumberRule;
+use App\Rules\EmailValidationRule;
 
 class UserController extends Controller
 {
@@ -75,17 +79,17 @@ class UserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'nullable|string|max:20',
+            'email' => ['required', new EmailValidationRule, 'unique:users'],
+            'phone' => ['nullable', new PhoneNumberRule],
             'role' => ['required', Rule::in(['admin', 'patient'])],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'password' => 'required|string|min:8|confirmed',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
             'date_of_birth' => 'nullable|date|before:today',
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'address' => 'nullable|string|max:500',
             'emergency_contact' => 'nullable|string|max:255',
-            'emergency_phone' => 'nullable|string|max:20',
+            'emergency_phone' => ['nullable', new PhoneNumberRule],
             'medical_history' => 'nullable|string',
             'allergies' => 'nullable|string',
             'notes' => 'nullable|string',
@@ -110,12 +114,57 @@ class UserController extends Controller
                 'allergies' => $request->allergies,
                 'notes' => $request->notes,
                 'created_by' => Auth::id(),
+                'registration_source' => User::SOURCE_ADMIN,
             ];
+            
+            // Set appropriate registration status based on role and admin decision
+            if ($request->role === 'admin') {
+                // Admin accounts are automatically approved
+                $userData['registration_status'] = User::REGISTRATION_APPROVED;
+                $userData['approved_at'] = now();
+                $userData['approved_by'] = Auth::id();
+            } else {
+                // Patient accounts created by admin can be immediately approved if status is active
+                if ($request->status === 'active') {
+                    $userData['registration_status'] = User::REGISTRATION_APPROVED;
+                    $userData['approved_at'] = now();
+                    $userData['approved_by'] = Auth::id();
+                } else {
+                    // If admin sets status to inactive, keep as pending until manually approved
+                    $userData['registration_status'] = User::REGISTRATION_PENDING;
+                }
+            }
 
-            // Handle avatar upload
-            if ($request->hasFile('avatar')) {
-                $avatarPath = $request->file('avatar')->store('avatars', 'public');
-                $userData['avatar'] = $avatarPath;
+            // Handle profile picture upload - try ImgBB first, fallback to local
+            if ($request->hasFile('profile_picture')) {
+                $uploadSuccess = false;
+                
+                // Try ImgBB first
+                try {
+                    $imgbbService = new ImgBBService();
+                    $uploadResult = $imgbbService->uploadProfilePicture($request->file('profile_picture'), 0);
+                    
+                    if ($uploadResult['success']) {
+                        $userData['profile_picture'] = $uploadResult['url'];
+                        $uploadSuccess = true;
+                        Log::info('Profile picture uploaded to ImgBB successfully');
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('ImgBB upload failed, trying local storage', ['error' => $e->getMessage()]);
+                }
+                
+                // Fallback to local storage if ImgBB failed
+                if (!$uploadSuccess) {
+                    $localService = new LocalProfilePictureService();
+                    $localResult = $localService->uploadProfilePicture($request->file('profile_picture'), 0);
+                    
+                    if ($localResult['success']) {
+                        $userData['profile_picture'] = $localResult['url'];
+                        Log::info('Profile picture uploaded to local storage successfully');
+                    } else {
+                        throw new \Exception('Profile picture upload failed: ' . $localResult['error']);
+                    }
+                }
             }
 
             $user = User::create($userData);
@@ -214,17 +263,17 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'phone' => 'nullable|string|max:20',
+            'email' => ['required', new EmailValidationRule, Rule::unique('users')->ignore($user->id)],
+            'phone' => ['nullable', new PhoneNumberRule],
             'role' => ['required', Rule::in(['admin', 'patient'])],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'password' => 'nullable|string|min:8|confirmed',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
             'date_of_birth' => 'nullable|date|before:today',
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'address' => 'nullable|string|max:500',
             'emergency_contact' => 'nullable|string|max:255',
-            'emergency_phone' => 'nullable|string|max:20',
+            'emergency_phone' => ['nullable', new PhoneNumberRule],
             'medical_history' => 'nullable|string',
             'allergies' => 'nullable|string',
             'notes' => 'nullable|string',
@@ -255,15 +304,36 @@ class UserController extends Controller
                 $userData['password'] = Hash::make($request->password);
             }
 
-            // Handle avatar upload
-            if ($request->hasFile('avatar')) {
-                // Delete old avatar if exists
-                if ($user->avatar) {
-                    Storage::disk('public')->delete($user->avatar);
+            // Handle profile picture upload - try ImgBB first, fallback to local
+            if ($request->hasFile('profile_picture')) {
+                $uploadSuccess = false;
+                
+                // Try ImgBB first
+                try {
+                    $imgbbService = new ImgBBService();
+                    $uploadResult = $imgbbService->uploadProfilePicture($request->file('profile_picture'), $user->id);
+                    
+                    if ($uploadResult['success']) {
+                        $userData['profile_picture'] = $uploadResult['url'];
+                        $uploadSuccess = true;
+                        Log::info('Profile picture uploaded to ImgBB successfully');
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('ImgBB upload failed, trying local storage', ['error' => $e->getMessage()]);
                 }
                 
-                $avatarPath = $request->file('avatar')->store('avatars', 'public');
-                $userData['avatar'] = $avatarPath;
+                // Fallback to local storage if ImgBB failed
+                if (!$uploadSuccess) {
+                    $localService = new LocalProfilePictureService();
+                    $localResult = $localService->uploadProfilePicture($request->file('profile_picture'), $user->id);
+                    
+                    if ($localResult['success']) {
+                        $userData['profile_picture'] = $localResult['url'];
+                        Log::info('Profile picture uploaded to local storage successfully');
+                    } else {
+                        throw new \Exception('Profile picture upload failed: ' . $localResult['error']);
+                    }
+                }
             }
 
             $user->update($userData);
@@ -343,10 +413,7 @@ class UserController extends Controller
                     ->withErrors(['error' => 'Cannot delete user with ' . implode(' and ', $dependencies) . '. Please resolve these first.']);
             }
 
-            // Delete avatar if exists
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
+            // Note: ImgBB images are not deleted to preserve image integrity
 
             // Soft delete or mark as inactive instead of hard delete
             $user->update([
@@ -373,6 +440,7 @@ class UserController extends Controller
      */
     public function changeStatus(Request $request, User $user)
     {
+        
         $request->validate([
             'status' => ['required', Rule::in(['active', 'inactive'])],
         ]);
@@ -395,14 +463,14 @@ class UserController extends Controller
 
         try {
             $user->update([
-                'status' => $request->status,
+                'status' => $request->input('status'),
                 'updated_by' => Auth::id(),
             ]);
 
             // Update patient record if exists
             if ($user->patient) {
                 $user->patient->update([
-                    'status' => $request->status,
+                    'status' => $request->input('status'),
                     'updated_by' => Auth::id(),
                 ]);
             }

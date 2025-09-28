@@ -75,7 +75,12 @@ class DashboardController extends Controller
             ->unread()
             ->orderBy('created_at', 'desc')
             ->take(5)
-            ->get();
+            ->get()
+            ->each(function ($message) {
+                if ($message->sender) {
+                    $message->sender->avatar_url = $message->sender->getAvatarUrl(24);
+                }
+            });
         
         // Load other stats asynchronously via AJAX later
         $stats['load_async'] = true;
@@ -139,6 +144,13 @@ class DashboardController extends Controller
             ->notSentBy($user->id)
             ->unread()
             ->count();
+        
+        // Add avatar URLs to messages
+        $messages->each(function ($message) {
+            if ($message->sender) {
+                $message->sender->avatar_url = $message->sender->getAvatarUrl(24);
+            }
+        });
         
         return response()->json([
             'messages' => $messages,

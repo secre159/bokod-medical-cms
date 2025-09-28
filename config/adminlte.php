@@ -632,6 +632,16 @@ return [
                 ],
             ],
         ],
+        'ProfilePicturePreview' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'js/profile-picture-preview.js',
+                ],
+            ],
+        ],
     ],
 
     /*

@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Message;
+use App\Services\ImgBBService;
 use Exception;
 
 class FileUploadService
@@ -40,29 +41,16 @@ class FileUploadService
             $filename = pathinfo($originalName, PATHINFO_FILENAME);
             $uniqueFilename = Str::slug($filename) . '_' . time() . '.' . $extension;
             
-            // Create directory path based on conversation
-            $directoryPath = 'attachments/' . date('Y/m') . '/' . $conversationId;
-            
-            // Get the appropriate storage disk
-            $disk = $this->getStorageDisk();
-            
-            // Store file
-            $filePath = $file->storeAs($directoryPath, $uniqueFilename, $disk->getName());
-            
-            if (!$filePath) {
-                throw new Exception('Failed to store file');
-            }
-            
             // Determine file type
             $fileType = Message::getFileTypeFromExtension($extension);
             
-            return [
-                'file_name' => $originalName,
-                'file_path' => $filePath,
-                'file_type' => $fileType,
-                'file_size' => $file->getSize(),
-                'mime_type' => $file->getMimeType(),
-            ];
+            // Check if it's an image and ImgBB is configured
+            if ($fileType === Message::FILE_TYPE_IMAGE && $this->shouldUseImgBB()) {
+                return $this->uploadImageToImgBB($file, $conversationId);
+            }
+            
+            // For non-images or when ImgBB is not configured, use local storage
+            return $this->uploadToLocalStorage($file, $conversationId, $uniqueFilename, $fileType);
             
         } catch (Exception $e) {
             throw new Exception('File upload failed: ' . $e->getMessage());
@@ -172,6 +160,77 @@ class FileUploadService
         }
         
         return round($bytes, 2) . ' ' . $units[$i];
+    }
+    
+    /**
+     * Check if ImgBB should be used for image uploads
+     */
+    private function shouldUseImgBB()
+    {
+        $imgbbService = new ImgBBService();
+        return $imgbbService->isConfigured();
+    }
+    
+    /**
+     * Upload image to ImgBB
+     */
+    private function uploadImageToImgBB(UploadedFile $file, $conversationId)
+    {
+        $imgbbService = new ImgBBService();
+        $userId = auth()->id() ?? 1; // Fallback to user ID 1 if not authenticated
+        
+        $result = $imgbbService->uploadMessageAttachment($file, $conversationId, $userId);
+        
+        if (!$result['success']) {
+            throw new Exception('ImgBB upload failed: ' . $result['error']);
+        }
+        
+        \Log::info('Image uploaded to ImgBB for conversation ' . $conversationId, [
+            'url' => $result['url'],
+            'display_url' => $result['display_url']
+        ]);
+        
+        return [
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $result['url'], // Store the ImgBB URL as the file path
+            'file_type' => Message::FILE_TYPE_IMAGE,
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+            'imgbb_data' => [
+                'url' => $result['url'],
+                'display_url' => $result['display_url'],
+                'thumb_url' => $result['thumb_url'],
+                'medium_url' => $result['medium_url'],
+                'delete_url' => $result['delete_url']
+            ]
+        ];
+    }
+    
+    /**
+     * Upload file to local storage (for non-images or when ImgBB is not configured)
+     */
+    private function uploadToLocalStorage(UploadedFile $file, $conversationId, $uniqueFilename, $fileType)
+    {
+        // Create directory path based on conversation
+        $directoryPath = 'attachments/' . date('Y/m') . '/' . $conversationId;
+        
+        // Get the appropriate storage disk
+        $disk = $this->getStorageDisk();
+        
+        // Store file
+        $filePath = $file->storeAs($directoryPath, $uniqueFilename, $disk->getName());
+        
+        if (!$filePath) {
+            throw new Exception('Failed to store file');
+        }
+        
+        return [
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $filePath,
+            'file_type' => $fileType,
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+        ];
     }
     
     /**

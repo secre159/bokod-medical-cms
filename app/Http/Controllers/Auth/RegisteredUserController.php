@@ -24,27 +24,16 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
+     * 
+     * This method should not be used for direct registration.
+     * All patient registrations must go through the proper approval flow.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+        // Redirect to proper patient registration flow
+        return redirect()->route('patient.register')
+                         ->with('info', 'Please complete the full patient registration form for proper approval.');
     }
 }

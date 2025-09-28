@@ -17,7 +17,16 @@ class PatientProfileUpdateRequest extends FormRequest
     public function authorize(): bool
     {
         // Only allow authenticated users with patient role
-        return Auth::check() && Auth::user()->role === 'patient';
+        $authorized = Auth::check() && Auth::user()->role === 'patient';
+        
+        \Log::info('REAL PATIENT: Authorization check', [
+            'auth_check' => Auth::check(),
+            'user_id' => Auth::id(),
+            'user_role' => Auth::user()->role ?? 'not logged in',
+            'authorized' => $authorized
+        ]);
+        
+        return $authorized;
     }
 
     /**
@@ -29,14 +38,12 @@ class PatientProfileUpdateRequest extends FormRequest
     {
         $patient = Patient::where('user_id', Auth::id())->first();
         
-        return [
+        $rules = [
             // Contact Information (patients can edit)
             'phone_number' => ['nullable', new PhoneNumberRule],
             'email' => [
                 'required',
                 new EmailValidationRule,
-                'max:255',
-                Rule::unique('patients', 'email')->ignore($patient?->id),
                 Rule::unique('users', 'email')->ignore(Auth::id()),
             ],
             'address' => 'nullable|string|max:1000',
@@ -48,9 +55,18 @@ class PatientProfileUpdateRequest extends FormRequest
             'emergency_contact_phone' => ['nullable', new PhoneNumberRule],
             'emergency_contact_address' => 'nullable|string|max:1000',
             
-            // Profile Picture (patients can upload) - optimized for smaller storage
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:1024|dimensions:min_width=100,min_height=100,max_width=1200,max_height=1200',
+            // Profile Picture
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
         ];
+        
+        \Log::info('REAL PATIENT: Validation rules prepared', [
+            'user_id' => Auth::id(),
+            'patient_found' => $patient ? true : false,
+            'rules' => array_keys($rules),
+            'has_profile_picture_file' => request()->hasFile('profile_picture')
+        ]);
+        
+        return $rules;
     }
     
     /**
@@ -69,12 +85,10 @@ class PatientProfileUpdateRequest extends FormRequest
             'emergency_contact_relationship.max' => 'Relationship cannot exceed 100 characters.',
             'emergency_contact_phone' => 'Emergency contact phone must be a valid format with at least 11 digits or start with +639.',
             'emergency_contact_address.max' => 'Emergency contact address cannot exceed 1000 characters.',
-            
-            // Profile Picture messages
             'profile_picture.image' => 'Profile picture must be an image file.',
             'profile_picture.mimes' => 'Profile picture must be a JPEG, PNG, JPG, GIF, or WebP file.',
-            'profile_picture.max' => 'Profile picture size cannot exceed 1MB.',
-            'profile_picture.dimensions' => 'Profile picture must be between 100x100 and 1200x1200 pixels.',
+            'profile_picture.max' => 'Profile picture size cannot exceed 5MB.',
+            
         ];
     }
     
@@ -94,5 +108,24 @@ class PatientProfileUpdateRequest extends FormRequest
             'emergency_contact_address' => 'emergency contact address',
             'profile_picture' => 'profile picture',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        \Log::error('REAL PATIENT: Validation failed', [
+            'user_id' => Auth::id(),
+            'errors' => $validator->errors()->toArray(),
+            'input_data' => $this->all(),
+            'file_info' => $this->hasFile('profile_picture') ? [
+                'name' => $this->file('profile_picture')->getClientOriginalName(),
+                'size' => $this->file('profile_picture')->getSize(),
+                'mime' => $this->file('profile_picture')->getMimeType()
+            ] : 'no file'
+        ]);
+
+        parent::failedValidation($validator);
     }
 }

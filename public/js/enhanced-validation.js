@@ -197,13 +197,13 @@
                     this.showError('International numbers should be 11-15 digits');
                 }
             }
-            // Local numbers (non-Philippines)
+            // Invalid format - numbers not starting with +63 or 09 are invalid for Philippines
             else if (digitsOnly.length === 11) {
-                this.showSuccess('Valid 11-digit number');
+                this.showError('Philippine mobile numbers must start with "09" or "+63"');
             } else if (digitsOnly.length > 0 && digitsOnly.length < 11) {
-                this.showWarning(`Need ${11 - digitsOnly.length} more digits`);
+                this.showError('Philippine mobile numbers must start with "09" or "+63"');
             } else if (digitsOnly.length > 11) {
-                this.showError('Local numbers should be exactly 11 digits');
+                this.showError('Invalid phone number format. Use 09XXXXXXXXX or +639XXXXXXXXX');
             }
         }
         

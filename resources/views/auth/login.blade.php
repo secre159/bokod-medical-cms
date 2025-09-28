@@ -210,28 +210,6 @@
             transform: translateY(-1px);
         }
         
-        /* Welcome badge */
-        .welcome-badge {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 214, 10, 0.9);
-            color: var(--bsu-primary-green);
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(15, 81, 50, 0.3);
-            z-index: 10;
-            box-shadow: 0 4px 15px rgba(255, 214, 10, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .welcome-badge:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(255, 214, 10, 0.4);
-        }
         
         /* Page decorations */
         .page-decoration {
@@ -276,25 +254,12 @@
                 display: none;
             }
             
-            .welcome-badge {
-                position: relative;
-                top: auto;
-                left: auto;
-                margin: 1rem auto;
-                display: block;
-                text-align: center;
-                width: fit-content;
-            }
         }
     </style>
 @stop
 
 @section('auth_header')
     <!-- Page Decorations -->
-    <div class="welcome-badge">
-        <i class="fas fa-university"></i> BSU Health Portal
-    </div>
-    
     <div class="page-decoration decoration-top-right">
         <i class="fas fa-user-graduate"></i>
     </div>

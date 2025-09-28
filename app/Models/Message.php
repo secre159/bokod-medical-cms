@@ -15,9 +15,16 @@ class Message extends Model
         'message',
         'is_read',
         'read_at',
-        // Note: Removed columns that don't exist in production database:
-        // 'message_type', 'attachments', 'file_name', 'file_path', 'file_type', 
-        // 'file_size', 'mime_type', 'has_attachment', 'priority', 'is_system_message', 'reactions'
+        'message_type',
+        'file_name',
+        'file_path',
+        'file_type',
+        'file_size',
+        'mime_type',
+        'has_attachment',
+        'priority',
+        'is_system_message',
+        'reactions'
     ];
 
     protected $casts = [
@@ -177,19 +184,43 @@ class Message extends Model
             return null;
         }
         
+        // Check if file_path is already a full URL (ImgBB or external URL)
+        if (filter_var($this->file_path, FILTER_VALIDATE_URL)) {
+            // Log the ImgBB URL for debugging
+            \Log::debug('Using external URL for message ' . $this->id . ': ' . $this->file_path, [
+                'file_name' => $this->file_name,
+                'file_type' => $this->file_type
+            ]);
+            
+            return $this->file_path;
+        }
+        
         // Check if we're using Cloudinary
         $defaultDisk = config('filesystems.default');
         
         if ($defaultDisk === 'cloudinary' && config('filesystems.disks.cloudinary.cloud_name')) {
             // For Cloudinary, get the URL from the cloudinary disk
-            $disk = \Illuminate\Support\Facades\Storage::disk('cloudinary');
-            if ($disk->exists($this->file_path)) {
-                return $disk->url($this->file_path);
+            try {
+                $disk = \Illuminate\Support\Facades\Storage::disk('cloudinary');
+                if ($disk->exists($this->file_path)) {
+                    return $disk->url($this->file_path);
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to get Cloudinary URL for file: ' . $this->file_path, ['error' => $e->getMessage()]);
             }
         }
         
         // For local storage or fallback, use asset URL
-        return asset('storage/' . $this->file_path);
+        $localUrl = asset('storage/' . $this->file_path);
+        
+        // Log the generated URL for debugging
+        \Log::debug('Generated local file URL for message ' . $this->id . ': ' . $localUrl, [
+            'file_path' => $this->file_path,
+            'file_name' => $this->file_name,
+            'file_type' => $this->file_type
+        ]);
+        
+        return $localUrl;
     }
     
     /**

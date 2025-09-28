@@ -6,11 +6,9 @@ use App\Http\Requests\PatientProfileUpdateRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
-use Illuminate\Support\Str;
 use App\Models\Patient;
-use App\Services\ProfilePictureService;
+use App\Services\ImgBBService;
+use App\Services\LocalProfilePictureService;
 
 class PatientProfileController extends Controller
 {
@@ -35,6 +33,19 @@ class PatientProfileController extends Controller
      */
     public function update(PatientProfileUpdateRequest $request)
     {
+        Log::info('REAL PATIENT: Profile update started', [
+            'user_id' => Auth::id(),
+            'user_role' => Auth::user()->role,
+            'request_method' => $request->method(),
+            'has_profile_picture' => $request->hasFile('profile_picture'),
+            'all_request_data' => $request->all(),
+            'profile_picture_info' => $request->hasFile('profile_picture') ? [
+                'original_name' => $request->file('profile_picture')->getClientOriginalName(),
+                'size' => $request->file('profile_picture')->getSize(),
+                'mime_type' => $request->file('profile_picture')->getMimeType()
+            ] : null
+        ]);
+        
         try {
             // Get the patient record for the authenticated user
             $patient = Patient::where('user_id', Auth::id())->first();
@@ -45,22 +56,60 @@ class PatientProfileController extends Controller
             
             DB::beginTransaction();
             
-            // Handle profile picture upload or removal
+            // Get validated data
             $validatedData = $request->validated();
             
-            // Check if user wants to remove current profile picture
-            if ($request->input('remove_profile_picture') == '1') {
-                ProfilePictureService::deleteUserProfilePicture($patient->user);
-            }
-            // Handle new profile picture upload
-            elseif ($request->hasFile('profile_picture')) {
+            // Handle profile picture upload - try ImgBB first, fallback to local
+            if ($request->hasFile('profile_picture')) {
+                $uploadSuccess = false;
+                $profilePictureUrl = null;
+                
+                // Try ImgBB first
                 try {
-                    ProfilePictureService::uploadProfilePicture($request->file('profile_picture'), $patient->user);
-                    \Log::info('Profile picture updated successfully for patient ID: ' . $patient->id);
+                    $imgbbService = new ImgBBService();
+                    $uploadResult = $imgbbService->uploadProfilePicture($request->file('profile_picture'), $patient->user->id);
+                    
+                    if ($uploadResult['success']) {
+                        $profilePictureUrl = $uploadResult['url'];
+                        $uploadSuccess = true;
+                        Log::info('Profile picture uploaded to ImgBB successfully');
+                    }
                 } catch (\Exception $e) {
-                    \Log::error('Profile picture upload failed for patient ID: ' . $patient->id . ': ' . $e->getMessage());
-                    return back()->withErrors(['profile_picture' => 'Failed to upload profile picture: ' . $e->getMessage()])
-                                ->withInput();
+                    Log::warning('ImgBB upload failed, trying local storage', ['error' => $e->getMessage()]);
+                }
+                
+                // Fallback to local storage if ImgBB failed
+                if (!$uploadSuccess) {
+                    $localService = new LocalProfilePictureService();
+                    $localResult = $localService->uploadProfilePicture($request->file('profile_picture'), $patient->user->id);
+                    
+                    if ($localResult['success']) {
+                        $profilePictureUrl = $localResult['url'];
+                        Log::info('Profile picture uploaded to local storage successfully');
+                    } else {
+                        throw new \Exception('Profile picture upload failed: ' . $localResult['error']);
+                    }
+                }
+                
+                // Update the user's profile picture
+                if ($profilePictureUrl) {
+                    Log::info('Updating user profile picture', [
+                        'user_id' => $patient->user->id,
+                        'old_profile_picture' => $patient->user->profile_picture,
+                        'new_profile_picture' => $profilePictureUrl
+                    ]);
+                    
+                    $patient->user->update([
+                        'profile_picture' => $profilePictureUrl
+                    ]);
+                    
+                    // Verify the update
+                    $patient->user->refresh();
+                    Log::info('Profile picture update verification', [
+                        'user_id' => $patient->user->id,
+                        'current_profile_picture' => $patient->user->profile_picture,
+                        'update_successful' => $patient->user->profile_picture === $profilePictureUrl
+                    ]);
                 }
             }
             
@@ -82,6 +131,23 @@ class PatientProfileController extends Controller
             // Force refresh the patient model to get updated data
             $patient->refresh();
             $patient->user->refresh();
+            
+            // Set session flag to indicate profile picture was updated (for cache-busting)
+            if ($request->hasFile('profile_picture')) {
+                session(['profile_updated_user_' . $patient->user->id => true]);
+                // Clear the session flag after 15 minutes
+                session(['profile_updated_user_' . $patient->user->id . '_expires' => now()->addMinutes(15)]);
+            }
+            
+            Log::info('REAL PATIENT: Profile update completed successfully', [
+                'user_id' => $patient->user->id,
+                'final_profile_picture' => $patient->user->profile_picture,
+                'has_profile_picture' => $patient->user->hasProfilePicture(),
+                'redirect_route' => 'patient.profile.edit',
+                'session_success' => 'Your profile has been updated successfully!',
+                'profile_picture_updated' => $request->hasFile('profile_picture'),
+                'session_cache_bust_set' => session('profile_updated_user_' . $patient->user->id, false)
+            ]);
             
             return redirect()->route('patient.profile.edit')
                            ->with('success', 'Your profile has been updated successfully!');
@@ -107,114 +173,5 @@ class PatientProfileController extends Controller
         }
         
         return view('patient-profile.show', compact('patient'));
-    }
-    
-    /**
-     * Handle profile picture file upload
-     */
-    private function handleProfilePictureUpload($file, $patient)
-    {
-        try {
-            \Log::info('Starting profile picture upload for patient: ' . $patient->id);
-            \Log::info('Original file: ' . $file->getClientOriginalName() . ', Size: ' . $file->getSize() . ' bytes');
-            
-            // Delete old profile picture if it exists
-            if ($patient->user->profile_picture) {
-                \Log::info('Deleting old profile picture: ' . $patient->user->profile_picture);
-                Storage::disk('public')->delete($patient->user->profile_picture);
-            }
-            
-            // Get configuration settings
-            $config = config('image_processing.profile_pictures');
-            $directory = $config['directory'] ?? 'profile-pictures';
-            
-            // Check if image processing is available
-            if (extension_loaded('gd') || extension_loaded('imagick')) {
-                return $this->processImageWithIntervention($file, $patient, $directory);
-            } else {
-                return $this->saveImageDirectly($file, $patient, $directory);
-            }
-            
-        } catch (\Exception $e) {
-            // Log the detailed error
-            \Log::error('Profile picture upload failed: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            return null;
-        }
-    }
-    
-    private function processImageWithIntervention($file, $patient, $directory)
-    {
-        // Get configuration settings
-        $config = config('image_processing.profile_pictures');
-        $maxWidth = $config['max_width'] ?? 400;
-        $maxHeight = $config['max_height'] ?? 400;
-        $quality = $config['jpeg_quality'] ?? 85;
-        
-        // Ensure the directory exists
-        $fullDirectory = storage_path('app/public/' . $directory);
-        if (!file_exists($fullDirectory)) {
-            \Log::info('Creating directory: ' . $fullDirectory);
-            mkdir($fullDirectory, 0755, true);
-        }
-        
-        // Generate a unique filename
-        $filename = 'profile_' . $patient->id . '_' . time() . '_' . Str::random(8) . '.jpg';
-        $fullPath = $fullDirectory . '/' . $filename;
-        
-        \Log::info('Processing image with Intervention to: ' . $fullPath);
-        
-        // Process and optimize the image
-        $image = Image::read($file->getRealPath());
-        
-        // Resize image maintaining aspect ratio
-        $image->scaleDown(width: $maxWidth, height: $maxHeight);
-        
-        // Convert to JPEG with configured quality
-        $image->toJpeg(quality: $quality);
-        
-        // Save the optimized image
-        $image->save($fullPath);
-        
-        // Verify the file was saved
-        if (!file_exists($fullPath)) {
-            throw new \Exception('File was not saved to: ' . $fullPath);
-        }
-        
-        $relativePath = $directory . '/' . $filename;
-        \Log::info('Profile picture processed and saved successfully: ' . $relativePath);
-        
-        return $relativePath;
-    }
-    
-    private function saveImageDirectly($file, $patient, $directory)
-    {
-        \Log::info('Image processing extensions not available, saving directly');
-        
-        // Get original file extension
-        $originalExtension = $file->getClientOriginalExtension();
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-        
-        if (!in_array(strtolower($originalExtension), $allowedExtensions)) {
-            throw new \Exception('Invalid file extension: ' . $originalExtension);
-        }
-        
-        // Generate a unique filename with original extension
-        $filename = 'profile_' . $patient->id . '_' . time() . '_' . Str::random(8) . '.' . $originalExtension;
-        
-        // Store the file using Laravel's built-in storage
-        $path = Storage::disk('public')->putFileAs(
-            $directory,
-            $file,
-            $filename
-        );
-        
-        if (!$path) {
-            throw new \Exception('Failed to save file using Storage::putFileAs');
-        }
-        
-        \Log::info('Profile picture saved directly: ' . $path);
-        
-        return $path;
     }
 }

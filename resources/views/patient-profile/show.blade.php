@@ -327,23 +327,12 @@
             <div class="card card-primary card-outline">
                 <div class="card-body box-profile">
                     <div class="text-center">
-                        @php
-                            $hasProfilePicture = !empty($patient->user->avatar) || !empty($patient->user->profile_picture);
-                        @endphp
-                        @if($hasProfilePicture)
-                            <img class="profile-user-img img-fluid img-circle mb-3"
-                                 src="{{ $patient->user->getProfilePictureUrlAttribute() }}"
-                                 alt="{{ $patient->patient_name }}'s profile picture"
-                                 style="width: 100px; height: 100px; object-fit: cover; border: 3px solid #007bff;"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
-                            <div class="user-avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px; font-size: 32px; display: none;">
-                                {{ $patient->getInitials() }}
-                            </div>
-                        @else
-                            <div class="user-avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 100px; height: 100px; font-size: 32px;">
-                                {{ $patient->getInitials() }}
-                            </div>
-                        @endif
+                        <x-user-avatar 
+                            :user="$patient->user" 
+                            size="profile" 
+                            width="100px" 
+                            height="100px" 
+                            class="mb-3" />
                         
                         <h3 class="profile-username text-center">{{ $patient->patient_name }}</h3>
                         
@@ -428,7 +417,7 @@
                         <a href="{{ route('patient.profile.edit') }}#password-section" class="list-group-item list-group-item-action">
                             <i class="fas fa-key mr-2"></i>Change Password
                         </a>
-                        <a href="{{ route('password.request') }}" class="list-group-item list-group-item-action text-warning">
+                        <a href="{{ route('password.forgot.option') }}" class="list-group-item list-group-item-action text-warning">
                             <i class="fas fa-unlock mr-2"></i>Forgot Password?
                         </a>
                     </div>

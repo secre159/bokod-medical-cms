@@ -393,28 +393,6 @@
             50% { opacity: 0.1; transform: scale(1.1); }
         }
         
-        /* Welcome text */
-        .welcome-badge {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 214, 10, 0.9);
-            color: var(--bsu-primary-green);
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(15, 81, 50, 0.3);
-            z-index: 10;
-            box-shadow: 0 4px 15px rgba(255, 214, 10, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .welcome-badge:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(255, 214, 10, 0.4);
-        }
         
         
         @media (max-width: 768px) {
@@ -439,14 +417,6 @@
             .decoration-bottom-right,
             .decoration-middle-left {
                 display: none;
-            }
-            .welcome-badge {
-                position: relative;
-                top: auto;
-                left: auto;
-                margin: 1rem;
-                display: block;
-                text-align: center;
             }
             
         }
@@ -543,6 +513,46 @@
         .form-control:focus {
             transform: translateY(-1px);
         }
+        
+        /* Valid/Invalid input states */
+        .form-control.is-valid {
+            border-color: var(--bsu-secondary-green);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='m2.3 6.73 2.63-2.54c.14-.13.37-.13.51 0l.64.62a.36.36 0 0 1 0 .52L3.2 7.9a.36.36 0 0 1-.52 0L.25 5.48a.36.36 0 0 1 0-.52l.64-.62a.36.36 0 0 1 .52 0l.89.91z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        
+        .form-control.is-valid:focus {
+            border-color: var(--bsu-secondary-green);
+            box-shadow: 0 0 0 0.125rem rgba(25, 135, 84, 0.25);
+        }
+        
+        .form-control.is-invalid {
+            border-color: var(--error-color);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 2.4 2.4M8.2 4.6l-2.4 2.4'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+        
+        .form-control.is-invalid:focus {
+            border-color: var(--error-color);
+            box-shadow: 0 0 0 0.125rem rgba(220, 53, 69, 0.25);
+        }
+        
+        /* Real-time validation feedback */
+        .invalid-feedback {
+            display: none;
+            font-size: 0.875rem;
+            color: var(--error-color);
+            margin-top: 0.25rem;
+        }
+        
+        .invalid-feedback.d-block,
+        .invalid-feedback[style*="block"] {
+            display: block !important;
+        }
     </style>
 @stop
 
@@ -550,10 +560,6 @@
 
 @section('auth_body')
 <!-- Page Decorations -->
-<div class="welcome-badge">
-    <i class="fas fa-university"></i> BSU Health Center
-</div>
-
 <div class="page-decoration decoration-top-left">
     <i class="fas fa-stethoscope"></i>
 </div>
@@ -605,9 +611,10 @@
 
                     <div class="form-group">
                         <label class="form-label">Email Address</label>
-                        <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" 
-                               placeholder="Enter your email" value="{{ old('email') }}" required>
+                        <input type="email" name="email" id="email" class="form-control @error('email') is-invalid @enderror" 
+                               placeholder="Enter your email (e.g., name@example.com)" value="{{ old('email') }}" required>
                         <small class="text-muted">Gmail, Yahoo, and other providers accepted</small>
+                        <div class="invalid-feedback" id="email-error"></div>
                         @error('email')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
@@ -637,8 +644,10 @@
 
                     <div class="form-group">
                         <label class="form-label">Phone Number</label>
-                        <input type="tel" name="phone_number" class="form-control @error('phone_number') is-invalid @enderror" 
-                               placeholder="Enter phone number" value="{{ old('phone_number') }}" required>
+                        <input type="tel" name="phone_number" id="phone_number" class="form-control @error('phone_number') is-invalid @enderror" 
+                               placeholder="Enter phone number (e.g., 09123456789)" value="{{ old('phone_number') }}" required>
+                        <small class="text-muted">Philippine mobile number format: 09XXXXXXXXX (11 digits)</small>
+                        <div class="invalid-feedback" id="phone-error"></div>
                         @error('phone_number')
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
@@ -746,14 +755,16 @@
                             <div class="enhanced-input">
                                 <label class="form-label">Contact Phone</label>
                                 <div class="input-group">
-                                    <input type="tel" name="emergency_contact_phone" class="form-control @error('emergency_contact_phone') is-invalid @enderror" 
-                                           placeholder="Phone number" value="{{ old('emergency_contact_phone') }}" required>
+                                    <input type="tel" name="emergency_contact_phone" id="emergency_contact_phone" class="form-control @error('emergency_contact_phone') is-invalid @enderror" 
+                                           placeholder="Phone number (e.g., 09123456789)" value="{{ old('emergency_contact_phone') }}" required>
                                     <div class="input-group-append">
                                         <div class="input-group-text">
                                             <span class="fas fa-phone"></span>
                                         </div>
                                     </div>
                                 </div>
+                                <small class="text-muted">Philippine mobile number format: 09XXXXXXXXX</small>
+                                <div class="invalid-feedback" id="emergency-phone-error"></div>
                                 @error('emergency_contact_phone')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
@@ -928,6 +939,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupFormValidation();
     setupPasswordStrength();
     setupStepNavigation();
+    setupRealTimeValidation();
 });
 
 function initializeForm() {
@@ -1102,6 +1114,84 @@ function setupFormValidation() {
     });
 }
 
+// Real-time validation for phone and email
+function setupRealTimeValidation() {
+    // Email validation
+    const emailInput = document.getElementById('email');
+    const emailError = document.getElementById('email-error');
+    
+    if (emailInput && emailError) {
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            if (email.length > 0) {
+                if (isValidEmailFormat(email)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    emailError.style.display = 'none';
+                } else {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    emailError.textContent = 'Please enter a valid email format (name@domain.com)';
+                    emailError.style.display = 'block';
+                }
+            } else {
+                this.classList.remove('is-invalid', 'is-valid');
+                emailError.style.display = 'none';
+            }
+        });
+    }
+    
+    // Phone number validation
+    const phoneInput = document.getElementById('phone_number');
+    const phoneError = document.getElementById('phone-error');
+    
+    if (phoneInput && phoneError) {
+        phoneInput.addEventListener('input', function() {
+            const phone = this.value.trim();
+            if (phone.length > 0) {
+                if (isValidPhoneFormat(phone)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    phoneError.style.display = 'none';
+                } else {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    phoneError.textContent = 'Please enter a valid Philippine mobile number (09XXXXXXXXX - 11 digits)';
+                    phoneError.style.display = 'block';
+                }
+            } else {
+                this.classList.remove('is-invalid', 'is-valid');
+                phoneError.style.display = 'none';
+            }
+        });
+    }
+    
+    // Emergency contact phone validation
+    const emergencyPhoneInput = document.getElementById('emergency_contact_phone');
+    const emergencyPhoneError = document.getElementById('emergency-phone-error');
+    
+    if (emergencyPhoneInput && emergencyPhoneError) {
+        emergencyPhoneInput.addEventListener('input', function() {
+            const phone = this.value.trim();
+            if (phone.length > 0) {
+                if (isValidPhoneFormat(phone)) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    emergencyPhoneError.style.display = 'none';
+                } else {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    emergencyPhoneError.textContent = 'Please enter a valid Philippine mobile number (09XXXXXXXXX - 11 digits)';
+                    emergencyPhoneError.style.display = 'block';
+                }
+            } else {
+                this.classList.remove('is-invalid', 'is-valid');
+                emergencyPhoneError.style.display = 'none';
+            }
+        });
+    }
+}
+
 function setupPasswordStrength() {
     const passwordInput = document.getElementById('password');
     const strengthBar = document.getElementById('strength-bar');
@@ -1154,6 +1244,51 @@ function updatePasswordStrengthBar(strength) {
 
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Enhanced email validation matching backend rules
+function isValidEmailFormat(email) {
+    // Match the backend EmailValidationRule format
+    const basicEmailRegex = /^[a-z0-9]+([._-][a-z0-9]+)*@[a-z0-9]+([.-][a-z0-9]+)*\.[a-z]{2,}$/i;
+    
+    if (!basicEmailRegex.test(email)) {
+        return false;
+    }
+    
+    const [local, domain] = email.split('@');
+    
+    // Check length limits
+    if (local.length === 0 || local.length > 64 || domain.length < 4 || domain.length > 255) {
+        return false;
+    }
+    
+    // Check for invalid patterns
+    if (local.startsWith('.') || local.endsWith('.') || local.includes('..')) {
+        return false;
+    }
+    
+    return true;
+}
+
+// Philippine phone number validation matching backend rules
+function isValidPhoneFormat(phone) {
+    // Remove all non-digit characters for validation
+    const cleanNumber = phone.replace(/[^0-9]/g, '');
+    
+    // Check if it follows Philippine mobile format: 09XXXXXXXXX (exactly 11 digits)
+    if (!/^09[0-9]{9}$/.test(cleanNumber)) {
+        return false;
+    }
+    
+    // Check for valid network prefixes (simplified version)
+    const networkCode = cleanNumber.substring(2, 4);
+    const validNetworkCodes = [
+        '17', '05', '06', '15', '16', '26', '27', '35', '36', '37', '94', '95', '96', '97', // Globe/TM
+        '07', '08', '09', '10', '11', '12', '13', '14', '18', '19', '20', '21', '22', '23', '28', '29', '30', '31', '32', '33', '34', '38', '39', '40', '41', '42', '43', '44', '89', '98', '99', // Smart/TNT/Sun
+        '91', '92', '93' // DITO
+    ];
+    
+    return validNetworkCodes.includes(networkCode);
 }
 
 // Add shake animation CSS

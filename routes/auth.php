@@ -6,7 +6,7 @@ use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
+// RegisteredUserController removed - all registration goes through PatientRegistrationController
 use App\Http\Controllers\PatientRegistrationController;
 use Illuminate\Support\Facades\Route;
 

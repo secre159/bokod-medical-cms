@@ -19,88 +19,96 @@ class EmailValidationRule implements ValidationRule
             return;
         }
         
-        // Basic format validation
-        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            $fail('The :attribute field must be a valid email address.');
+        // Trim and convert to lowercase for validation
+        $email = strtolower(trim($value));
+        
+        // Basic format validation using PHP's filter
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $fail('The :attribute field must be a valid email address (name@domain.com).');
             return;
         }
         
-        // Additional checks for email format
-        $email = strtolower(trim($value));
-        
-        // Check for basic structure
-        if (!preg_match('/^[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}$/i', $email)) {
-            $fail('The :attribute field must be a valid email format.');
+        // Enforce stricter email format: name@domain.com
+        if (!preg_match('/^[a-z0-9]+([._-][a-z0-9]+)*@[a-z0-9]+([.-][a-z0-9]+)*\.[a-z]{2,}$/i', $email)) {
+            $fail('The :attribute field must follow the format name@domain.com (letters and numbers only, with optional dots, underscores, or hyphens).');
             return;
         }
         
         // Split email into local and domain parts
         list($local, $domain) = explode('@', $email, 2);
         
-        // Local part validation
-        if (strlen($local) > 64) {
-            $fail('The email local part (before @) cannot exceed 64 characters.');
+        // Local part (name) validation
+        if (strlen($local) < 1) {
+            $fail('The email name part (before @) cannot be empty.');
             return;
         }
         
-        if (strlen($local) < 1) {
-            $fail('The email local part (before @) cannot be empty.');
+        if (strlen($local) > 64) {
+            $fail('The email name part (before @) cannot exceed 64 characters.');
+            return;
+        }
+        
+        // Local part must start and end with alphanumeric characters
+        if (!preg_match('/^[a-z0-9]/', $local) || !preg_match('/[a-z0-9]$/', $local)) {
+            $fail('The email name part must start and end with a letter or number.');
+            return;
+        }
+        
+        // Check for consecutive special characters
+        if (preg_match('/[._-]{2,}/', $local)) {
+            $fail('The email name part cannot contain consecutive dots, underscores, or hyphens.');
             return;
         }
         
         // Domain part validation
+        if (strlen($domain) < 4) { // minimum: a.co
+            $fail('The email domain is too short (minimum: domain.com).');
+            return;
+        }
+        
         if (strlen($domain) > 255) {
             $fail('The email domain part (after @) cannot exceed 255 characters.');
             return;
         }
         
-        if (strlen($domain) < 4) { // minimum: a.co
-            $fail('The email domain is too short.');
-            return;
-        }
-        
-        // Check for valid characters in local part
-        if (!preg_match('/^[a-z0-9._-]+$/i', $local)) {
-            $fail('The email address contains invalid characters. Only letters, numbers, dots, hyphens, and underscores are allowed.');
-            return;
-        }
-        
-        // Check that local part doesn't start or end with dots
-        if (str_starts_with($local, '.') || str_ends_with($local, '.')) {
-            $fail('The email address cannot start or end with a dot.');
-            return;
-        }
-        
-        // Check for consecutive dots
-        if (str_contains($local, '..')) {
-            $fail('The email address cannot contain consecutive dots.');
-            return;
-        }
-        
-        // Domain validation
-        if (!preg_match('/^[a-z0-9.-]+$/i', $domain)) {
-            $fail('The email domain contains invalid characters.');
-            return;
-        }
-        
-        // Check domain has at least one dot and valid TLD
+        // Domain must contain at least one dot
         if (!str_contains($domain, '.')) {
-            $fail('The email domain must contain at least one dot.');
+            $fail('The email domain must contain at least one dot (e.g., domain.com).');
             return;
+        }
+        
+        // Get domain parts
+        $domainParts = explode('.', $domain);
+        
+        // Check each domain part
+        foreach ($domainParts as $part) {
+            if (empty($part)) {
+                $fail('The email domain cannot have empty parts (consecutive dots).');
+                return;
+            }
+            
+            if (!preg_match('/^[a-z0-9-]+$/i', $part)) {
+                $fail('The email domain can only contain letters, numbers, and hyphens.');
+                return;
+            }
+            
+            if (str_starts_with($part, '-') || str_ends_with($part, '-')) {
+                $fail('Domain parts cannot start or end with hyphens.');
+                return;
+            }
         }
         
         // Get TLD (top-level domain)
-        $domainParts = explode('.', $domain);
         $tld = end($domainParts);
         
         if (strlen($tld) < 2) {
-            $fail('The email domain extension is too short.');
+            $fail('The email domain extension must be at least 2 characters long.');
             return;
         }
         
-        // Check for valid TLD format (only letters)
+        // TLD must contain only letters
         if (!preg_match('/^[a-z]{2,}$/i', $tld)) {
-            $fail('The email domain extension must contain only letters.');
+            $fail('The email domain extension must contain only letters (e.g., .com, .org, .net).');
             return;
         }
         

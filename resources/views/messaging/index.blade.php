@@ -3452,9 +3452,11 @@ body.modal-open {
                     Messages
                 </h3>
                 <div class="card-tools">
+                    @if($conversations->count() == 0)
                     <button type="button" class="btn btn-primary btn-sm" onclick="startNewConversation()">
                         <i class="fas fa-plus mr-1"></i> New Message
                     </button>
+                    @endif
                     <button type="button" class="btn btn-outline-secondary btn-sm ml-2" onclick="toggleArchivedView()" id="archive-toggle-btn">
                         <i class="fas fa-archive mr-1"></i> Archived
                     </button>
@@ -3537,7 +3539,7 @@ body.modal-open {
                                     <i class="fas fa-comments fa-3x mb-3 text-muted"></i>
                                     <h5>No conversations yet</h5>
                                     @if(Auth::user()->role === 'patient')
-                                        <p class="text-muted">Click "New Message" to start a conversation with medical staff.</p>
+                                        <p class="text-muted">Click "New Message" to start your conversation with medical staff.</p>
                                     @else
                                         <p class="text-muted">Patient conversations will appear here.</p>
                                     @endif
@@ -3972,12 +3974,13 @@ function displayPatientResults(patients, searchQuery) {
                     <div class="d-flex align-items-center">
                         <div class="patient-avatar mr-3 position-relative">
                             ${patient.profile_picture ? 
-                                `<img src="{{ asset('storage/') }}/${patient.profile_picture}" 
-                                      alt="${patient.name}" 
-                                      style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; transition: all 0.2s ease;">` :
+                                `<img src="${patient.profile_picture}" alt="${patient.name}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; transition: all 0.2s ease;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                 <div style="display: none; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid transparent; transition: all 0.2s ease;">
+                                    ${patient.name.substring(0, 2).toUpperCase()}
+                                 </div>` :
                                 `<div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid transparent; transition: all 0.2s ease;">
                                     ${patient.name.substring(0, 2).toUpperCase()}
-                                </div>`
+                                 </div>`
                             }
                             ${patient.has_existing_conversation ? 
                                 '<div class="position-absolute" style="top: -5px; right: -5px; width: 16px; height: 16px; background: #ffc107; border-radius: 50%; border: 2px solid white;"><i class="fas fa-comments" style="font-size: 8px; color: white; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i></div>' :
@@ -4051,12 +4054,13 @@ function selectPatient(patient) {
         <div class="d-flex align-items-center">
             <div class="patient-avatar mr-3">
                 ${patient.profile_picture ? 
-                    `<img src="{{ asset('storage/') }}/${patient.profile_picture}" 
-                          alt="${patient.name}" 
-                          style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">` :
+                    `<img src="${patient.profile_picture}" alt="${patient.name}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                     <div style="display: none; width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">
+                        ${patient.name.substring(0, 2).toUpperCase()}
+                     </div>` :
                     `<div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px;">
                         ${patient.name.substring(0, 2).toUpperCase()}
-                    </div>`
+                     </div>`
                 }
             </div>
             <div class="flex-grow-1">

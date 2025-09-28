@@ -27,6 +27,49 @@
         @csrf
         @method('PATCH')
         
+        {{-- Profile Picture Upload --}}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-camera mr-2"></i>
+                    Profile Picture
+                </h3>
+                <div class="card-tools">
+                    <span class="badge badge-success">You Can Edit</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="profile-picture-preview mb-3">
+                                <x-user-avatar :user="$patient->user" width="150px" height="150px" class="img-thumbnail" />
+                            </div>
+                            <input type="file" class="form-control-file @error('profile_picture') is-invalid @enderror" 
+                                   id="profile_picture" name="profile_picture" accept="image/*">
+                            <small class="form-text text-muted">Max size: 5MB. Supported formats: JPEG, PNG, JPG, GIF, WebP. Images uploaded to ImgBB CDN.</small>
+                            @error('profile_picture')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <strong>Profile Picture Guidelines:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Upload a clear photo of yourself</li>
+                                <li>Square images work best (1:1 ratio)</li>
+                                <li>Images will be uploaded securely to ImgBB</li>
+                                <li>Your previous image will be replaced</li>
+                                <li>Leave blank to keep current picture</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         {{-- Personal Information (Read-Only) --}}
         <div class="card">
             <div class="card-header">
@@ -84,95 +127,6 @@
             </div>
         </div>
         
-        {{-- Profile Picture (Editable) --}}
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-camera mr-2"></i>
-                    Profile Picture
-                </h3>
-                <div class="card-tools">
-                    <span class="badge badge-success">You Can Upload</span>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <div class="profile-preview-container" style="position: relative; display: inline-block;">
-                                <img id="profilePreview" 
-                                     class="profile-user-img img-fluid img-circle" 
-                                     src="{{ $patient->user->getProfilePictureUrlAttribute() }}"
-                                     alt="Profile picture preview" 
-                                     style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #adb5bd;"
-                                     onerror="this.src='{{ asset('images/default-avatar.svg') }}'; console.log('Profile image failed to load, using default');">
-                            </div>
-                            <div class="mt-3">
-                                <small class="text-muted d-block">Current profile picture</small>
-                                @php
-                                    $hasProfilePicture = !empty($patient->user->avatar) || !empty($patient->user->profile_picture);
-                                @endphp
-                                @if($hasProfilePicture)
-                                    <small class="text-success d-block">
-                                        <i class="fas fa-check-circle mr-1"></i>
-                                        Profile picture uploaded
-                                    </small>
-                                @else
-                                    <small class="text-warning d-block">
-                                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                                        Using default picture
-                                    </small>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label for="profile_picture">Upload New Profile Picture</label>
-                            <div class="input-group">
-                                <div class="custom-file">
-                                    <input type="file" 
-                                           name="profile_picture" 
-                                           id="profile_picture" 
-                                           class="custom-file-input @error('profile_picture') is-invalid @enderror"
-                                           accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
-                                           onchange="previewProfilePicture(event)">
-                                    <label class="custom-file-label" for="profile_picture">Choose image file...</label>
-                                </div>
-                            </div>
-                            @error('profile_picture')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                <strong>Requirements:</strong> JPEG, PNG, JPG, GIF, or WebP format. Maximum 1MB. Images will be automatically resized to 400x400 pixels for optimal performance.
-                            </small>
-                        </div>
-                        
-                        <div class="alert alert-info">
-                            <i class="fas fa-lightbulb mr-2"></i>
-                            <strong>Tips for a good profile picture:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li>Use a clear, well-lit photo of your face</li>
-                                <li>Square images work best (will be cropped to circle)</li>
-                                <li>Avoid group photos or photos with busy backgrounds</li>
-                                <li>Professional or semi-professional photos are recommended</li>
-                            </ul>
-                        </div>
-                        
-                        @if($hasProfilePicture)
-                        <div class="form-group">
-                            <button type="button" class="btn btn-warning btn-sm" onclick="removeProfilePicture()">
-                                <i class="fas fa-trash mr-1"></i>
-                                Remove Current Picture
-                            </button>
-                            <input type="hidden" name="remove_profile_picture" id="remove_profile_picture" value="0">
-                        </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
 
         {{-- Contact Information (Editable) --}}
         <div class="card">
@@ -211,7 +165,7 @@
                                    class="form-control @error('phone_number') is-invalid @enderror" 
                                    value="{{ old('phone_number', $patient->phone_number) }}"
                                    placeholder="+63 9XX XXX XXXX"
-                                   pattern="[0-9+\s()-]+"
+                                   pattern="[0-9+\s\(\)\-]+"
                                    title="Enter a valid phone number with at least 11 digits"
                                    maxlength="20"
                                    autocomplete="tel">
@@ -306,7 +260,7 @@
                                    class="form-control @error('emergency_contact_phone') is-invalid @enderror" 
                                    value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone) }}"
                                    placeholder="+63 9XX XXX XXXX"
-                                   pattern="[0-9+\s()-]+"
+                                   pattern="[0-9+\s\(\)\-]+"
                                    title="Enter a valid phone number with at least 11 digits"
                                    maxlength="20"
                                    autocomplete="tel">
@@ -595,7 +549,10 @@
 @stop
 
 @section('js')
+    {{-- Ensure jQuery is loaded --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ asset('js/enhanced-validation.js') }}"></script>
+    <script src="{{ asset('js/profile-picture-preview.js') }}"></script>
     <script>
         // Immediate preloader hide to prevent stuck state
         $(window).on('load', function() {
@@ -613,6 +570,16 @@
     </script>
     <script>
         $(document).ready(function() {
+            // DEBUG: Track page load and initial profile picture state
+            const initialProfilePicture = $('.user-avatar img').attr('src');
+            console.log('PATIENT PROFILE PAGE: Loaded', {
+                initialProfilePictureUrl: initialProfilePicture,
+                hasProfilePicture: initialProfilePicture ? true : false,
+                userAvatarElements: $('.user-avatar').length,
+                timestamp: new Date().toISOString(),
+                pageUrl: window.location.href
+            });
+            
             // PRELOADER FIX: Force hide preloader after page load to prevent stuck preloader
             setTimeout(function() {
                 $('.preloader').fadeOut(500);
@@ -641,6 +608,17 @@
             // Form validation
             $('#patientProfileForm').on('submit', function(e) {
                 const email = $('#email').val();
+                const hasProfilePicture = $('#profile_picture')[0].files.length > 0;
+                const currentProfilePictureUrl = $('.user-avatar img').attr('src');
+                
+                console.log('PATIENT PROFILE FORM: Submission started', {
+                    hasProfilePicture: hasProfilePicture,
+                    currentProfilePictureUrl: currentProfilePictureUrl,
+                    email: email,
+                    formAction: $(this).attr('action'),
+                    formMethod: $(this).attr('method'),
+                    timestamp: new Date().toISOString()
+                });
                 
                 if (!email || !email.includes('@')) {
                     e.preventDefault();
@@ -649,29 +627,26 @@
                     return false;
                 }
                 
-                // Log form submission details
-                console.log('Form submitted with profile picture:', $('#profile_picture')[0].files.length > 0);
-                console.log('Remove profile picture flag:', $('#remove_profile_picture').val());
-                if ($('#profile_picture')[0].files.length > 0) {
-                    const file = $('#profile_picture')[0].files[0];
-                    console.log('Profile picture file:', {
-                        name: file.name,
-                        size: file.size + ' bytes (' + Math.round(file.size / 1024) + ' KB)',
-                        type: file.type,
-                        lastModified: new Date(file.lastModified).toLocaleString()
-                    });
-                } else {
-                    console.log('No profile picture file selected');
-                }
-                
                 // Show loading state
                 const submitBtn = $(this).find('button[type="submit"]');
                 const originalText = submitBtn.html();
                 submitBtn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Updating Profile...').prop('disabled', true);
                 
+                console.log('PATIENT PROFILE FORM: Loading state activated', {
+                    buttonText: originalText,
+                    buttonDisabled: true
+                });
+                
+                // Set session storage flag to indicate profile picture update is in progress
+                if (hasProfilePicture) {
+                    sessionStorage.setItem('profilePictureUpdated', 'true');
+                    console.log('PATIENT PROFILE FORM: Session storage flag set for profile picture update');
+                }
+                
                 // Re-enable button after 10 seconds as failsafe
                 setTimeout(function() {
                     submitBtn.html(originalText).prop('disabled', false);
+                    console.log('PATIENT PROFILE FORM: Button failsafe activated');
                 }, 10000);
             });
             
@@ -744,6 +719,48 @@
                 $(this).next('.custom-file-label').addClass('selected').html(fileName || 'Choose image file...');
             });
             
+            // DEBUG: Watch for profile picture changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+                        const target = mutation.target;
+                        if (target.classList.contains('user-avatar') || target.closest('.user-avatar')) {
+                            console.log('PATIENT PROFILE: Profile picture URL changed', {
+                                oldSrc: mutation.oldValue,
+                                newSrc: target.src,
+                                element: target,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
+                    }
+                });
+            });
+            
+            // Start observing profile picture changes
+            $('.user-avatar img').each(function() {
+                observer.observe(this, {
+                    attributes: true,
+                    attributeOldValue: true,
+                    attributeFilter: ['src']
+                });
+            });
+            
+            // DEBUG: Check for success/error messages on page load
+            const successAlerts = $('.alert-success');
+            const errorAlerts = $('.alert-danger, .alert-error');
+            if (successAlerts.length > 0) {
+                console.log('PATIENT PROFILE: Success alerts found', {
+                    count: successAlerts.length,
+                    messages: successAlerts.map(function() { return $(this).text().trim(); }).get()
+                });
+            }
+            if (errorAlerts.length > 0) {
+                console.log('PATIENT PROFILE: Error alerts found', {
+                    count: errorAlerts.length,
+                    messages: errorAlerts.map(function() { return $(this).text().trim(); }).get()
+                });
+            }
+            
             console.log('Patient profile edit form loaded successfully!');
         });
         
@@ -763,61 +780,5 @@
             }
         }
         
-        // Profile picture preview
-        function previewProfilePicture(event) {
-            const file = event.target.files[0];
-            const preview = document.getElementById('profilePreview');
-            
-            console.log('Profile picture selected:', file ? file.name : 'No file');
-            
-            if (file) {
-                // Validate file type
-                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
-                console.log('File type:', file.type, 'Valid:', validTypes.includes(file.type));
-                
-                if (!validTypes.includes(file.type)) {
-                    alert('Please select a valid image file (JPEG, PNG, JPG, GIF, or WebP).');
-                    event.target.value = '';
-                    $('.custom-file-label').removeClass('selected').html('Choose image file...');
-                    return;
-                }
-                
-                // Validate file size (1MB)
-                console.log('File size:', file.size, 'bytes, Max:', 1048576);
-                if (file.size > 1048576) {
-                    alert('File size must be less than 1MB. Current size: ' + Math.round(file.size / 1024) + ' KB');
-                    event.target.value = '';
-                    $('.custom-file-label').removeClass('selected').html('Choose image file...');
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    console.log('FileReader loaded, setting preview src');
-                    preview.src = e.target.result;
-                }
-                reader.onerror = function(e) {
-                    console.error('FileReader error:', e);
-                    alert('Error reading the selected file. Please try again.');
-                }
-                reader.readAsDataURL(file);
-                
-                // Reset remove flag if user uploads new image
-                $('#remove_profile_picture').val('0');
-                console.log('Reset remove profile picture flag');
-            }
-        }
-        
-        // Remove profile picture
-        function removeProfilePicture() {
-            if (confirm('Are you sure you want to remove your current profile picture? This will be saved when you update your profile.')) {
-                $('#remove_profile_picture').val('1');
-                $('#profilePreview').attr('src', '{{ asset('images/default-avatar.svg') }}');
-                $('#profile_picture').val('');
-                $('.custom-file-label').removeClass('selected').html('Choose image file...');
-                
-                alert('Profile picture will be removed when you save your profile changes.');
-            }
-        }
     </script>
 @stop

@@ -15,7 +15,25 @@ use App\Http\Controllers\EmailTestController;
 use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\DatabaseFixController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\PasswordChangeController;
 use Illuminate\Support\Facades\Route;
+
+// Debug routes (remove in production) - loaded before auth middleware to avoid conflicts
+if (app()->environment(['local', 'staging'])) {
+    include __DIR__ . '/debug.php';
+}
+
+// Simple auth test route for debugging
+Route::get('/auth-test-working', function () {
+    return response()->json([
+        'status' => 'working',
+        'message' => 'Authentication system test',
+        'authenticated' => auth()->check(),
+        'timestamp' => now()
+    ]);
+});
+
+// Test routes removed - authentication system working properly
 
 // Landing page route
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -31,7 +49,7 @@ Route::get('/landing', function () {
 });
 
 // Dashboard routes with role-based access (email verification removed)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'account.status'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/dashboard/async-stats', [DashboardController::class, 'asyncStats'])->name('dashboard.async-stats');
     Route::get('/dashboard/recent-messages', [DashboardController::class, 'getRecentMessages'])->name('dashboard.recent-messages');
@@ -235,8 +253,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/appointments/{appointment}/details', [PatientPortalController::class, 'getAppointmentDetails'])->name('details');
             
             // Typing indicators for patients
-            Route::post('/typing', [MessagingController::class, 'updateTypingStatus'])->name('typing');
-            Route::get('/typing', [MessagingController::class, 'getTypingStatus'])->name('typing');
+            Route::post('/typing', [MessagingController::class, 'updateTypingStatus'])->name('typing.update');
+            Route::get('/typing', [MessagingController::class, 'getTypingStatus'])->name('typing.get');
         });
         
         // Debug route for testing typing
@@ -254,6 +272,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Password reset for authenticated users
+    Route::get('/password/forgot-option', [PasswordChangeController::class, 'showForgotOption'])->name('password.forgot.option');
+    Route::post('/password/request-reset', [PasswordChangeController::class, 'requestReset'])->name('password.request.reset');
 });
 
 require __DIR__.'/auth.php';
@@ -641,7 +663,7 @@ Route::get('/debug-image-urls', function () {
         // Check current user profile picture
         if (auth()->check()) {
             $user = auth()->user();
-            $profileUrl = \App\Services\ProfilePictureService::getProfilePictureUrl($user);
+            $profileUrl = null; // Profile pictures removed
             $results['current_user_profile'] = [
                 'user_id' => $user->id,
                 'user_name' => $user->name,
@@ -673,6 +695,8 @@ Route::get('/debug-image-urls', function () {
     }
 });
 
+// Debug route to diagnose specific user's avatar issue
+
 // Test route for ImgBB
 Route::get('/test-imgbb', function () {
     try {
@@ -702,6 +726,54 @@ Route::get('/test-imgbb', function () {
 
 // Debug routes (only in development)
 if (app()->environment(['local', 'development'])) {
+    // Test registration data insertion
+    Route::get('/debug/registration-data', function() {
+        $testData = [
+            'name' => 'Test Student',
+            'email' => 'test@example.com',
+            'phone_number' => '09123456789',
+            'date_of_birth' => '2000-01-01',
+            'gender' => 'Male',
+            'address' => '123 Test Street',
+            'emergency_contact_name' => 'Test Parent',
+            'emergency_contact_phone' => '09987654321',
+        ];
+        
+        return response()->json([
+            'message' => 'Test data that would be inserted during registration',
+            'user_data' => [
+                'name' => $testData['name'],
+                'display_name' => $testData['name'],
+                'email' => $testData['email'],
+                'role' => 'patient',
+                'status' => 'inactive',
+                'registration_status' => \App\Models\User::REGISTRATION_PENDING,
+                'registration_source' => \App\Models\User::SOURCE_SELF,
+                'phone' => $testData['phone_number'],
+                'date_of_birth' => $testData['date_of_birth'],
+                'gender' => $testData['gender'],
+                'address' => $testData['address'],
+                'emergency_contact' => $testData['emergency_contact_name'],
+                'emergency_phone' => $testData['emergency_contact_phone'],
+            ],
+            'patient_data' => [
+                'patient_name' => $testData['name'],
+                'email' => $testData['email'],
+                'phone_number' => $testData['phone_number'],
+                'date_of_birth' => $testData['date_of_birth'],
+                'gender' => $testData['gender'],
+                'address' => $testData['address'],
+                'emergency_contact_name' => $testData['emergency_contact_name'],
+                'emergency_contact_phone' => $testData['emergency_contact_phone'],
+                'archived' => false,
+            ],
+            'database_tables' => [
+                'users_table_fillable' => \App\Models\User::make()->getFillable(),
+                'patient_table_fillable' => \App\Models\Patient::make()->getFillable() ?? 'Patient model not available'
+            ]
+        ], 200, [], JSON_PRETTY_PRINT);
+    });
+    
     Route::get('/debug/appointments', function() {
         $stats = [
             'total' => \App\Models\Appointment::count(),

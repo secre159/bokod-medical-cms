@@ -1053,9 +1053,9 @@
             // Build new messages HTML
             let messagesHtml = '';
             messages.forEach(function(message) {
-                const avatarHtml = message.sender.profile_picture 
-                    ? `<img src="/storage/${message.sender.profile_picture}" class="rounded-circle mr-2" width="24" height="24" alt="${message.sender.name}">`
-                    : `<div class="bg-primary rounded-circle mr-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 10px; color: white;">${message.sender.name.charAt(0).toUpperCase()}</div>`;
+                // Use the avatar_url provided by the API (includes initials fallback)
+                const avatarHtml = `<img src="${message.sender.avatar_url}" class="rounded-circle mr-2" width="24" height="24" alt="${message.sender.name}">`;
+                
                     
                 const messageText = message.message || '[File attachment]';
                 const truncatedMessage = messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText;
