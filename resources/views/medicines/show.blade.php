@@ -418,7 +418,7 @@
                 </div>
                 <div class="card-body text-center">
                     @if($medicine->medicine_image)
-                        <img src="{{ asset('storage/' . $medicine->medicine_image) }}" alt="{{ $medicine->medicine_name }}" class="img-fluid rounded">
+                        <img src="{{ $medicine->medicine_image }}" alt="{{ $medicine->medicine_name }}" class="img-fluid rounded medicine-image" data-fallback="true">
                     @else
                         <div class="medicine-placeholder">
                             <i class="fas fa-pills fa-4x text-muted mb-3"></i>
@@ -665,6 +665,13 @@
 
 @section('js')
 <script>
+// Handle image loading errors
+$(document).ready(function() {
+    $('.medicine-image[data-fallback="true"]').on('error', function() {
+        $(this).replaceWith('<div class="medicine-placeholder"><i class="fas fa-pills fa-4x text-muted mb-3"></i><p class="text-muted">Image not available</p></div>');
+    });
+});
+
 // Print medicine information
 function printMedicineInfo() {
     var printWindow = window.open('', '_blank');

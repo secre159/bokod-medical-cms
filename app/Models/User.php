@@ -214,16 +214,28 @@ class User extends Authenticatable
      */
     public function getInitials()
     {
-        if (!$this->name) {
-            return '??';
+        if (!$this->name || trim($this->name) === '') {
+            // Use email as fallback if available
+            if ($this->email) {
+                $emailParts = explode('@', $this->email);
+                $username = $emailParts[0];
+                return strtoupper(substr($username, 0, 2));
+            }
+            return 'UN'; // Unknown User
         }
         
         $names = explode(' ', trim($this->name));
+        $names = array_filter($names); // Remove empty elements
+        
         if (count($names) >= 2) {
             return strtoupper(substr($names[0], 0, 1) . substr($names[1], 0, 1));
+        } elseif (count($names) === 1 && strlen($names[0]) >= 2) {
+            return strtoupper(substr($names[0], 0, 2));
+        } elseif (count($names) === 1 && strlen($names[0]) === 1) {
+            return strtoupper($names[0] . $names[0]);
         }
         
-        return strtoupper(substr($names[0], 0, 2));
+        return 'UN'; // Fallback for edge cases
     }
     
     /**

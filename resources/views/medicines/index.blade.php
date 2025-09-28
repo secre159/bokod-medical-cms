@@ -43,12 +43,12 @@
             <div class="small-box bg-info">
                 <div class="inner">
                     <h3>{{ $stats['total'] }}</h3>
-                    <p>Total Active Medicines</p>
+                    <p>Total Medicines</p>
                 </div>
                 <div class="icon">
                     <i class="fas fa-pills"></i>
                 </div>
-                <a href="?status=active" class="small-box-footer">
+                <a href="{{ route('medicines.index') }}" class="small-box-footer">
                     View All <i class="fas fa-arrow-circle-right"></i>
                 </a>
             </div>
@@ -114,7 +114,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label for="status">Status</label>
-                            <select name="status" id="status" class="form-control">
+                            <select name="status" id="status" class="form-control" data-original-name="status">
                                 <option value="">All Status</option>
                                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
@@ -127,7 +127,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label for="category">Category</label>
-                            <select name="category" id="category" class="form-control">
+                            <select name="category" id="category" class="form-control" data-original-name="category">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $key => $category)
                                     <option value="{{ $key }}" {{ request('category') == $key ? 'selected' : '' }}>{{ $category }}</option>
@@ -139,7 +139,7 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label for="stock_filter">Stock Status</label>
-                            <select name="stock_filter" id="stock_filter" class="form-control">
+                            <select name="stock_filter" id="stock_filter" class="form-control" data-original-name="stock_filter">
                                 <option value="">All Stock</option>
                                 <option value="low_stock" {{ request('stock_filter') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
                                 <option value="out_of_stock" {{ request('stock_filter') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
@@ -155,7 +155,7 @@
                             <div class="input-group">
                                 <input type="text" name="search" id="search" class="form-control" 
                                        placeholder="Medicine name, generic, brand, manufacturer, or supplier..." 
-                                       value="{{ request('search') }}">
+                                       value="{{ request('search') }}" data-original-name="search">
                                 <div class="input-group-append">
                                     <button type="submit" class="btn btn-default">
                                         <i class="fas fa-search"></i>
@@ -199,120 +199,123 @@
             @if($medicines->count() > 0)
                 <table class="table table-bordered table-striped" id="medicinesTable">
                     <thead>
-                        <tr>
-                            <th width="5%">ID</th>
-                            <th width="20%">Medicine Details</th>
-                            <th width="12%">Category</th>
-                            <th width="15%">Stock Info</th>
-                            <th width="12%">Therapeutic Info</th>
-                            <th width="12%">Expiry</th>
-                            <th width="8%">Status</th>
-                            <th width="16%">Actions</th>
+                        <tr style="background-color: #f8f9fa;">
+                            <th width="8%" class="text-center">Article</th>
+                            <th width="25%">Description</th>
+                            <th width="10%" class="text-center">Stock Number</th>
+                            <th width="10%" class="text-center">Unit Measure</th>
+                            <th width="10%" class="text-center">Unit Value</th>
+                            <th width="12%" class="text-center">Balance (Quantity)</th>
+                            <th width="10%" class="text-center">On Hand Per Count</th>
+                            <th width="10%" class="text-center">Shortage/Overage</th>
+                            <th width="12%">Remarks</th>
+                            <th width="13%" class="text-center">Expiry Status</th>
+                            <th width="10%" class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($medicines as $medicine)
                         <tr>
-                            <td>{{ $medicine->id }}</td>
+                            <td class="text-center">{{ $medicine->id }}</td>
                             <td>
                                 <strong>{{ $medicine->medicine_name }}</strong>
                                 @if($medicine->brand_name)
                                     <br><small class="text-muted">{{ $medicine->brand_name }}</small>
                                 @endif
-                                @if($medicine->generic_name)
-                                    <br><small class="text-primary">Generic: {{ $medicine->generic_name }}</small>
-                                @endif
-                                <br><small class="text-info">{{ $medicine->strength }} {{ $medicine->dosage_form }}</small>
-                                @if($medicine->requires_prescription)
-                                    <br><span class="badge badge-warning">Prescription Required</span>
-                                @else
-                                    <br><span class="badge badge-info">Over-the-Counter</span>
+                                @if($medicine->strength)
+                                    <br><small class="text-info">{{ $medicine->strength }}</small>
                                 @endif
                             </td>
-                            <td>
-                                <span class="badge badge-secondary">{{ $medicine->category }}</span>
-                                @if($medicine->manufacturer)
-                                    <br><small class="text-muted mt-1">{{ $medicine->manufacturer }}</small>
+                            <td class="text-center">
+                                <span class="badge badge-secondary">MED-{{ str_pad($medicine->id, 4, '0', STR_PAD_LEFT) }}</span>
+                            </td>
+                            <td class="text-center">{{ $medicine->unit_measure ?? 'pcs' }}</td>
+                            <td class="text-center">
+                                <span class="text-muted">-</span>
+                            </td>
+                            <td class="text-center">
+                                <strong class="{{ $medicine->stock_quantity <= $medicine->minimum_stock ? 'text-danger' : 'text-success' }}">
+                                    {{ $medicine->stock_quantity }}
+                                </strong>
+                                @if($medicine->minimum_stock)
+                                    <br><small class="text-muted">Min: {{ $medicine->minimum_stock }}</small>
                                 @endif
                             </td>
-                            <td>
-                                <strong>{{ $medicine->stock_quantity }} {{ $medicine->unit }}</strong>
-                                <br><small class="text-muted">Min: {{ $medicine->minimum_stock }}</small>
-                                <br><span class="badge badge-{{ $medicine->stock_status_color }}">{{ $medicine->stock_status }}</span>
+                            <td class="text-center">
+                                <input type="number" class="form-control form-control-sm text-center" 
+                                       style="width: 80px; margin: 0 auto;" 
+                                       placeholder="{{ $medicine->stock_quantity }}" 
+                                       title="Physical count"
+                                       data-medicine-id="{{ $medicine->id }}"
+                                       data-original-value="{{ $medicine->on_hand_per_count ?? 0 }}"
+                                       value="{{ $medicine->on_hand_per_count ?? '' }}">
                             </td>
-                            <td>
-                                @if($medicine->therapeutic_class)
-                                    <span class="badge badge-info">{{ $medicine->therapeutic_class }}</span>
-                                @endif
-                                @if($medicine->age_restrictions)
-                                    <br><small class="text-warning"><i class="fas fa-user-clock mr-1"></i>{{ $medicine->age_restrictions }}</small>
-                                @endif
-                                @if($medicine->pregnancy_category)
-                                    <br><small class="text-info"><i class="fas fa-baby mr-1"></i>Cat {{ $medicine->pregnancy_category }}</small>
-                                @endif
-                                @if($medicine->indication)
-                                    <br><small class="text-muted" title="{{ $medicine->indication }}">{{ Str::limit($medicine->indication, 30) }}</small>
-                                @endif
-                            </td>
-                            <td>
-                                @if($medicine->expiry_date)
-                                    {{ $medicine->expiry_date->format('M d, Y') }}
-                                    <br>
-                                    @if($medicine->is_expired)
-                                        <span class="badge badge-danger">Expired</span>
-                                    @elseif($medicine->is_expiring_soon)
-                                        <span class="badge badge-warning">Expiring Soon</span>
+                            <td class="text-center">
+                                <div class="shortage-display" data-balance="{{ $medicine->balance_per_card ?? $medicine->stock_quantity }}">
+                                    @if($medicine->shortage_overage > 0)
+                                        <span class="text-success">+{{ $medicine->shortage_overage }}</span><br><small class="text-muted">Overage</small>
+                                    @elseif($medicine->shortage_overage < 0)
+                                        <span class="text-danger">{{ $medicine->shortage_overage }}</span><br><small class="text-muted">Shortage</small>
                                     @else
-                                        <small class="text-success">{{ $medicine->expiry_date->diffForHumans() }}</small>
+                                        <small class="text-muted">-</small>
                                     @endif
-                                @else
-                                    <span class="text-muted">No expiry set</span>
-                                @endif
+                                </div>
                             </td>
                             <td>
-                                @if($medicine->status == 'active')
-                                    <span class="badge badge-success">Active</span>
-                                @elseif($medicine->status == 'inactive')
-                                    <span class="badge badge-secondary">Inactive</span>
-                                @elseif($medicine->status == 'expired')
-                                    <span class="badge badge-danger">Expired</span>
-                                @else
-                                    <span class="badge badge-dark">Discontinued</span>
-                                @endif
+                                <div style="min-height: 40px; font-size: 0.8rem;">
+                                    @if($medicine->inventory_remarks)
+                                        <span class="text-dark">{{ Str::limit($medicine->inventory_remarks, 50) }}</span>
+                                    @else
+                                        <small class="text-muted">No remarks</small>
+                                    @endif
+                                </div>
                             </td>
-                            <td>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
-                                        Actions
+                            <td class="text-center">
+                                <div style="min-height: 40px;">
+                                    @if($medicine->status == 'expired' || ($medicine->expiry_date && $medicine->expiry_date->isPast()))
+                                        <span class="badge badge-danger">Expired</span>
+                                        @if($medicine->expiry_date)
+                                            <br><small class="text-muted">{{ $medicine->expiry_date->format('M d, Y') }}</small>
+                                        @endif
+                                    @elseif($medicine->expiry_date && $medicine->expiry_date->diffInDays() <= 30)
+                                        <span class="badge badge-warning">Expiring Soon</span>
+                                        <br><small class="text-muted">{{ $medicine->expiry_date->format('M d, Y') }}</small>
+                                        <br><small class="text-warning">{{ $medicine->expiry_date->diffInDays() }} days left</small>
+                                    @elseif($medicine->expiry_date && $medicine->expiry_date->diffInDays() <= 90)
+                                        <span class="badge badge-info">Expiring in 3 months</span>
+                                        <br><small class="text-muted">{{ $medicine->expiry_date->format('M d, Y') }}</small>
+                                        <br><small class="text-info">{{ $medicine->expiry_date->diffInDays() }} days left</small>
+                                    @elseif($medicine->expiry_date)
+                                        <span class="badge badge-success">Good</span>
+                                        <br><small class="text-muted">Exp: {{ $medicine->expiry_date->format('M d, Y') }}</small>
+                                        <br><small class="text-success">{{ $medicine->expiry_date->diffInDays() }} days left</small>
+                                    @else
+                                        <span class="badge badge-secondary">No Date</span>
+                                        <br><small class="text-muted">Not specified</small>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" style="flex-wrap: wrap; gap: 2px;">
+                                    <button type="button" class="btn btn-outline-primary btn-xs" 
+                                            onclick="location.href='{{ route('medicines.edit', $medicine) }}'" 
+                                            title="Edit">
+                                        <i class="fas fa-edit"></i>
                                     </button>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="{{ route('medicines.show', $medicine) }}">
-                                            <i class="fas fa-eye mr-2"></i>View Details
-                                        </a>
-                                        @if($medicine->status != 'discontinued')
-                                            <a class="dropdown-item" href="{{ route('medicines.edit', $medicine) }}">
-                                                <i class="fas fa-edit mr-2"></i>Edit
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                            <a class="dropdown-item stock-update" href="#" 
-                                               data-id="{{ $medicine->id }}" 
-                                               data-name="{{ $medicine->medicine_name }}"
-                                               data-current="{{ $medicine->stock_quantity }}"
-                                               data-unit="{{ $medicine->unit }}">
-                                                <i class="fas fa-boxes mr-2"></i>Update Stock
-                                            </a>
-                                        @endif
-                                        @if($medicine->status == 'active')
-                                            <div class="dropdown-divider"></div>
-                                            <form action="{{ route('medicines.destroy', $medicine) }}" method="POST" style="display: inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Discontinue this medicine?')">
-                                                    <i class="fas fa-ban mr-2"></i>Discontinue
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
+                                    <button type="button" class="btn btn-outline-info btn-xs" 
+                                            onclick="location.href='{{ route('medicines.show', $medicine) }}'" 
+                                            title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    @if($medicine->shortage_overage != 0)
+                                        <button type="button" class="btn btn-outline-warning btn-xs btn-adjust-stock" 
+                                                data-medicine-id="{{ $medicine->id }}"
+                                                data-medicine-name="{{ $medicine->medicine_name }}"
+                                                data-shortage-overage="{{ $medicine->shortage_overage }}"
+                                                title="Adjust Stock">
+                                            <i class="fas fa-balance-scale"></i>
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -433,6 +436,89 @@
         transition: all 0.3s ease;
         margin-bottom: 1rem;
     }
+    
+    /* Inventory table styling */
+    #medicinesTable {
+        font-size: 0.9rem;
+    }
+    
+    #medicinesTable th {
+        border: 1px solid #dee2e6;
+        padding: 8px 4px;
+        vertical-align: middle;
+        font-weight: 600;
+        background-color: #f8f9fa;
+    }
+    
+    #medicinesTable td {
+        border: 1px solid #dee2e6;
+        padding: 8px 4px;
+        vertical-align: middle;
+    }
+    
+    .btn-xs {
+        padding: 2px 6px;
+        font-size: 11px;
+        line-height: 1.2;
+    }
+    
+    .form-control-sm.text-center {
+        font-size: 0.8rem;
+        padding: 2px 4px;
+    }
+    
+    .shortage-display {
+        min-height: 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .table-active {
+        background-color: #f8f9fa;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+    
+    /* Expiry status styling */
+    .badge-danger {
+        background-color: #dc3545;
+    }
+    
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-info {
+        background-color: #17a2b8;
+    }
+    
+    .badge-success {
+        background-color: #28a745;
+    }
+    
+    .badge-secondary {
+        background-color: #6c757d;
+    }
+    
+    /* Print styles for inventory */
+    @media print {
+        .card-tools, .btn-group, .filter-section {
+            display: none !important;
+        }
+        
+        #medicinesTable {
+            font-size: 0.8rem;
+        }
+        
+        .shortage-display input {
+            border: 1px solid #000;
+        }
+    }</style>
 </style>
 @endsection
 
@@ -470,23 +556,82 @@ $(document).ready(function() {
     
     // Auto-submit form on filter change
     $('#status, #category, #stock_filter').change(function() {
+        // Remove empty parameters before submitting
+        $('#filterForm input, #filterForm select').each(function() {
+            if ($(this).val() === '' || $(this).val() === null) {
+                $(this).removeAttr('name');
+            } else {
+                // Restore name attribute if it was removed
+                var originalName = $(this).data('original-name');
+                if (originalName && !$(this).attr('name')) {
+                    $(this).attr('name', originalName);
+                }
+            }
+        });
         $('#filterForm').submit();
     });
-
-    // DataTable for better sorting
-    @if($medicines->count() > 0)
-    $('#medicinesTable').DataTable({
-        "paging": false,
-        "searching": false,
-        "ordering": true,
-        "info": false,
-        "autoWidth": false,
-        "responsive": true,
-        "order": [[ 1, "asc" ]], // Sort by medicine name
-        "columnDefs": [
-            { "orderable": false, "targets": [7] } // Disable sorting on actions column
-        ]
+    
+    // Calculate shortage/overage when physical count changes
+    $(document).on('input', '.form-control-sm[type="number"]', function() {
+        const physicalCount = parseFloat($(this).val()) || 0;
+        const balance = parseFloat($(this).closest('tr').find('.shortage-display').data('balance')) || 0;
+        const shortageDisplay = $(this).closest('tr').find('.shortage-display');
+        
+        const difference = physicalCount - balance;
+        
+        if (difference === 0 || physicalCount === 0) {
+            shortageDisplay.html('<small class="text-muted">-</small>');
+        } else if (difference > 0) {
+            shortageDisplay.html(`<span class="text-success">+${difference}</span><br><small class="text-muted">Overage</small>`);
+        } else {
+            shortageDisplay.html(`<span class="text-danger">${difference}</span><br><small class="text-muted">Shortage</small>`);
+        }
     });
+    
+    // Save physical count to backend on blur/enter
+    $(document).on('blur keypress', '.form-control-sm[type="number"]', function(e) {
+        if (e.type === 'keypress' && e.which !== 13) return; // Only handle Enter key for keypress
+        
+        const $input = $(this);
+        const medicineId = $input.data('medicine-id');
+        const physicalCount = parseInt($input.val()) || 0;
+        const originalValue = parseInt($input.data('original-value')) || 0;
+        
+        // Only save if value has changed and medicine ID exists
+        if (physicalCount !== originalValue && medicineId) {
+            savePhysicalCount(medicineId, physicalCount, $input);
+        }
+    });
+    
+    // Handle stock adjustment buttons
+    $(document).on('click', '.btn-adjust-stock', function() {
+        const medicineId = $(this).data('medicine-id');
+        const medicineName = $(this).data('medicine-name');
+        const shortageOverage = parseInt($(this).data('shortage-overage')) || 0;
+        
+        if (shortageOverage === 0) {
+            showAlert('No adjustment needed. Stock is balanced.', 'info');
+            return;
+        }
+        
+        const adjustmentType = shortageOverage > 0 ? 'increase' : 'decrease';
+        const adjustmentAmount = Math.abs(shortageOverage);
+        
+        if (confirm(`Adjust stock for ${medicineName}?\n\nThis will ${adjustmentType} the stock by ${adjustmentAmount} units to match the physical count.`)) {
+            const reason = prompt('Please provide a reason for this adjustment:');
+            if (reason && reason.trim()) {
+                adjustStockFromCount(medicineId, reason.trim());
+            }
+        }
+    });
+
+    // Simple table styling instead of DataTable for cleaner look
+    @if($medicines->count() > 0)
+    // Add hover effects
+    $('#medicinesTable tbody tr').hover(
+        function() { $(this).addClass('table-active'); },
+        function() { $(this).removeClass('table-active'); }
+    );
     @endif
     
     // Handle filter card toggle behavior
@@ -645,6 +790,104 @@ $(document).ready(function() {
             });
         }
     });
+    
+    // Helper function: Save physical count to backend
+    function savePhysicalCount(medicineId, physicalCount, $input) {
+        const $row = $input.closest('tr');
+        const originalBg = $row.css('background-color');
+        
+        // Visual feedback
+        $row.css('background-color', '#fff3cd');
+        $input.prop('disabled', true);
+        
+        $.ajax({
+            url: `/medicines/${medicineId}/update-physical-count`,
+            method: 'POST',
+            data: {
+                on_hand_per_count: physicalCount,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update the shortage/overage display
+                    const $shortageCell = $row.find('.shortage-display');
+                    const shortageOverage = response.data.shortage_overage;
+                    
+                    if (shortageOverage === 0 || physicalCount === 0) {
+                        $shortageCell.html('<small class="text-muted">-</small>');
+                    } else if (shortageOverage > 0) {
+                        $shortageCell.html(`<span class="text-success">+${shortageOverage}</span><br><small class="text-muted">Overage</small>`);
+                    } else {
+                        $shortageCell.html(`<span class="text-danger">${shortageOverage}</span><br><small class="text-muted">Shortage</small>`);
+                    }
+                    
+                    // Update the original value
+                    $input.data('original-value', physicalCount);
+                    
+                    // Show/hide adjust button
+                    const $adjustBtn = $row.find('.btn-adjust-stock');
+                    if (shortageOverage !== 0) {
+                        $adjustBtn.show().data('shortage-overage', shortageOverage);
+                    } else {
+                        $adjustBtn.hide();
+                    }
+                    
+                    // Success feedback
+                    $row.css('background-color', '#d4edda');
+                    setTimeout(() => {
+                        $row.css('background-color', originalBg);
+                    }, 2000);
+                    
+                    showAlert('Physical count updated successfully.', 'success');
+                } else {
+                    showAlert(response.message || 'Failed to update physical count.', 'danger');
+                    $input.val($input.data('original-value') || 0); // Reset value
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Failed to update physical count.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                showAlert(errorMessage, 'danger');
+                $input.val($input.data('original-value') || 0); // Reset value
+            },
+            complete: function() {
+                $input.prop('disabled', false);
+            }
+        });
+    }
+    
+    // Helper function: Adjust stock based on physical count
+    function adjustStockFromCount(medicineId, reason) {
+        $.ajax({
+            url: `/medicines/${medicineId}/adjust-stock-from-count`,
+            method: 'POST',
+            data: {
+                adjustment_reason: reason,
+                confirm_adjustment: true,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    showAlert(response.message, 'success');
+                    // Refresh the page to show updated data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showAlert(response.message || 'Failed to adjust stock.', 'danger');
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Failed to adjust stock.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                showAlert(errorMessage, 'danger');
+            }
+        });
+    }
 });
 </script>
 @endsection

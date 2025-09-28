@@ -32,7 +32,7 @@
         </div>
     @endif
 
-    <form action="{{ route('medicines.store') }}" method="POST" id="medicineForm">
+    <form action="{{ route('medicines.store') }}" method="POST" id="medicineForm" enctype="multipart/form-data">
         @csrf
         
         <!-- Basic Information Card -->
@@ -550,6 +550,34 @@
                     </div>
                 </div>
 
+                <!-- Medicine Image Upload -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="medicine_image">Medicine Image</label>
+                            <div class="custom-file">
+                                <input type="file" name="medicine_image" id="medicine_image" class="custom-file-input" 
+                                       accept="image/*">
+                                <label class="custom-file-label" for="medicine_image">Choose image file...</label>
+                            </div>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle mr-1"></i>Upload an image of the medicine (JPEG, PNG, GIF, WebP - Max 10MB)
+                            </small>
+                            @error('medicine_image')
+                                <span class="text-danger small">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="imagePreview" class="mt-2" style="display: none;">
+                            <div class="border rounded p-2 text-center" style="max-width: 300px;">
+                                <img id="previewImage" src="" alt="Preview" class="img-fluid" style="max-height: 200px;">
+                                <p class="text-muted mt-2 mb-0">Image Preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Notes -->
                 <div class="row">
                     <div class="col-12">
@@ -650,6 +678,27 @@ $(document).ready(function() {
             return $(this).data('placeholder');
         },
         allowClear: true
+    });
+    
+    // Image preview functionality
+    $('#medicine_image').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            const fileName = file.name;
+            
+            // Update the custom file label
+            $(this).next('.custom-file-label').html(fileName);
+            
+            reader.onload = function(e) {
+                $('#previewImage').attr('src', e.target.result);
+                $('#imagePreview').show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $(this).next('.custom-file-label').html('Choose image file...');
+            $('#imagePreview').hide();
+        }
     });
 
     

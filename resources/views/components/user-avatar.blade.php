@@ -3,13 +3,19 @@
     $width = $width ?? ($size === 'thumbnail' ? '50px' : '200px');
     $height = $height ?? ($size === 'thumbnail' ? '50px' : '200px');
     
-    // Get user information
-    if (!$user || !$user->name) {
-        $initials = '??';
+    // Get user information with better fallback handling
+    if (!$user) {
+        $initials = 'NA';
         $userName = 'User';
         $hasProfilePicture = false;
         $profilePictureUrl = '';
-        $initialsAvatarUrl = 'data:image/svg+xml;base64,' . base64_encode('<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#6c757d"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">??</text></svg>');
+        $initialsAvatarUrl = 'data:image/svg+xml;base64,' . base64_encode('<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#6c757d"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">NA</text></svg>');
+    } elseif (!$user->name || trim($user->name) === '') {
+        $initials = 'UN';
+        $userName = 'Unknown User';
+        $hasProfilePicture = false;
+        $profilePictureUrl = '';
+        $initialsAvatarUrl = 'data:image/svg+xml;base64,' . base64_encode('<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#6c757d"/><text x="50%" y="50%" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="central">UN</text></svg>');
     } else {
         $userName = $user->name;
         $initials = $user->getInitials();

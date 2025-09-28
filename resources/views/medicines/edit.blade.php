@@ -568,8 +568,8 @@
                     <div class="card-body text-center">
                         <div id="currentImage" class="mb-3">
                             @if($medicine->medicine_image)
-                                <img src="{{ asset('storage/' . $medicine->medicine_image) }}" 
-                                     alt="{{ $medicine->medicine_name }}" class="img-fluid rounded">
+                                <img src="{{ $medicine->medicine_image }}" 
+                                     alt="{{ $medicine->medicine_name }}" class="img-fluid rounded medicine-image" data-fallback="true">
                             @else
                                 <div class="medicine-placeholder">
                                     <i class="fas fa-pills fa-4x text-muted mb-3"></i>
@@ -586,7 +586,7 @@
                             <label for="medicine_image">Update Image</label>
                             <input type="file" name="medicine_image" id="medicine_image" class="form-control-file" 
                                    accept="image/*">
-                            <small class="form-text text-muted">Max size: 2MB. JPG, PNG, GIF allowed. Leave empty to keep current image.</small>
+                            <small class="form-text text-muted">Upload a new image (JPEG, PNG, GIF, WebP - Max 10MB). Leave empty to keep current image. Images are stored securely via ImgBB.</small>
                             @error('medicine_image')
                                 <span class="text-danger small">{{ $message }}</span>
                             @enderror
@@ -824,6 +824,11 @@
 @section('js')
 <script>
 $(document).ready(function() {
+    // Handle image loading errors
+    $('.medicine-image[data-fallback="true"]').on('error', function() {
+        $(this).replaceWith('<div class="medicine-placeholder"><i class="fas fa-pills fa-4x text-muted mb-3"></i><p class="text-muted">Image not available</p></div>');
+    });
+    
     // Image preview
     $('#medicine_image').change(function() {
         const file = this.files[0];

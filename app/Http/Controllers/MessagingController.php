@@ -25,7 +25,7 @@ class MessagingController extends Controller
         $conversations = Conversation::forUser($user->id)
             ->active()
             ->notArchivedFor($user->id)
-            ->with(['patient', 'admin', 'latestMessage', 'messages' => function($q) use ($user) {
+            ->with(['patient.user', 'admin', 'latestMessage', 'messages' => function($q) use ($user) {
                 $q->notSentBy($user->id)->unread();
             }])
             ->orderBy('last_message_at', 'desc')
@@ -36,7 +36,7 @@ class MessagingController extends Controller
         
         // If a specific conversation is selected, load its messages
         if ($selectedConversationId) {
-            $selectedConversation = Conversation::with(['patient', 'admin'])
+            $selectedConversation = Conversation::with(['patient.user', 'admin'])
                 ->forUser($user->id)
                 ->find($selectedConversationId);
                 
@@ -303,7 +303,7 @@ class MessagingController extends Controller
         $user = Auth::user();
         
         $conversation = Conversation::forUser($user->id)
-            ->with(['patient', 'admin'])
+            ->with(['patient.user', 'admin'])
             ->findOrFail($conversationId);
         
         // Load messages with sender information

@@ -16,6 +16,7 @@ use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\DatabaseFixController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PasswordChangeController;
+use App\Http\Controllers\DocumentationController;
 use Illuminate\Support\Facades\Route;
 
 // Debug routes (remove in production) - loaded before auth middleware to avoid conflicts
@@ -32,6 +33,16 @@ Route::get('/auth-test-working', function () {
         'timestamp' => now()
     ]);
 });
+
+// Health check endpoint for monitoring services (prevents Render sleep)
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'service' => 'Clinic Management System',
+        'timestamp' => now()->toISOString(),
+        'uptime' => 'running'
+    ]);
+})->name('health.check');
 
 // Test routes removed - authentication system working properly
 
@@ -97,6 +108,11 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             Route::get('/export-stock', [MedicineController::class, 'exportStockReport'])->name('exportStock');
             Route::get('/search', [MedicineController::class, 'searchForPrescription'])->name('searchForPrescription');
             Route::get('/low-stock-alerts', [MedicineController::class, 'getLowStockAlert'])->name('lowStockAlerts');
+            
+            // Inventory management routes
+            Route::post('/{medicine}/update-physical-count', [MedicineController::class, 'updatePhysicalCount'])->name('updatePhysicalCount');
+            Route::post('/{medicine}/adjust-stock-from-count', [MedicineController::class, 'adjustStockFromCount'])->name('adjustStockFromCount');
+            Route::get('/inventory-report', [MedicineController::class, 'inventoryReport'])->name('inventoryReport');
         });
         Route::resource('medicines', MedicineController::class);
         
@@ -151,6 +167,29 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             Route::get('/download-backup/{filename}', [SettingsController::class, 'downloadBackup'])->name('downloadBackup');
             Route::delete('/delete-backup/{filename}', [SettingsController::class, 'deleteBackup'])->name('deleteBackup');
             Route::post('/restore-backup/{filename}', [SettingsController::class, 'restoreBackup'])->name('restoreBackup');
+        });
+        
+        // Documentation Management (AdminLTE Menu)
+        Route::prefix('admin/documentation')->name('admin.documentation.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'index'])->name('index');
+            Route::get('/system-overview', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'systemOverview'])->name('system-overview');
+            Route::get('/user-management', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'userManagement'])->name('user-management');
+            Route::get('/patient-management', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'patientManagement'])->name('patient-management');
+            Route::get('/appointment-management', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'appointmentManagement'])->name('appointment-management');
+            Route::get('/medicine-management', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'medicineManagement'])->name('medicine-management');
+            Route::get('/messaging-system', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'messagingSystem'])->name('messaging-system');
+            Route::get('/reports-analytics', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'reportsAnalytics'])->name('reports-analytics');
+            Route::get('/technical', [App\Http\Controllers\Admin\AdminDocumentationController::class, 'technical'])->name('technical');
+        });
+        
+        // Legacy Documentation Management
+        Route::prefix('documentation')->name('documentation.')->group(function () {
+            Route::get('/', [App\Http\Controllers\DocumentationController::class, 'index'])->name('index');
+            Route::get('/admin-guide', [App\Http\Controllers\DocumentationController::class, 'adminGuide'])->name('admin-guide');
+            Route::get('/quick-guide', [App\Http\Controllers\DocumentationController::class, 'quickGuide'])->name('quick-guide');
+            Route::get('/module-help/{module}', [App\Http\Controllers\DocumentationController::class, 'moduleHelp'])->name('module-help');
+            Route::get('/search', [App\Http\Controllers\DocumentationController::class, 'search'])->name('search');
+            Route::get('/export/{type}', [App\Http\Controllers\DocumentationController::class, 'exportPdf'])->name('export');
         });
         
         // Email Testing Management

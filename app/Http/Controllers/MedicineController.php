@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
+use App\Services\ImgBBService;
 
 class MedicineController extends Controller
 {
@@ -19,20 +20,18 @@ class MedicineController extends Controller
     {
         $query = Medicine::query();
         
-        // Filter by status
-        if ($request->has('status') && $request->status !== '') {
+        // Filter by status - show all by default
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
-        } else {
-            $query->active(); // Default to active medicines
         }
         
         // Filter by category
-        if ($request->has('category') && $request->category !== '') {
+        if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
         
         // Filter by stock status
-        if ($request->has('stock_filter')) {
+        if ($request->filled('stock_filter')) {
             switch ($request->stock_filter) {
                 case 'low_stock':
                     $query->lowStock();
@@ -50,7 +49,7 @@ class MedicineController extends Controller
         }
         
         // Search functionality
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('medicine_name', 'like', "%{$search}%")
@@ -66,7 +65,8 @@ class MedicineController extends Controller
         
         // Get statistics
         $stats = [
-            'total' => Medicine::active()->count(),
+            'total' => Medicine::count(), // Show all medicines, not just active
+            'active' => Medicine::active()->count(),
             'low_stock' => Medicine::active()->lowStock()->count(),
             'expired' => Medicine::expired()->count(),
             'expiring_soon' => Medicine::active()->expiringSoon()->count(),
@@ -110,9 +110,13 @@ class MedicineController extends Controller
             'strength' => 'required|string|max:255',
             'dosage_instructions' => 'nullable|string',
             'age_restrictions' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:255',
+            'unit_measure' => 'nullable|string|max:255', // Changed from 'unit' to 'unit_measure' and made nullable
             'stock_quantity' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',
+            'balance_per_card' => 'nullable|integer|min:0',
+            'on_hand_per_count' => 'nullable|integer|min:0',
+            'shortage_overage' => 'nullable|integer',
+            'inventory_remarks' => 'nullable|string|max:500',
             'supplier' => 'nullable|string|max:255',
             'batch_number' => 'nullable|string|max:255',
             'manufacturing_date' => 'nullable|date|before_or_equal:today',
@@ -125,6 +129,7 @@ class MedicineController extends Controller
             'warnings' => 'nullable|string',
             'requires_prescription' => 'boolean',
             'notes' => 'nullable|string',
+            'medicine_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
         ];
         
         try {
@@ -141,6 +146,19 @@ class MedicineController extends Controller
         }
         
         try {
+            // Handle image upload if provided
+            if ($request->hasFile('medicine_image') && $request->file('medicine_image')->isValid()) {
+                $imgBBService = new ImgBBService();
+                $imageName = 'medicine_' . time() . '_' . uniqid();
+                $uploadResult = $imgBBService->uploadImage($request->file('medicine_image'), $imageName);
+                
+                if ($uploadResult['success']) {
+                    $validated['medicine_image'] = $uploadResult['url'];
+                } else {
+                    throw new \Exception('Failed to upload image: ' . $uploadResult['error']);
+                }
+            }
+            
             // Set status based on expiry date
             if (isset($validated['expiry_date'])) {
                 $expiryDate = Carbon::parse($validated['expiry_date']);
@@ -225,9 +243,13 @@ class MedicineController extends Controller
             'strength' => 'required|string|max:255',
             'dosage_instructions' => 'nullable|string',
             'age_restrictions' => 'nullable|string|max:255',
-            'unit' => 'required|string|max:255',
+            'unit_measure' => 'nullable|string|max:255', // Changed from 'unit' to 'unit_measure' and made nullable
             'stock_quantity' => 'required|integer|min:0',
             'minimum_stock' => 'required|integer|min:0',
+            'balance_per_card' => 'nullable|integer|min:0',
+            'on_hand_per_count' => 'nullable|integer|min:0',
+            'shortage_overage' => 'nullable|integer',
+            'inventory_remarks' => 'nullable|string|max:500',
             'supplier' => 'nullable|string|max:255',
             'batch_number' => 'nullable|string|max:255',
             'manufacturing_date' => 'nullable|date|before_or_equal:today',
@@ -241,6 +263,7 @@ class MedicineController extends Controller
             'requires_prescription' => 'boolean',
             'status' => ['required', Rule::in([Medicine::STATUS_ACTIVE, Medicine::STATUS_INACTIVE, Medicine::STATUS_EXPIRED, Medicine::STATUS_DISCONTINUED])],
             'notes' => 'nullable|string',
+            'medicine_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
         ];
         
         try {
@@ -257,6 +280,19 @@ class MedicineController extends Controller
         }
         
         try {
+            // Handle image upload if provided
+            if ($request->hasFile('medicine_image') && $request->file('medicine_image')->isValid()) {
+                $imgBBService = new ImgBBService();
+                $imageName = 'medicine_' . $medicine->id . '_' . time() . '_' . uniqid();
+                $uploadResult = $imgBBService->uploadImage($request->file('medicine_image'), $imageName);
+                
+                if ($uploadResult['success']) {
+                    $validated['medicine_image'] = $uploadResult['url'];
+                } else {
+                    throw new \Exception('Failed to upload image: ' . $uploadResult['error']);
+                }
+            }
+            
             // Auto-update status if expired
             if (isset($validated['expiry_date'])) {
                 $expiryDate = Carbon::parse($validated['expiry_date']);
@@ -793,6 +829,199 @@ class MedicineController extends Controller
                 'success' => false,
                 'message' => 'Failed to fetch stock history: ' . $e->getMessage()
             ], 500);
+        }
+    }
+    
+    /**
+     * Update physical count for inventory management
+     */
+    public function updatePhysicalCount(Request $request, Medicine $medicine)
+    {
+        $request->validate([
+            'on_hand_per_count' => 'required|integer|min:0',
+            'inventory_remarks' => 'nullable|string|max:500',
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            $oldCount = $medicine->on_hand_per_count ?? 0;
+            $newCount = $request->on_hand_per_count;
+            $balancePerCard = $medicine->balance_per_card ?? $medicine->stock_quantity;
+            
+            // Calculate shortage/overage
+            $shortageOverage = $newCount - $balancePerCard;
+            
+            $medicine->update([
+                'on_hand_per_count' => $newCount,
+                'shortage_overage' => $shortageOverage,
+                'inventory_remarks' => $request->inventory_remarks,
+            ]);
+            
+            // Log the physical count update
+            StockMovement::create([
+                'medicine_id' => $medicine->id,
+                'user_id' => auth()->id(),
+                'type' => 'physical_count',
+                'quantity_changed' => 0, // Physical count doesn't change actual stock
+                'quantity_before' => $oldCount,
+                'quantity_after' => $newCount,
+                'reason' => 'Physical inventory count',
+                'notes' => $request->inventory_remarks,
+                'reference_type' => 'inventory',
+                'reference_id' => null
+            ]);
+            
+            DB::commit();
+            
+            $shortageOverageText = '';
+            if ($shortageOverage > 0) {
+                $shortageOverageText = "+{$shortageOverage} (Overage)";
+            } elseif ($shortageOverage < 0) {
+                $shortageOverageText = "{$shortageOverage} (Shortage)";
+            } else {
+                $shortageOverageText = "0 (Balanced)";
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Physical count updated successfully.',
+                'data' => [
+                    'on_hand_per_count' => $newCount,
+                    'shortage_overage' => $shortageOverage,
+                    'shortage_overage_text' => $shortageOverageText,
+                    'balance_per_card' => $balancePerCard,
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update physical count: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Adjust stock based on physical count discrepancy
+     */
+    public function adjustStockFromCount(Request $request, Medicine $medicine)
+    {
+        $request->validate([
+            'adjustment_reason' => 'required|string|max:500',
+            'confirm_adjustment' => 'required|boolean|accepted',
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            $physicalCount = $medicine->on_hand_per_count;
+            $currentStock = $medicine->stock_quantity;
+            $shortageOverage = $medicine->shortage_overage ?? 0;
+            
+            if ($shortageOverage == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No adjustment needed. Stock is balanced.'
+                ], 400);
+            }
+            
+            // Update the actual stock quantity to match physical count
+            $newStockQuantity = $physicalCount;
+            $quantityChanged = abs($shortageOverage);
+            $adjustmentType = $shortageOverage > 0 ? 'adjustment_add' : 'adjustment_subtract';
+            
+            $medicine->update([
+                'stock_quantity' => $newStockQuantity,
+                'balance_per_card' => $newStockQuantity, // Update balance to match
+                'shortage_overage' => 0, // Reset to balanced
+            ]);
+            
+            // Log the stock adjustment
+            StockMovement::create([
+                'medicine_id' => $medicine->id,
+                'user_id' => auth()->id(),
+                'type' => $adjustmentType,
+                'quantity_changed' => $quantityChanged,
+                'quantity_before' => $currentStock,
+                'quantity_after' => $newStockQuantity,
+                'reason' => $request->adjustment_reason,
+                'notes' => "Stock adjusted based on physical count. Previous shortage/overage: {$shortageOverage}",
+                'reference_type' => 'adjustment',
+                'reference_id' => null
+            ]);
+            
+            DB::commit();
+            
+            $adjustmentText = $shortageOverage > 0 ? 'increased' : 'decreased';
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Stock {$adjustmentText} by {$quantityChanged} units to match physical count.",
+                'data' => [
+                    'old_stock' => $currentStock,
+                    'new_stock' => $newStockQuantity,
+                    'adjustment' => $shortageOverage,
+                    'stock_status' => $medicine->refresh()->stock_status,
+                    'stock_status_color' => $medicine->refresh()->stock_status_color,
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to adjust stock: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Generate inventory report
+     */
+    public function inventoryReport(Request $request)
+    {
+        try {
+            $query = Medicine::active();
+            
+            // Filter by category if specified
+            if ($request->has('category') && $request->category !== '') {
+                $query->where('category', $request->category);
+            }
+            
+            // Filter by discrepancy type
+            if ($request->has('discrepancy_filter')) {
+                switch ($request->discrepancy_filter) {
+                    case 'shortage':
+                        $query->where('shortage_overage', '<', 0);
+                        break;
+                    case 'overage':
+                        $query->where('shortage_overage', '>', 0);
+                        break;
+                    case 'balanced':
+                        $query->where('shortage_overage', '=', 0);
+                        break;
+                    case 'uncounted':
+                        $query->whereNull('on_hand_per_count');
+                        break;
+                }
+            }
+            
+            $medicines = $query->orderBy('medicine_name')->paginate(50);
+            
+            $stats = [
+                'total_items' => Medicine::active()->count(),
+                'counted_items' => Medicine::active()->whereNotNull('on_hand_per_count')->count(),
+                'items_with_shortage' => Medicine::active()->where('shortage_overage', '<', 0)->count(),
+                'items_with_overage' => Medicine::active()->where('shortage_overage', '>', 0)->count(),
+                'balanced_items' => Medicine::active()->where('shortage_overage', '=', 0)->count(),
+            ];
+            
+            return view('medicines.inventory-report', compact('medicines', 'stats'));
+            
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to generate inventory report: ' . $e->getMessage()]);
         }
     }
 }

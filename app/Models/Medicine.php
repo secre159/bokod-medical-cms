@@ -103,6 +103,7 @@ class Medicine extends Model
         'status',
         'notes',
         'inventory_remarks',
+        'medicine_image',
     ];
     
     protected $casts = [

@@ -440,6 +440,13 @@ return [
             'can' => 'manage-users',
         ],
         [
+            'text' => 'Documentation',
+            'route' => 'admin.documentation.index',
+            'icon' => 'fas fa-fw fa-book',
+            'can' => 'admin',
+            'active' => ['admin/documentation*'],
+        ],
+        [
             'text' => 'Settings',
             'route' => 'settings.index',
             'icon' => 'fas fa-fw fa-cog',

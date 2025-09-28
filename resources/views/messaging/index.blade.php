@@ -3493,7 +3493,7 @@ body.modal-open {
                                                 @if(Auth::user()->role === 'patient')
                                                     @php $otherUser = $conversation->admin; @endphp
                                                 @else
-                                                    @php $otherUser = $conversation->patient; @endphp
+                                                    @php $otherUser = $conversation->patient?->user; @endphp
                                                 @endif
                                                 
                                                 <x-user-avatar :user="$otherUser" size="thumbnail" width="40px" height="40px" class="conversation-avatar-img" />
@@ -3503,7 +3503,7 @@ body.modal-open {
                                                     @if(Auth::user()->role === 'patient')
                                                         {{ $conversation->admin->name ?? 'Medical Staff' }}
                                                     @else
-                                                        {{ $conversation->patient->patient_name ?? 'Unknown Patient' }}
+                                                        {{ $conversation->patient?->user?->name ?? $conversation->patient?->patient_name ?? 'Unknown Patient' }}
                                                     @endif
                                                 </h6>
                                                 <p class="mb-1 text-muted small">
@@ -3558,9 +3558,20 @@ body.modal-open {
                                         </button>
                                         <div class="chat-header-avatar mr-3">
                                             @if(Auth::user()->role === 'patient')
-                                                @php $chatUser = $selectedConversation->admin; @endphp
+                                                @php 
+                                                    $chatUser = $selectedConversation->admin; 
+                                                    if (!$chatUser) {
+                                                        \Log::warning('No admin user found for conversation', ['conversation_id' => $selectedConversation->id]);
+                                                    }
+                                                @endphp
                                             @else
-                                                @php $chatUser = $selectedConversation->patient; @endphp
+                                                @php 
+                                                    // For admin users, we need to get the patient's user record
+                                                    $chatUser = $selectedConversation->patient?->user ?? null; 
+                                                    if (!$chatUser) {
+                                                        \Log::warning('No patient user found for conversation', ['conversation_id' => $selectedConversation->id, 'patient_id' => $selectedConversation->patient_id]);
+                                                    }
+                                                @endphp
                                             @endif
                                             
                                             <x-user-avatar :user="$chatUser" size="thumbnail" width="45px" height="45px" class="chat-header-avatar-img" />
@@ -3570,7 +3581,7 @@ body.modal-open {
                                                 @if(Auth::user()->role === 'patient')
                                                     {{ $selectedConversation->admin->name ?? 'Medical Staff' }}
                                                 @else
-                                                    {{ $selectedConversation->patient->patient_name ?? 'Unknown Patient' }}
+                                                    {{ $selectedConversation->patient?->user?->name ?? $selectedConversation->patient?->patient_name ?? 'Unknown Patient' }}
                                                 @endif
                                             </h6>
                                             <small class="text-muted">
