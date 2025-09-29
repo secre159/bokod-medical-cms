@@ -64,6 +64,10 @@ return [
 
         'resend' => [
             'transport' => 'resend',
+            // Reduce HTTP client timeout to prevent long request blocking on failures
+            'client' => [
+                'timeout' => env('MAIL_HTTP_TIMEOUT', 5),
+            ],
         ],
 
         'sendmail' => [

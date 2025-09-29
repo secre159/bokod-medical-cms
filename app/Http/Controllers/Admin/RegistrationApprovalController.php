@@ -207,6 +207,15 @@ class RegistrationApprovalController extends Controller
     private function sendApprovalEmail(User $user)
     {
         try {
+            // Skip sending if Resend is selected but no API key is configured to avoid timeouts
+            if (config('mail.default') === 'resend' && empty(config('services.resend.key'))) {
+                \Log::warning('Skipping approval email: Resend not configured', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ]);
+                return;
+            }
+
             // Using a simple mail approach - you can enhance this with Mailable classes
             Mail::send('emails.registration-approved', ['user' => $user], function($message) use ($user) {
                 $message->to($user->email, $user->name)
@@ -240,6 +249,15 @@ class RegistrationApprovalController extends Controller
     private function sendRejectionEmail(User $user, string $reason)
     {
         try {
+            // Skip sending if Resend is selected but no API key is configured to avoid timeouts
+            if (config('mail.default') === 'resend' && empty(config('services.resend.key'))) {
+                \Log::warning('Skipping rejection email: Resend not configured', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ]);
+                return;
+            }
+
             Mail::send('emails.registration-rejected', [
                 'user' => $user, 
                 'reason' => $reason
