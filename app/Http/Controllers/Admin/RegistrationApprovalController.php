@@ -217,8 +217,12 @@ class RegistrationApprovalController extends Controller
             }
 
             // Using a simple mail approach - you can enhance this with Mailable classes
-            Mail::send('emails.registration-approved', ['user' => $user], function($message) use ($user) {
-                $message->to($user->email, $user->name)
+            $fromAddress = config('mail.from.address') ?: 'noreply@resend.dev';
+            $fromName = config('mail.from.name') ?: (config('app.name') ?: 'Bokod Medical CMS');
+
+            Mail::send('emails.registration-approved', ['user' => $user], function($message) use ($user, $fromAddress, $fromName) {
+                $message->from($fromAddress, $fromName)
+                        ->to($user->email, $user->name)
                         ->subject('BSU Health Portal - Registration Approved');
             });
         } catch (\Exception $e) {
@@ -258,11 +262,15 @@ class RegistrationApprovalController extends Controller
                 return;
             }
 
+            $fromAddress = config('mail.from.address') ?: 'noreply@resend.dev';
+            $fromName = config('mail.from.name') ?: (config('app.name') ?: 'Bokod Medical CMS');
+
             Mail::send('emails.registration-rejected', [
                 'user' => $user, 
                 'reason' => $reason
-            ], function($message) use ($user) {
-                $message->to($user->email, $user->name)
+            ], function($message) use ($user, $fromAddress, $fromName) {
+                $message->from($fromAddress, $fromName)
+                        ->to($user->email, $user->name)
                         ->subject('BSU Health Portal - Registration Status');
             });
         } catch (\Exception $e) {
