@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Patient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class RegistrationApprovalController extends Controller
@@ -209,7 +210,7 @@ class RegistrationApprovalController extends Controller
         try {
             // Skip sending if Resend is selected but no API key is configured to avoid timeouts
             if (config('mail.default') === 'resend' && empty(config('services.resend.key'))) {
-                \Log::warning('Skipping approval email: Resend not configured', [
+                Log::warning('Skipping approval email: Resend not configured', [
                     'user_id' => $user->id,
                     'email' => $user->email,
                 ]);
@@ -226,7 +227,7 @@ class RegistrationApprovalController extends Controller
                         ->subject('BSU Health Portal - Registration Approved');
             });
         } catch (\Throwable $e) {
-            \\Log::error('Failed to send approval email', [
+            Log::error('Failed to send approval email', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'error' => $e->getMessage(),
@@ -256,7 +257,7 @@ class RegistrationApprovalController extends Controller
         try {
             // Skip sending if Resend is selected but no API key is configured to avoid timeouts
             if (config('mail.default') === 'resend' && empty(config('services.resend.key'))) {
-                \Log::warning('Skipping rejection email: Resend not configured', [
+                Log::warning('Skipping rejection email: Resend not configured', [
                     'user_id' => $user->id,
                     'email' => $user->email,
                 ]);
@@ -275,7 +276,7 @@ class RegistrationApprovalController extends Controller
                         ->subject('BSU Health Portal - Registration Status');
             });
         } catch (\Throwable $e) {
-            \\Log::error('Failed to send rejection email', [
+            Log::error('Failed to send rejection email', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'error' => $e->getMessage(),
