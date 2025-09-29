@@ -225,11 +225,12 @@ class RegistrationApprovalController extends Controller
                         ->to($user->email, $user->name)
                         ->subject('BSU Health Portal - Registration Approved');
             });
-        } catch (\Exception $e) {
-            \Log::error('Failed to send approval email', [
+        } catch (\Throwable $e) {
+            \\Log::error('Failed to send approval email', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'exception' => get_class($e)
             ]);
         }
     }
@@ -273,11 +274,12 @@ class RegistrationApprovalController extends Controller
                         ->to($user->email, $user->name)
                         ->subject('BSU Health Portal - Registration Status');
             });
-        } catch (\Exception $e) {
-            \Log::error('Failed to send rejection email', [
+        } catch (\Throwable $e) {
+            \\Log::error('Failed to send rejection email', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'exception' => get_class($e)
             ]);
         }
     }
