@@ -228,7 +228,6 @@
                     <!-- Approve Button -->
                     <form action="{{ route('registrations.approve', $user) }}" method="POST" class="d-inline">
                         @csrf
-                        @method('PATCH')
                         <button type="submit" class="btn btn-success btn-block" 
                                 onclick="return confirm('Are you sure you want to approve this registration?')">
                             <i class="fas fa-check"></i> Approve Registration
@@ -290,7 +289,6 @@
         <div class="modal-content">
             <form action="{{ route('registrations.reject', $user) }}" method="POST">
                 @csrf
-                @method('PATCH')
                 <div class="modal-header">
                     <h5 class="modal-title" id="rejectModalLabel">Reject Registration</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">

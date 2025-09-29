@@ -209,8 +209,9 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'index'])->name('index');
             Route::get('/pending-count', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'pendingCount'])->name('pendingCount');
             Route::get('/{user}', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'show'])->name('show');
-            Route::post('/{user}/approve', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'approve'])->name('approve');
-            Route::post('/{user}/reject', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'reject'])->name('reject');
+            // Accept both POST and PATCH to be compatible with form overrides
+            Route::match(['post','patch'], '/{user}/approve', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'approve'])->name('approve');
+            Route::match(['post','patch'], '/{user}/reject', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'reject'])->name('reject');
             Route::post('/bulk-approve', [App\Http\Controllers\Admin\RegistrationApprovalController::class, 'bulkApprove'])->name('bulkApprove');
         });
         
