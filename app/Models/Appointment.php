@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
+use App\Traits\PhilippineTimezone;
 
 class Appointment extends Model
 {
+    use PhilippineTimezone;
+    
     protected $primaryKey = 'appointment_id';
     
     /**

@@ -876,6 +876,14 @@ class SecureBackdoorController extends Controller
                     'https_enabled' => $request->secure(),
                     'debug_mode' => config('app.debug'),
                     'maintenance_mode' => app()->isDownForMaintenance()
+                ],
+                'timezone' => [
+                    'php_timezone' => date_default_timezone_get(),
+                    'app_timezone' => config('app.timezone'),
+                    'current_utc' => \Carbon\Carbon::now('UTC')->format('Y-m-d H:i:s T'),
+                    'current_manila' => \Carbon\Carbon::now('Asia/Manila')->format('Y-m-d H:i:s T'),
+                    'server_time' => date('Y-m-d H:i:s T'),
+                    'offset' => \Carbon\Carbon::now('Asia/Manila')->getOffset() / 3600 . ' hours'
                 ]
             ];
             
