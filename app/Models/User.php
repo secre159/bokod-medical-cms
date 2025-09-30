@@ -25,6 +25,7 @@ class User extends Authenticatable
         'display_name',
         'email',
         'profile_picture',
+        'profile_picture_public_id',
         'password',
         'role',
         'status',

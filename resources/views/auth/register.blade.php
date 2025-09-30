@@ -467,6 +467,20 @@
             border-color: #ced4da;
         }
         
+        /* Password toggle styling */
+        .password-toggle {
+            transition: all 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            background: rgba(25, 135, 84, 0.1);
+            color: var(--bsu-primary-green);
+        }
+        
+        .password-toggle span {
+            font-size: 0.9rem;
+        }
+        
         /* Improved form transitions */
         .form-step {
             opacity: 0;
@@ -849,6 +863,9 @@
                                 <div class="input-group-text">
                                     <span class="fas fa-lock"></span>
                                 </div>
+                                <div class="input-group-text password-toggle" style="cursor: pointer; border-left: none;" onclick="togglePasswordVisibility('password', this)" title="Show password">
+                                    <span class="fas fa-eye"></span>
+                                </div>
                             </div>
                         </div>
                         <div class="password-strength" id="password-strength">
@@ -867,6 +884,9 @@
                             <div class="input-group-append">
                                 <div class="input-group-text">
                                     <span class="fas fa-lock"></span>
+                                </div>
+                                <div class="input-group-text password-toggle" style="cursor: pointer; border-left: none;" onclick="togglePasswordVisibility('password_confirmation', this)" title="Show password">
+                                    <span class="fas fa-eye"></span>
                                 </div>
                             </div>
                         </div>
@@ -1304,6 +1324,24 @@ function isValidPhoneFormat(phone) {
     ];
     
     return validNetworkCodes.includes(networkCode);
+}
+
+// Password visibility toggle function
+function togglePasswordVisibility(inputId, toggleButton) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleIcon = toggleButton.querySelector('span');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+        toggleButton.title = 'Hide password';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+        toggleButton.title = 'Show password';
+    }
 }
 
 // Add shake animation CSS

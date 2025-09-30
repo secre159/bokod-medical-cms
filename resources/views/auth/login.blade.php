@@ -143,6 +143,19 @@
             color: var(--bsu-secondary-green);
         }
         
+        .password-toggle {
+            transition: all 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            background: rgba(25, 135, 84, 0.2);
+            color: var(--bsu-primary-green);
+        }
+        
+        .password-toggle span {
+            font-size: 0.9rem;
+        }
+        
         .btn-primary {
             background: linear-gradient(135deg, var(--bsu-secondary-green) 0%, var(--bsu-light-green) 100%);
             border: none;
@@ -308,11 +321,14 @@
 
             {{-- Password field --}}
             <div class="input-group mb-3">
-                <input type="password" name="password" class="form-control @error('password') is-invalid @enderror"
+                <input type="password" name="password" id="login-password" class="form-control @error('password') is-invalid @enderror"
                        placeholder="{{ __('Password') }}" required autocomplete="current-password">
                 <div class="input-group-append">
                     <div class="input-group-text">
                         <span class="fas fa-lock {{ config('adminlte.classes_auth_icon', '') }}"></span>
+                    </div>
+                    <div class="input-group-text password-toggle" style="cursor: pointer; border-left: none;" onclick="togglePasswordVisibility('login-password', this)" title="Show password">
+                        <span class="fas fa-eye" id="login-password-toggle"></span>
                     </div>
                 </div>
                 @error('password')
@@ -369,4 +385,25 @@
             </small>
         </p>
     </div>
+@stop
+
+@section('adminlte_js')
+<script>
+function togglePasswordVisibility(inputId, toggleButton) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleIcon = toggleButton.querySelector('span');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+        toggleButton.title = 'Hide password';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+        toggleButton.title = 'Show password';
+    }
+}
+</script>
 @stop
