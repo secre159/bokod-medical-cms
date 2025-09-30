@@ -219,14 +219,16 @@ class User extends Authenticatable
             // Use email as fallback if available
             if ($this->email) {
                 $emailParts = explode('@', $this->email);
-                $username = $emailParts[0];
-                return strtoupper(substr($username, 0, 2));
+                if (isset($emailParts[0]) && !empty($emailParts[0])) {
+                    $username = $emailParts[0];
+                    return strtoupper(substr($username, 0, 2));
+                }
             }
             return 'UN'; // Unknown User
         }
         
         $names = explode(' ', trim($this->name));
-        $names = array_filter($names); // Remove empty elements
+        $names = array_values(array_filter($names)); // Remove empty elements and reindex
         
         if (count($names) >= 2) {
             return strtoupper(substr($names[0], 0, 1) . substr($names[1], 0, 1));
