@@ -1,0 +1,33 @@
+
+=== Manual Database Backup Instructions ===
+
+Since we don't have PostgreSQL tools installed locally, here are your options:
+
+OPTION 1: Use Online PostgreSQL Client
+1. Go to: https://www.db-fiddle.com/ or https://sqliteonline.com/
+2. Connect using these details:
+   Host: dpg-d39vbvjipnbc73b76ddg-a.singapore-postgres.render.com
+   Port: 5432
+   Database: bokod_cms
+   Username: bokod_user
+   Password: QDpObjPcGz2zyBChhBbH2p5L1NJjCNZ7
+
+OPTION 2: Install PostgreSQL Tools
+1. Download PostgreSQL from: https://www.postgresql.org/download/windows/
+2. Install only the client tools
+3. Then run: pg_dump "postgresql://bokod_user:QDpObjPcGz2zyBChhBbH2p5L1NJjCNZ7@dpg-d39vbvjipnbc73b76ddg-a.singapore-postgres.render.com:5432/bokod_cms" > backup_2025-09-29_23-07-25.sql
+
+OPTION 3: Use Render Dashboard
+1. Go to: https://dashboard.render.com/d/dpg-d39vbvjipnbc73b76ddg-a
+2. Look for export/backup options in the database dashboard
+
+OPTION 4: Use DBeaver (Recommended)
+1. Download DBeaver from: https://dbeaver.io/download/
+2. Install and create new PostgreSQL connection
+3. Use the connection details above
+4. Right-click database -> Tools -> Export Data
+
+CONNECTION STRING:
+postgresql://bokod_user:QDpObjPcGz2zyBChhBbH2p5L1NJjCNZ7@dpg-d39vbvjipnbc73b76ddg-a.singapore-postgres.render.com:5432/bokod_cms
+
+BACKUP DIRECTORY: C:\Users\Axl Chan\Desktop\XAMPP\htdocs\cms/backups

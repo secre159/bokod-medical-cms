@@ -1,0 +1,16 @@
+{
+    "timestamp": "2025-09-29_23-07-25",
+    "database": {
+        "host": "dpg-d39vbvjipnbc73b76ddg-a.singapore-postgres.render.com",
+        "database": "bokod_cms",
+        "username": "bokod_user"
+    },
+    "files_created": [
+        "backup_instructions_2025-09-29_23-07-25.txt",
+        "backup_script_2025-09-29_23-07-25.ps1",
+        "run_backup_2025-09-29_23-07-25.bat",
+        "list_tables.sql"
+    ],
+    "connection_string": "postgresql:\/\/bokod_user:QDpObjPcGz2zyBChhBbH2p5L1NJjCNZ7@dpg-d39vbvjipnbc73b76ddg-a.singapore-postgres.render.com:5432\/bokod_cms",
+    "backup_directory": "C:\\Users\\Axl Chan\\Desktop\\XAMPP\\htdocs\\cms\/backups"
+}
