@@ -1282,13 +1282,8 @@
         
         // Real-time Philippine time clock
         function updateCurrentTime() {
-            const now = new Date();
-            
-            // Convert to Philippine time (UTC+8)
-            const philippineTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-            
-            // Format time as h:mm:ss AM/PM
-            const timeString = philippineTime.toLocaleString('en-US', {
+            // Get current time directly in Philippine timezone
+            const timeString = new Date().toLocaleString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 second: '2-digit',

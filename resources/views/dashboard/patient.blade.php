@@ -656,10 +656,8 @@ $(document).ready(function() {
     
     // Real-time Philippine time clock for patient dashboard
     function updatePatientCurrentTime() {
-        const now = new Date();
-        
-        // Format time as h:mm:ss AM/PM in Philippine time
-        const timeString = now.toLocaleString('en-US', {
+        // Get current time directly in Philippine timezone
+        const timeString = new Date().toLocaleString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             second: '2-digit',
