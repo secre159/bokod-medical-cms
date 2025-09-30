@@ -5,7 +5,19 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <h1 class="m-0 text-dark">Dashboard</h1>
-        <small class="text-muted">{{ now()->format('F j, Y') }}</small>
+        <div class="text-right">
+            <div class="current-datetime">
+                <div class="current-time text-primary font-weight-bold" id="current-time" style="font-size: 1.1em;">
+                    {{ \App\Helpers\TimezoneHelper::now()->format('g:i:s A') }}
+                </div>
+                <div class="current-date text-muted" style="font-size: 0.9em;">
+                    <i class="fas fa-calendar-alt mr-1"></i>{{ \App\Helpers\TimezoneHelper::now()->format('l, F j, Y') }}
+                </div>
+                <div class="timezone-info text-muted" style="font-size: 0.75em;">
+                    <i class="fas fa-globe-asia mr-1"></i>Philippine Time (GMT+8)
+                </div>
+            </div>
+        </div>
     </div>
 @stop
 
@@ -685,6 +697,25 @@
             }
         }
         
+        /* Current time display styling */
+        .current-datetime {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .current-time {
+            font-family: 'Courier New', 'Monaco', monospace;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .timezone-info {
+            opacity: 0.8;
+        }
+        
         @keyframes pulse-dot {
             0%, 100% { 
                 transform: scale(1); 
@@ -1248,5 +1279,31 @@
                 }
             });
         }
+        
+        // Real-time Philippine time clock
+        function updateCurrentTime() {
+            const now = new Date();
+            
+            // Convert to Philippine time (UTC+8)
+            const philippineTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+            
+            // Format time as h:mm:ss AM/PM
+            const timeString = philippineTime.toLocaleString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Manila'
+            });
+            
+            // Update the time display
+            $('#current-time').text(timeString);
+        }
+        
+        // Initialize real-time clock
+        $(document).ready(function() {
+            updateCurrentTime(); // Update immediately
+            setInterval(updateCurrentTime, 1000); // Update every second
+        });
     </script>
 @stop

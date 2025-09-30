@@ -4,18 +4,68 @@
 
 @section('adminlte_css_pre')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        /* Patient dashboard time display styling */
+        .current-datetime {
+            background: rgba(40, 167, 69, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+        
+        .current-time {
+            font-family: 'Courier New', 'Monaco', monospace;
+            letter-spacing: 1px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .timezone-info {
+            opacity: 0.8;
+        }
+        
+        /* Responsive time display */
+        @media (max-width: 768px) {
+            .current-datetime {
+                margin-bottom: 0.5rem !important;
+            }
+            
+            .current-time {
+                font-size: 1em !important;
+            }
+            
+            .current-date {
+                font-size: 0.8em !important;
+            }
+            
+            .timezone-info {
+                font-size: 0.65em !important;
+            }
+        }
+    </style>
 @endsection
 
 @section('content_header')
-    <div class="row">
+    <div class="row align-items-center">
         <div class="col-sm-6">
             <h1 class="m-0">
                 Welcome, {{ auth()->user()->name }}!
                 <small class="text-muted">Patient Portal</small>
             </h1>
         </div>
-        <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
+        <div class="col-sm-6 text-right">
+            <div class="current-datetime mb-2">
+                <div class="current-time text-success font-weight-bold" id="patient-current-time" style="font-size: 1.1em;">
+                    {{ \App\Helpers\TimezoneHelper::now()->format('g:i:s A') }}
+                </div>
+                <div class="current-date text-muted" style="font-size: 0.85em;">
+                    <i class="fas fa-calendar-alt mr-1"></i>{{ \App\Helpers\TimezoneHelper::now()->format('l, F j, Y') }}
+                </div>
+                <div class="timezone-info text-muted" style="font-size: 0.7em;">
+                    <i class="fas fa-globe-asia mr-1"></i>Philippine Time
+                </div>
+            </div>
+            <ol class="breadcrumb float-sm-right mb-0" style="background: transparent; padding: 0;">
                 <li class="breadcrumb-item active">Dashboard</li>
             </ol>
         </div>
@@ -603,6 +653,27 @@ $(document).ready(function() {
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
     }
+    
+    // Real-time Philippine time clock for patient dashboard
+    function updatePatientCurrentTime() {
+        const now = new Date();
+        
+        // Format time as h:mm:ss AM/PM in Philippine time
+        const timeString = now.toLocaleString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true,
+            timeZone: 'Asia/Manila'
+        });
+        
+        // Update the time display
+        $('#patient-current-time').text(timeString);
+    }
+    
+    // Initialize real-time clock for patient
+    updatePatientCurrentTime(); // Update immediately
+    setInterval(updatePatientCurrentTime, 1000); // Update every second
     
     // Clean up polling on page unload
     window.addEventListener('beforeunload', function() {
