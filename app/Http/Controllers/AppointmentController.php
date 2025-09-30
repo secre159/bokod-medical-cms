@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Helpers\TimezoneHelper;
 
 class AppointmentController extends Controller
 {
@@ -115,9 +116,12 @@ class AppointmentController extends Controller
      */
     public function store(Request $request)
     {
+        // Get today's date in Philippine timezone for validation
+        $todayInPhilippines = TimezoneHelper::now()->toDateString();
+        
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
-            'appointment_date' => 'required|date|after_or_equal:today',
+            'appointment_date' => 'required|date|after_or_equal:' . $todayInPhilippines,
             'appointment_time' => 'required|date_format:H:i',
             'reason' => 'required|string|max:500',
         ]);
@@ -136,10 +140,11 @@ class AppointmentController extends Controller
         }
         
         // Philippine School Hours Validation
-        $appointmentDate = Carbon::createFromFormat('Y-m-d', $validated['appointment_date']);
-        $appointmentTime = Carbon::createFromFormat('H:i', $validated['appointment_time']);
+        // Parse dates in Philippine timezone context
+        $appointmentDate = Carbon::createFromFormat('Y-m-d', $validated['appointment_date'], TimezoneHelper::PHILIPPINE_TIMEZONE);
+        $appointmentTime = Carbon::createFromFormat('H:i', $validated['appointment_time'], TimezoneHelper::PHILIPPINE_TIMEZONE);
         
-        // Check if it's Monday-Friday only
+        // Check if it's Monday-Friday only (using Philippine timezone)
         if ($appointmentDate->dayOfWeek === 0 || $appointmentDate->dayOfWeek === 6) {
             return back()->withErrors([
                 'appointment_date' => 'Appointments can only be scheduled Monday through Friday.'
@@ -238,9 +243,12 @@ class AppointmentController extends Controller
      */
     public function update(Request $request, Appointment $appointment)
     {
+        // Get today's date in Philippine timezone for validation
+        $todayInPhilippines = TimezoneHelper::now()->toDateString();
+        
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
-            'appointment_date' => 'required|date|after_or_equal:today',
+            'appointment_date' => 'required|date|after_or_equal:' . $todayInPhilippines,
             'appointment_time' => 'required|date_format:H:i',
             'reason' => 'required|string|max:500',
             'status' => ['required', Rule::in([Appointment::STATUS_ACTIVE, Appointment::STATUS_CANCELLED, Appointment::STATUS_COMPLETED])],

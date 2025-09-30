@@ -12,6 +12,7 @@ use App\Models\Message;
 use App\Models\Conversation;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Helpers\TimezoneHelper;
 
 class DashboardController extends Controller
 {
@@ -30,8 +31,9 @@ class DashboardController extends Controller
     private function adminDashboard()
     {
         $user = Auth::user();
-        $today = Carbon::today();
-        $tomorrow = Carbon::tomorrow();
+        // Use Philippine timezone for consistent date comparisons
+        $today = TimezoneHelper::now()->toDateString();
+        $tomorrow = TimezoneHelper::now()->addDay()->toDateString();
         
         // Optimized statistics with reduced queries
         $stats = [];
@@ -56,10 +58,11 @@ class DashboardController extends Controller
             ->count();
         
         // Recent appointments with optimized eager loading
+        $upcomingDateLimit = TimezoneHelper::now()->addDays(2)->toDateString();
         $stats['upcoming_appointments'] = Appointment::select('appointment_id', 'patient_id', 'appointment_date', 'appointment_time', 'reason')
             ->with(['patient:id,patient_name'])
             ->where('appointment_date', '>=', $today)
-            ->where('appointment_date', '<=', $today->copy()->addDays(2)) // Reduced to 2 days
+            ->where('appointment_date', '<=', $upcomingDateLimit) // Reduced to 2 days
             ->where('status', 'active')
             ->orderBy('appointment_date')
             ->orderBy('appointment_time')
@@ -91,8 +94,9 @@ class DashboardController extends Controller
     public function asyncStats()
     {
         // Return secondary statistics asynchronously
-        $today = Carbon::today();
-        $tomorrow = Carbon::tomorrow();
+        // Use Philippine timezone for consistent date comparisons
+        $today = TimezoneHelper::now()->toDateString();
+        $tomorrow = TimezoneHelper::now()->addDay()->toDateString();
         
         $stats = [
             'appointments_tomorrow' => Appointment::whereDate('appointment_date', $tomorrow)
@@ -101,8 +105,9 @@ class DashboardController extends Controller
             
             'active_prescriptions' => Prescription::where('status', 'active')
                 ->where(function ($q) {
+                    $todayInPhilippines = TimezoneHelper::now()->toDateString();
                     $q->whereNull('expiry_date')
-                      ->orWhere('expiry_date', '>=', now());
+                      ->orWhere('expiry_date', '>=', $todayInPhilippines);
                 })->count(),
             
             'low_stock_medicines' => Medicine::where('stock_quantity', '<=', 10)
@@ -110,7 +115,7 @@ class DashboardController extends Controller
                 ->count(),
             
             'expiring_prescriptions' => Prescription::where('status', 'active')
-                ->whereDate('expiry_date', '<=', Carbon::now()->addDays(7))
+                ->whereDate('expiry_date', '<=', TimezoneHelper::now()->addDays(7)->toDateString())
                 ->count()
         ];
         

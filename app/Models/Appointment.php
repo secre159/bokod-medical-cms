@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use App\Traits\PhilippineTimezone;
+use App\Helpers\TimezoneHelper;
 
 class Appointment extends Model
 {
@@ -105,7 +106,9 @@ class Appointment extends Model
      */
     public function isOverdue(): bool
     {
-        return $this->appointment_date->isPast();
+        // Compare with Philippine timezone date
+        $todayInPhilippines = TimezoneHelper::now()->toDateString();
+        return $this->appointment_date->toDateString() < $todayInPhilippines;
     }
     
     /**
@@ -113,7 +116,9 @@ class Appointment extends Model
      */
     public function isToday(): bool
     {
-        return $this->appointment_date->isToday();
+        // Compare with Philippine timezone date
+        $todayInPhilippines = TimezoneHelper::now()->toDateString();
+        return $this->appointment_date->toDateString() === $todayInPhilippines;
     }
     
     /**
@@ -205,7 +210,9 @@ class Appointment extends Model
      */
     public function scopeUpcoming($query)
     {
-        return $query->where('appointment_date', '>=', now()->toDateString());
+        // Use Philippine timezone for consistent date comparison
+        $todayInPhilippines = TimezoneHelper::now()->toDateString();
+        return $query->where('appointment_date', '>=', $todayInPhilippines);
     }
     
     /**
@@ -213,7 +220,9 @@ class Appointment extends Model
      */
     public function scopeToday($query)
     {
-        return $query->whereDate('appointment_date', now()->toDateString());
+        // Use Philippine timezone for consistent date comparison
+        $todayInPhilippines = TimezoneHelper::now()->toDateString();
+        return $query->whereDate('appointment_date', $todayInPhilippines);
     }
     
     /**
@@ -221,9 +230,11 @@ class Appointment extends Model
      */
     public function scopeThisWeek($query)
     {
+        // Use Philippine timezone for consistent week calculation
+        $nowInPhilippines = TimezoneHelper::now();
         return $query->whereBetween('appointment_date', [
-            now()->startOfWeek(),
-            now()->endOfWeek()
+            $nowInPhilippines->startOfWeek()->toDateString(),
+            $nowInPhilippines->endOfWeek()->toDateString()
         ]);
     }
     
@@ -232,7 +243,9 @@ class Appointment extends Model
      */
     public function scopeOverdue($query)
     {
-        return $query->where('appointment_date', '<', now()->toDateString())
+        // Use Philippine timezone for consistent date comparison
+        $todayInPhilippines = TimezoneHelper::now()->toDateString();
+        return $query->where('appointment_date', '<', $todayInPhilippines)
                      ->where('status', self::STATUS_ACTIVE); // Only active appointments can be overdue
     }
 }
