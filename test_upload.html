@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Cloudinary Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .upload-form { border: 1px solid #ddd; padding: 20px; border-radius: 5px; }
+        .result { margin-top: 20px; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .preview { max-width: 200px; margin-top: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>🌟 Test Cloudinary Image Upload</h1>
+    
+    <div class="upload-form">
+        <h3>Upload Profile Picture</h3>
+        <form id="uploadForm">
+            <p>
+                <label for="image">Select Image:</label><br>
+                <input type="file" id="image" name="image" accept="image/*" required>
+            </p>
+            <p>
+                <label for="category">Category:</label><br>
+                <input type="text" id="category" name="category" value="profiles" placeholder="e.g., profiles">
+            </p>
+            <button type="submit">Upload to Cloudinary</button>
+        </form>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const formData = new FormData();
+            const imageFile = document.getElementById('image').files[0];
+            const category = document.getElementById('category').value || 'profiles';
+            
+            if (!imageFile) {
+                alert('Please select an image');
+                return;
+            }
+            
+            formData.append('image', imageFile);
+            formData.append('category', category);
+            
+            resultDiv.innerHTML = '<p>⏳ Uploading to Cloudinary...</p>';
+            
+            try {
+                // Using Laravel's OwnImageApiService endpoint
+                const response = await fetch('/api/images', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Upload Successful!</h4>
+                            <p><strong>URL:</strong> <a href="${data.data.url}" target="_blank">${data.data.url}</a></p>
+                            <p><strong>Public ID:</strong> ${data.data.public_id}</p>
+                            <p><strong>Size:</strong> ${(data.data.size / 1024).toFixed(2)} KB</p>
+                            <p><strong>Dimensions:</strong> ${data.data.width} x ${data.data.height}</p>
+                            <p><strong>Format:</strong> ${data.data.format}</p>
+                            <img src="${data.data.url}" class="preview" alt="Uploaded image">
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Upload Failed</h4>
+                            <p><strong>Error:</strong> ${data.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Request Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Make sure your Laravel server is running at: <code>php artisan serve</code></p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
