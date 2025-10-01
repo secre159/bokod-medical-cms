@@ -29,6 +29,32 @@ php artisan migrate --force --verbose
 echo "=== MIGRATION STATUS ==="
 php artisan migrate:status
 
+# Run additional PostgreSQL constraint fix if needed
+echo "=== RUNNING POSTGRESQL CONSTRAINT FIX ==="
+php artisan db:show
+echo "Database driver: $(php artisan tinker --execute='echo DB::getDriverName()')"
+echo "Current appointment statuses: $(php artisan tinker --execute='echo DB::table("appointments")->distinct()->pluck("status")->implode(", ")')"
+
+# Explicit constraint fix command
+echo "Running explicit constraint fix..."
+php -r '
+    require_once "vendor/autoload.php";
+    $app = require_once "bootstrap/app.php";
+    $app->make("Illuminate\Contracts\Console\Kernel")->bootstrap();
+    
+    try {
+        if (DB::getDriverName() === "pgsql") {
+            DB::statement("ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_status_check");
+            echo "Dropped existing constraint\n";
+            
+            DB::statement("ALTER TABLE appointments ADD CONSTRAINT appointments_status_check CHECK (status IN (\"pending\", \"active\", \"completed\", \"cancelled\", \"overdue\"))");
+            echo "Added new constraint with overdue status\n";
+        }
+    } catch (Exception $e) {
+        echo "Error: " . $e->getMessage() . "\n";
+    }
+'
+
 # Clear all caches
 echo "=== CLEARING CACHES ==="
 php artisan config:clear
