@@ -6,6 +6,12 @@ echo "Working directory: $(pwd)"
 echo "Database URL: ${DATABASE_URL:0:20}..."
 echo "Port: $PORT"
 
+# Copy production environment file if it exists
+if [ -f ".env.production" ]; then
+    echo "Using production environment configuration..."
+    cp .env.production .env
+fi
+
 # Wait for database connection
 echo "Waiting for database connection..."
 for i in {1..30}; do
