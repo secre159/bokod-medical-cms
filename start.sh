@@ -23,6 +23,14 @@ for i in {1..30}; do
     sleep 3
 done
 
+# IMMEDIATE PostgreSQL constraint fix BEFORE migrations
+if [ "$DATABASE_URL" ]; then
+    echo "FIXING POSTGRESQL CONSTRAINT NOW..."
+    psql "$DATABASE_URL" -c "ALTER TABLE appointments DROP CONSTRAINT IF EXISTS appointments_status_check;" 2>/dev/null || echo "Drop constraint attempt 1 failed"
+    psql "$DATABASE_URL" -c "ALTER TABLE appointments ADD CONSTRAINT appointments_status_check CHECK (status IN ('pending', 'active', 'completed', 'cancelled', 'overdue'));" 2>/dev/null || echo "Add constraint attempt 1 failed"
+    echo "PostgreSQL constraint fix completed!"
+fi
+
 # Force run all migrations
 echo "=== RUNNING MIGRATIONS ==="
 php artisan migrate --force --verbose
