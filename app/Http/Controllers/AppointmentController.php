@@ -224,6 +224,9 @@ class AppointmentController extends Controller
      */
     public function show(Appointment $appointment)
     {
+        // Auto-update status if needed
+        $appointment->autoUpdateStatus();
+        
         $appointment->load('patient');
         return view('appointments.show', compact('appointment'));
     }
@@ -251,7 +254,7 @@ class AppointmentController extends Controller
             'appointment_date' => 'required|date|after_or_equal:' . $todayInPhilippines,
             'appointment_time' => 'required|date_format:H:i',
             'reason' => 'required|string|max:500',
-            'status' => ['required', Rule::in([Appointment::STATUS_ACTIVE, Appointment::STATUS_CANCELLED, Appointment::STATUS_COMPLETED])],
+            'status' => ['required', Rule::in([Appointment::STATUS_ACTIVE, Appointment::STATUS_CANCELLED, Appointment::STATUS_COMPLETED, Appointment::STATUS_OVERDUE])],
         ]);
         
         // Check for conflicts (excluding current appointment)

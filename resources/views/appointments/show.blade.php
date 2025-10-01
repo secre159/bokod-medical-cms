@@ -49,15 +49,17 @@
                             <div class="d-flex flex-wrap">
                                 <div class="mr-3 mb-2">
                                     <strong>Status:</strong>
-                                    <span class="badge badge-lg badge-{{ $appointment->status === 'active' ? 'primary' : ($appointment->status === 'completed' ? 'success' : ($appointment->status === 'cancelled' ? 'danger' : 'secondary')) }}">
+                                    <span class="badge badge-lg badge-{{ $appointment->getStatusColorClass() }}">
                                         @if($appointment->status === 'cancelled')
                                             <i class="fas fa-times mr-1"></i>
                                         @elseif($appointment->status === 'completed')
                                             <i class="fas fa-check mr-1"></i>
+                                        @elseif($appointment->status === 'overdue')
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
                                         @elseif($appointment->status === 'active')
                                             <i class="fas fa-calendar mr-1"></i>
                                         @endif
-                                        {{ ucfirst($appointment->status) }}
+                                        {{ $appointment->getStatusDisplayName() }}
                                     </span>
                                 </div>
                                 <div class="mr-3 mb-2">
@@ -71,13 +73,6 @@
                                         <strong>Reschedule:</strong>
                                         <span class="badge badge-lg badge-{{ $appointment->reschedule_status === 'pending' ? 'warning' : ($appointment->reschedule_status === 'approved' ? 'info' : 'dark') }}">
                                             {{ ucfirst($appointment->reschedule_status) }}
-                                        </span>
-                                    </div>
-                                @endif
-                                @if($appointment->isOverdue() && $appointment->status !== 'completed')
-                                    <div class="mr-3 mb-2">
-                                        <span class="badge badge-lg badge-danger">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
                                         </span>
                                     </div>
                                 @endif

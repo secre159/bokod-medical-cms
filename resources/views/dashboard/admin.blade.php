@@ -352,7 +352,15 @@
                                                 </small>
                                             </div>
                                             <div class="text-right">
-                                                @if($appointment->appointment_date->isToday())
+                                                @php
+                                                    $appointmentDateTime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time->format('H:i:s'));
+                                                    $now = \App\Helpers\TimezoneHelper::now();
+                                                    $isOverdue = $appointmentDateTime->lt($now);
+                                                @endphp
+                                                
+                                                @if($isOverdue)
+                                                    <span class="badge badge-danger badge-sm">Overdue</span>
+                                                @elseif($appointment->appointment_date->isToday())
                                                     <span class="badge badge-info badge-sm">Today</span>
                                                 @elseif($appointment->appointment_date->isTomorrow())
                                                     <span class="badge badge-primary badge-sm">Tomorrow</span>

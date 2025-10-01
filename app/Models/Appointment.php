@@ -53,6 +53,7 @@ class Appointment extends Model
     const STATUS_ACTIVE = 'active';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_COMPLETED = 'completed';
+    const STATUS_OVERDUE = 'overdue';
     
     const APPROVAL_PENDING = 'pending';
     const APPROVAL_APPROVED = 'approved';
@@ -102,13 +103,20 @@ class Appointment extends Model
     }
     
     /**
-     * Check if appointment is overdue
+     * Check if appointment is overdue (considering both date and time)
      */
     public function isOverdue(): bool
     {
-        // Compare with Philippine timezone date
-        $todayInPhilippines = TimezoneHelper::now()->toDateString();
-        return $this->appointment_date->toDateString() < $todayInPhilippines;
+        // Only active appointments can be overdue
+        if ($this->status !== self::STATUS_ACTIVE) {
+            return false;
+        }
+        
+        // Combine date and time for proper comparison
+        $appointmentDateTime = Carbon::parse($this->appointment_date->format('Y-m-d') . ' ' . $this->appointment_time->format('H:i:s'));
+        $now = TimezoneHelper::now();
+        
+        return $appointmentDateTime->lt($now);
     }
     
     /**
@@ -239,13 +247,88 @@ class Appointment extends Model
     }
     
     /**
-     * Scope for overdue appointments
+     * Scope for overdue appointments (considering both date and time)
      */
     public function scopeOverdue($query)
     {
-        // Use Philippine timezone for consistent date comparison
-        $todayInPhilippines = TimezoneHelper::now()->toDateString();
-        return $query->where('appointment_date', '<', $todayInPhilippines)
-                     ->where('status', self::STATUS_ACTIVE); // Only active appointments can be overdue
+        $now = TimezoneHelper::now();
+        $today = $now->toDateString();
+        $currentTime = $now->format('H:i:s');
+        
+        return $query->where('status', self::STATUS_ACTIVE)
+                     ->where(function($q) use ($today, $currentTime) {
+                         // Past dates
+                         $q->where('appointment_date', '<', $today)
+                           // Or today but past time
+                           ->orWhere(function($subQ) use ($today, $currentTime) {
+                               $subQ->where('appointment_date', $today)
+                                    ->whereTime('appointment_time', '<', $currentTime);
+                           });
+                     });
+    }
+    
+    /**
+     * Automatically update overdue appointments
+     * Call this method periodically or when viewing appointments
+     */
+    public static function updateOverdueAppointments(): int
+    {
+        $count = 0;
+        $overdueAppointments = self::overdue()->get();
+        
+        foreach ($overdueAppointments as $appointment) {
+            $appointment->update(['status' => self::STATUS_OVERDUE]);
+            $count++;
+        }
+        
+        return $count;
+    }
+    
+    /**
+     * Get the appropriate status color class
+     */
+    public function getStatusColorClass(): string
+    {
+        return match($this->status) {
+            self::STATUS_ACTIVE => 'success',
+            self::STATUS_COMPLETED => 'primary', 
+            self::STATUS_CANCELLED => 'secondary',
+            self::STATUS_OVERDUE => 'danger',
+            default => 'info'
+        };
+    }
+    
+    /**
+     * Get the status display name
+     */
+    public function getStatusDisplayName(): string
+    {
+        return match($this->status) {
+            self::STATUS_ACTIVE => 'Active',
+            self::STATUS_COMPLETED => 'Completed',
+            self::STATUS_CANCELLED => 'Cancelled', 
+            self::STATUS_OVERDUE => 'Overdue',
+            default => ucfirst($this->status)
+        };
+    }
+    
+    /**
+     * Check if appointment status should be automatically updated
+     */
+    public function shouldAutoUpdateStatus(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE && $this->isOverdue();
+    }
+    
+    /**
+     * Auto-update status if needed
+     */
+    public function autoUpdateStatus(): bool
+    {
+        if ($this->shouldAutoUpdateStatus()) {
+            $this->update(['status' => self::STATUS_OVERDUE]);
+            return true;
+        }
+        return false;
     }
 }

@@ -31,6 +31,10 @@ class DashboardController extends Controller
     private function adminDashboard()
     {
         $user = Auth::user();
+        
+        // Automatically update overdue appointments before showing dashboard
+        Appointment::updateOverdueAppointments();
+        
         // Use Philippine timezone for consistent date comparisons
         $today = TimezoneHelper::now()->toDateString();
         $tomorrow = TimezoneHelper::now()->addDay()->toDateString();
@@ -57,7 +61,7 @@ class DashboardController extends Controller
             ->where('role', 'patient')
             ->count();
         
-        // Recent appointments with optimized eager loading
+        // Recent appointments with optimized eager loading (include today's appointments regardless of time to show overdue status)
         $upcomingDateLimit = TimezoneHelper::now()->addDays(2)->toDateString();
         $stats['upcoming_appointments'] = Appointment::select('appointment_id', 'patient_id', 'appointment_date', 'appointment_time', 'reason')
             ->with(['patient:id,patient_name'])
