@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
+use Illuminate\Support\Facades\Route;
+
+// Include emergency constraint fix route
+require __DIR__.'/constraint-fix.php';
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientPortalController;
 use App\Http\Controllers\PatientProfileController;
