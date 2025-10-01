@@ -225,7 +225,8 @@ class AppointmentController extends Controller
     public function show(Appointment $appointment)
     {
         // Auto-update status if needed
-        $appointment->autoUpdateStatus();
+        // TEMPORARILY DISABLED: PostgreSQL constraint still not fixed in production
+        // $appointment->autoUpdateStatus();
         
         $appointment->load('patient');
         return view('appointments.show', compact('appointment'));
