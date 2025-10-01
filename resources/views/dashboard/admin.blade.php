@@ -356,13 +356,18 @@
                                                     $appointmentDateTime = \Carbon\Carbon::parse($appointment->appointment_date->format('Y-m-d') . ' ' . $appointment->appointment_time->format('H:i:s'));
                                                     $now = \App\Helpers\TimezoneHelper::now();
                                                     $isOverdue = $appointmentDateTime->lt($now);
+                                                    
+                                                    // Use Philippine timezone for date comparisons
+                                                    $today = \App\Helpers\TimezoneHelper::now()->toDateString();
+                                                    $tomorrow = \App\Helpers\TimezoneHelper::now()->addDay()->toDateString();
+                                                    $appointmentDate = $appointment->appointment_date->toDateString();
                                                 @endphp
                                                 
                                                 @if($isOverdue)
                                                     <span class="badge badge-danger badge-sm">Overdue</span>
-                                                @elseif($appointment->appointment_date->isToday())
+                                                @elseif($appointmentDate == $today)
                                                     <span class="badge badge-info badge-sm">Today</span>
-                                                @elseif($appointment->appointment_date->isTomorrow())
+                                                @elseif($appointmentDate == $tomorrow)
                                                     <span class="badge badge-primary badge-sm">Tomorrow</span>
                                                 @elseif($appointment->approval_status == 'pending')
                                                     <span class="badge badge-warning badge-sm">Pending</span>
