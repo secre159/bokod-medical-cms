@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 // Include emergency constraint fix route
@@ -20,7 +21,6 @@ use App\Http\Controllers\DatabaseFixController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PasswordChangeController;
 use App\Http\Controllers\DocumentationController;
-use Illuminate\Support\Facades\Route;
 
 // Debug routes (remove in production) - loaded before auth middleware to avoid conflicts
 if (app()->environment(['local', 'staging'])) {
