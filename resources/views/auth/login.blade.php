@@ -324,11 +324,11 @@
                 <input type="password" name="password" id="login-password" class="form-control @error('password') is-invalid @enderror"
                        placeholder="{{ __('Password') }}" required autocomplete="current-password">
                 <div class="input-group-append">
-                    <div class="input-group-text">
-                        <span class="fas fa-lock {{ config('adminlte.classes_auth_icon', '') }}"></span>
-                    </div>
-                    <div class="input-group-text password-toggle" style="cursor: pointer; border-left: none;" onclick="togglePasswordVisibility('login-password', this)" title="Show password">
+                    <div class="input-group-text password-toggle" style="cursor: pointer;" onclick="togglePasswordVisibility('login-password', this)" title="Show password">
                         <span class="fas fa-eye" id="login-password-toggle"></span>
+                    </div>
+                    <div class="input-group-text" style="border-left: none;">
+                        <span class="fas fa-lock {{ config('adminlte.classes_auth_icon', '') }}"></span>
                     </div>
                 </div>
                 @error('password')

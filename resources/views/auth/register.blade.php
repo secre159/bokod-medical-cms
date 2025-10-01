@@ -860,11 +860,11 @@
                             <input type="password" name="password" id="password" class="form-control @error('password') is-invalid @enderror" 
                                    placeholder="Password" required>
                             <div class="input-group-append">
-                                <div class="input-group-text">
-                                    <span class="fas fa-lock"></span>
-                                </div>
-                                <div class="input-group-text password-toggle" style="cursor: pointer; border-left: none;" onclick="togglePasswordVisibility('password', this)" title="Show password">
+                                <div class="input-group-text password-toggle" style="cursor: pointer;" onclick="togglePasswordVisibility('password', this)" title="Show password">
                                     <span class="fas fa-eye"></span>
+                                </div>
+                                <div class="input-group-text" style="border-left: none;">
+                                    <span class="fas fa-lock"></span>
                                 </div>
                             </div>
                         </div>
@@ -882,11 +882,11 @@
                             <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" 
                                    placeholder="Confirm Password" required>
                             <div class="input-group-append">
-                                <div class="input-group-text">
-                                    <span class="fas fa-lock"></span>
-                                </div>
-                                <div class="input-group-text password-toggle" style="cursor: pointer; border-left: none;" onclick="togglePasswordVisibility('password_confirmation', this)" title="Show password">
+                                <div class="input-group-text password-toggle" style="cursor: pointer;" onclick="togglePasswordVisibility('password_confirmation', this)" title="Show password">
                                     <span class="fas fa-eye"></span>
+                                </div>
+                                <div class="input-group-text" style="border-left: none;">
+                                    <span class="fas fa-lock"></span>
                                 </div>
                             </div>
                         </div>
