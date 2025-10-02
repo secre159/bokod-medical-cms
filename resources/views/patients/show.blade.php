@@ -431,8 +431,8 @@
             <div class="card card-primary card-outline">
                 <div class="card-body box-profile">
                     <div class="text-center">
-                        <div class="user-avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 32px;">
-                            {{ strtoupper(substr($patient->patient_name, 0, 1)) }}
+                        <div class="mb-3">
+                            <x-user-avatar :user="$patient->user" size="default" width="80px" height="80px" class="d-inline-block" />
                         </div>
                         
                         <h3 class="profile-username text-center">{{ $patient->patient_name }}</h3>

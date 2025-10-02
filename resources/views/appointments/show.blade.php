@@ -278,9 +278,7 @@
                 <div class="card-body">
                     @if($appointment->patient)
                         <div class="text-center mb-3">
-                            <div class="user-avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px;">
-                                {{ strtoupper(substr($appointment->patient->patient_name, 0, 1)) }}
-                            </div>
+                            <x-user-avatar :user="$appointment->patient->user" size="thumbnail" width="60px" height="60px" class="d-inline-block" />
                             <h4 class="mt-2 mb-0">{{ $appointment->patient->patient_name }}</h4>
                             <p class="text-muted small">Patient ID: {{ $appointment->patient->id }}</p>
                         </div>
