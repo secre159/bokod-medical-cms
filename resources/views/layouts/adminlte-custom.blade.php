@@ -67,6 +67,11 @@
                 var modalScript = document.createElement('script');
                 modalScript.src = '{{ asset('js/universal-modal.js') }}';
                 document.head.appendChild(modalScript);
+                
+                // Load profile picture refresh system
+                var profileRefreshScript = document.createElement('script');
+                profileRefreshScript.src = '{{ asset('js/profile-picture-refresh.js') }}';
+                document.head.appendChild(profileRefreshScript);
             };
         }
     </script>

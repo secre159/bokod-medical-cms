@@ -66,6 +66,41 @@ Route::get('/emergency-fix-constraint', function () {
 });
 
 /**
+ * Manual Profile Picture Cache Refresh Route
+ * Visit: https://bokod-medical-cms.onrender.com/refresh-profile-pictures
+ */
+Route::get('/refresh-profile-pictures', function () {
+    try {
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Profile picture refresh triggered',
+            'instructions' => [
+                'This endpoint triggers browser-side cache refresh',
+                'The actual refresh happens via JavaScript on the frontend',
+                'Profile pictures will be updated with cache-busting parameters'
+            ],
+            'javascript' => [
+                'Manual refresh: window.refreshProfilePictures()',
+                'Force refresh all: forceRefreshAllProfilePictures()',
+                'Light refresh: lightRefreshProfilePictures()'
+            ],
+            'cache_busting_active' => true,
+            'timestamp' => now()->toDateTimeString()
+        ], 200, [
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0'
+        ]);
+        
+    } catch (Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Error triggering refresh: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+/**
  * MANUAL Appointment Status Update Route
  * Visit: https://bokod-medical-cms.onrender.com/update-appointment-status/1
  */

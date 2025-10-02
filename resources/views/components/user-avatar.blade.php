@@ -30,19 +30,29 @@
 
 @if($hasProfilePicture)
     @php
-        // Add cache-busting parameter if the profile was recently updated (within last 10 minutes)
-        // Also check session for recent profile updates
-        $recentlyUpdated = $user->updated_at && $user->updated_at->gt(now()->subMinutes(10));
-        $sessionProfileUpdated = session('profile_updated_user_' . $user->id, false);
-        
+        // ALWAYS add cache-busting parameters for profile pictures to ensure they update properly
         $imageUrl = $profilePictureUrl;
-        if ($recentlyUpdated || $sessionProfileUpdated) {
-            // Aggressive cache-busting with multiple parameters
-            $separator = strpos($imageUrl, '?') !== false ? '&' : '?';
+        
+        // Check multiple conditions that indicate the image should be fresh
+        $recentlyUpdated = $user->updated_at && $user->updated_at->gt(now()->subMinutes(30)); // Extended to 30 minutes
+        $sessionProfileUpdated = session('profile_updated_user_' . $user->id, false);
+        $hasSuccessMessage = session('status') && str_contains(session('status'), 'profile');
+        $hasProfileParam = request()->has('profile_updated');
+        $isFromCloudinary = str_contains($imageUrl, 'res.cloudinary.com');
+        $isFromImgBB = str_contains($imageUrl, 'ibb.co');
+        
+        // Force cache-busting if any condition is met OR if it's an external image service
+        if ($recentlyUpdated || $sessionProfileUpdated || $hasSuccessMessage || $hasProfileParam || $isFromCloudinary || $isFromImgBB) {
+            // Remove existing cache-busting parameters first
+            $cleanUrl = preg_replace('/[?&](t|v|r|bust|cache|refresh|_)=[^&]*/', '', $imageUrl);
+            
+            // Add comprehensive cache-busting
+            $separator = strpos($cleanUrl, '?') !== false ? '&' : '?';
             $timestamp = time();
+            $microtime = microtime(true);
             $version = $user->updated_at ? $user->updated_at->timestamp : $timestamp;
-            $random = rand(1000, 9999);
-            $imageUrl .= $separator . "t={$timestamp}&v={$version}&r={$random}&bust=" . microtime(true);
+            $random = rand(10000, 99999);
+            $imageUrl = $cleanUrl . $separator . "t={$timestamp}&v={$version}&r={$random}&bust={$microtime}&refresh=" . date('YmdHis');
         }
     @endphp
     <img class="user-avatar {{ $class ?? '' }}" 
