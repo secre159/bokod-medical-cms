@@ -61,13 +61,7 @@
          style="width: {{ $width }}; height: {{ $height }}; border-radius: 50%; object-fit: cover;" 
          title="{{ $userName }}"
          data-user-id="{{ $user->id ?? '' }}"
-         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-    <!-- Fallback SVG initials avatar -->
-    <img class="user-avatar {{ $class ?? '' }}" 
-         src="{{ $initialsAvatarUrl }}" 
-         alt="{{ $userName }}'s initials" 
-         style="display: none; width: {{ $width }}; height: {{ $height }}; border-radius: 50%;" 
-         title="{{ $userName }}">
+         onerror="this.src='{{ $initialsAvatarUrl }}'; this.alt='{{ $userName }} initials';">
 @else
     <!-- Default SVG initials avatar -->
     <img class="user-avatar {{ $class ?? '' }}" 
