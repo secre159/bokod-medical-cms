@@ -33,7 +33,8 @@ class DashboardController extends Controller
         $user = Auth::user();
         
         // Automatically update overdue appointments before showing dashboard
-        Appointment::updateOverdueAppointments();
+        // TEMPORARILY DISABLED - investigating error messages on hosted site
+        // Appointment::updateOverdueAppointments();
         
         // Use Philippine timezone for consistent date comparisons
         $today = TimezoneHelper::now()->toDateString();

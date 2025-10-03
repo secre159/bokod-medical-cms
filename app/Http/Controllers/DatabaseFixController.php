@@ -135,6 +135,162 @@ class DatabaseFixController extends Controller
     }
 
     /**
+     * Fix messaging database schema for error alerts
+     */
+    public function fixMessagingDatabase(Request $request)
+    {
+        // Simple security check
+        $secret = $request->get('secret');
+        if ($secret !== 'bokod_cms_messaging_fix_2024') {
+            abort(404, 'Not found');
+        }
+
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $output = [];
+        $output[] = "🚀 Starting Messaging Database Fix...";
+        
+        try {
+            // Check messaging tables
+            $tables = ['conversations', 'messages'];
+            foreach ($tables as $table) {
+                if (Schema::hasTable($table)) {
+                    $output[] = "✅ {$table} table exists";
+                } else {
+                    $output[] = "❌ {$table} table MISSING";
+                }
+            }
+            
+            // Check messages table structure
+            $columns = Schema::getColumnListing('messages');
+            $requiredColumns = [
+                'reactions', 'has_attachment', 'file_path', 'file_name', 
+                'file_type', 'mime_type', 'file_size', 'priority', 'message_type'
+            ];
+            
+            $missingColumns = array_diff($requiredColumns, $columns);
+            
+            // Add missing columns
+            if (!empty($missingColumns)) {
+                $output[] = "🔧 Adding missing columns...";
+                
+                foreach ($missingColumns as $column) {
+                    try {
+                        switch ($column) {
+                            case 'reactions':
+                                Schema::table('messages', function ($table) {
+                                    $table->json('reactions')->nullable();
+                                });
+                                $output[] = "✅ Added reactions column";
+                                break;
+                                
+                            case 'has_attachment':
+                                Schema::table('messages', function ($table) {
+                                    $table->boolean('has_attachment')->default(false);
+                                });
+                                $output[] = "✅ Added has_attachment column";
+                                break;
+                                
+                            case 'file_path':
+                            case 'file_name':
+                            case 'file_type':
+                            case 'mime_type':
+                                Schema::table('messages', function ($table) use ($column) {
+                                    $table->string($column)->nullable();
+                                });
+                                $output[] = "✅ Added {$column} column";
+                                break;
+                                
+                            case 'file_size':
+                                Schema::table('messages', function ($table) {
+                                    $table->bigInteger('file_size')->nullable();
+                                });
+                                $output[] = "✅ Added file_size column";
+                                break;
+                                
+                            case 'priority':
+                                Schema::table('messages', function ($table) {
+                                    $table->enum('priority', ['low', 'normal', 'urgent'])->default('normal');
+                                });
+                                $output[] = "✅ Added priority column";
+                                break;
+                                
+                            case 'message_type':
+                                Schema::table('messages', function ($table) {
+                                    $table->enum('message_type', ['text', 'image', 'file', 'system'])->default('text');
+                                });
+                                $output[] = "✅ Added message_type column";
+                                break;
+                        }
+                    } catch (Exception $e) {
+                        $output[] = "❌ Failed to add {$column}: " . $e->getMessage();
+                    }
+                }
+            } else {
+                $output[] = "✅ All required columns already exist";
+            }
+            
+            // Check conversations table
+            $convColumns = Schema::getColumnListing('conversations');
+            $requiredConvColumns = ['archived_by_patient', 'archived_by_admin', 'is_active', 'last_message_at'];
+            $missingConvColumns = array_diff($requiredConvColumns, $convColumns);
+            
+            if (!empty($missingConvColumns)) {
+                $output[] = "🔧 Adding missing conversation columns...";
+                
+                foreach ($missingConvColumns as $column) {
+                    try {
+                        switch ($column) {
+                            case 'archived_by_patient':
+                            case 'archived_by_admin':
+                            case 'is_active':
+                                Schema::table('conversations', function ($table) use ($column) {
+                                    $table->boolean($column)->default($column === 'is_active' ? true : false);
+                                });
+                                $output[] = "✅ Added {$column} column";
+                                break;
+                                
+                            case 'last_message_at':
+                                Schema::table('conversations', function ($table) {
+                                    $table->timestamp('last_message_at')->nullable();
+                                });
+                                $output[] = "✅ Added last_message_at column";
+                                break;
+                        }
+                    } catch (Exception $e) {
+                        $output[] = "❌ Failed to add {$column}: " . $e->getMessage();
+                    }
+                }
+            }
+            
+            // Clear caches
+            $output[] = "🧹 Clearing caches...";
+            \Artisan::call('cache:clear');
+            \Artisan::call('config:clear');
+            $output[] = "✅ Caches cleared";
+            
+            $output[] = "🎉 MESSAGING FIX COMPLETED!";
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Messaging database fix completed successfully!',
+                'output' => $output
+            ]);
+            
+        } catch (Exception $e) {
+            $output[] = "❌ CRITICAL ERROR: " . $e->getMessage();
+            return response()->json([
+                'success' => false,
+                'error' => 'Fix failed: ' . $e->getMessage(),
+                'output' => $output
+            ], 500);
+        }
+    }
+
+    /**
      * Fix messaging system issues
      */
     public function fixMessaging(Request $request)
