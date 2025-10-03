@@ -250,6 +250,8 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             Route::post('/prescriptions', [DatabaseFixController::class, 'fixPrescriptions'])->name('prescriptions');
             // Special messaging database schema fix route (with secret parameter)
             Route::get('/fix-messaging-database', [DatabaseFixController::class, 'fixMessagingDatabase'])->name('fixMessagingDatabase');
+            // Performance optimization route
+            Route::get('/optimize-messaging-performance', [DatabaseFixController::class, 'optimizeMessagingPerformance'])->name('optimizePerformance');
         });
     });
     

@@ -291,6 +291,114 @@ class DatabaseFixController extends Controller
     }
 
     /**
+     * Optimize messaging system performance
+     */
+    public function optimizeMessagingPerformance(Request $request)
+    {
+        // Simple security check
+        $secret = $request->get('secret');
+        if ($secret !== 'bokod_cms_perf_fix_2024') {
+            abort(404, 'Not found');
+        }
+
+        // Check if user is admin
+        if (!Auth::check() || Auth::user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $output = [];
+        $output[] = "🚀 Starting Messaging Performance Optimization...";
+        
+        try {
+            $driver = DB::getDriverName();
+            $output[] = "🔗 Database driver: {$driver}";
+            
+            // Add performance indexes
+            $indexesAdded = 0;
+            
+            if ($driver === 'mysql') {
+                // Check existing indexes first
+                $messageIndexes = DB::select("SHOW INDEX FROM messages");
+                $conversationIndexes = DB::select("SHOW INDEX FROM conversations");
+                
+                $existingIndexes = collect($messageIndexes)->pluck('Key_name')->toArray();
+                $existingConvIndexes = collect($conversationIndexes)->pluck('Key_name')->toArray();
+                
+                // Add indexes if they don't exist
+                if (!in_array('idx_messages_conversation_created', $existingIndexes)) {
+                    DB::statement("CREATE INDEX idx_messages_conversation_created ON messages (conversation_id, created_at DESC)");
+                    $output[] = "✅ Added conversation_id + created_at index";
+                    $indexesAdded++;
+                }
+                
+                if (!in_array('idx_conversations_last_message', $existingConvIndexes)) {
+                    DB::statement("CREATE INDEX idx_conversations_last_message ON conversations (last_message_at DESC)");
+                    $output[] = "✅ Added last_message_at index";
+                    $indexesAdded++;
+                }
+                
+            } elseif ($driver === 'pgsql') {
+                // PostgreSQL indexes
+                DB::statement("CREATE INDEX IF NOT EXISTS idx_messages_conversation_created ON messages (conversation_id, created_at DESC)");
+                DB::statement("CREATE INDEX IF NOT EXISTS idx_conversations_last_message ON conversations (last_message_at DESC)");
+                $output[] = "✅ Added PostgreSQL performance indexes";
+                $indexesAdded = 2;
+            }
+            
+            // Test query performance
+            $start = microtime(true);
+            $testConversations = DB::table('conversations')
+                ->where('is_active', true)
+                ->orderBy('last_message_at', 'desc')
+                ->limit(10)
+                ->get();
+            
+            $queryTime = round((microtime(true) - $start) * 1000, 2);
+            $output[] = "📊 Conversation query: {$queryTime}ms";
+            
+            // Check email settings
+            $mailDriver = config('mail.default');
+            $queueConnection = config('queue.default');
+            
+            $output[] = "📮 Mail driver: {$mailDriver}";
+            $output[] = "🔄 Queue connection: {$queueConnection}";
+            
+            if ($mailDriver === 'smtp' && $queueConnection === 'sync') {
+                $output[] = "⚠️  WARNING: SMTP emails sent synchronously (causes delays)";
+                $output[] = "💡 Consider: MAIL_MAILER=log or QUEUE_CONNECTION=database";
+            }
+            
+            // Cache optimization
+            \Artisan::call('config:cache');
+            \Artisan::call('route:cache');
+            $output[] = "✅ Laravel caches optimized";
+            
+            $output[] = "🎉 Performance optimization completed!";
+            $output[] = "📊 Indexes added: {$indexesAdded}";
+            
+            if ($queryTime > 100) {
+                $output[] = "⚠️  Query time still high - check database server performance";
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Messaging performance optimization completed!',
+                'output' => $output,
+                'query_time_ms' => $queryTime,
+                'indexes_added' => $indexesAdded
+            ]);
+            
+        } catch (Exception $e) {
+            $output[] = "❌ ERROR: " . $e->getMessage();
+            return response()->json([
+                'success' => false,
+                'error' => 'Performance optimization failed: ' . $e->getMessage(),
+                'output' => $output
+            ], 500);
+        }
+    }
+
+    /**
      * Fix messaging system issues
      */
     public function fixMessaging(Request $request)
