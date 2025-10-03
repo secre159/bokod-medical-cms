@@ -6493,5 +6493,145 @@ $(document).ready(function() {
     }, 4000);
 });
 
+// ===============================
+// MESSAGING SEND BUTTON FIX
+// ===============================
+
+// Add timeout protection for AJAX requests
+function addTimeoutProtection() {
+    $.ajaxSetup({
+        timeout: 15000 // 15 seconds timeout
+    });
+    console.log('✅ AJAX timeout protection enabled (15s)');
+}
+
+// Force re-enable send button after timeout
+function forceReEnableSendButton() {
+    setTimeout(() => {
+        const sendBtn = $('#send-btn');
+        const textarea = $('#message-textarea');
+        
+        if (sendBtn.length && sendBtn.prop('disabled')) {
+            sendBtn.prop('disabled', false)
+                   .html('<i class="fas fa-paper-plane"></i>');
+            console.log('🔄 Force re-enabled stuck send button');
+        }
+        
+        if (textarea.length && textarea.prop('disabled')) {
+            textarea.prop('disabled', false);
+            console.log('🔄 Force re-enabled textarea');
+        }
+    }, 20000); // Force re-enable after 20 seconds
+}
+
+// Enhanced AJAX error handling specifically for messaging
+function enhanceMessagingAjaxHandling() {
+    // Store original AJAX complete handler
+    $(document).ajaxComplete(function(event, xhr, settings) {
+        if (settings.url && settings.url.includes('/send')) {
+            console.log('📨 Message AJAX completed', {
+                status: xhr.status,
+                url: settings.url,
+                responseTime: Date.now() - (window.messagingState?.submitTime || 0) + 'ms'
+            });
+            
+            // Always re-enable button after AJAX complete (success or error)
+            setTimeout(() => {
+                const sendBtn = $('#send-btn');
+                const textarea = $('#message-textarea');
+                
+                if (sendBtn.length) {
+                    sendBtn.prop('disabled', false)
+                           .html(window.messagingState?.originalButtonHtml || '<i class="fas fa-paper-plane"></i>');
+                    console.log('✅ Send button re-enabled after AJAX complete');
+                }
+                
+                if (textarea.length) {
+                    textarea.prop('disabled', false);
+                    console.log('✅ Textarea re-enabled after AJAX complete');
+                }
+                
+                // Clear the messaging state
+                window.messagingState = null;
+            }, 100);
+        }
+    });
+    
+    // Enhanced AJAX error handling
+    $(document).ajaxError(function(event, xhr, settings, thrownError) {
+        if (settings.url && settings.url.includes('/send')) {
+            console.error('❌ Message AJAX failed', {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                error: thrownError,
+                url: settings.url
+            });
+            
+            // Always re-enable on error
+            const sendBtn = $('#send-btn');
+            const textarea = $('#message-textarea');
+            
+            sendBtn.prop('disabled', false)
+                   .html(window.messagingState?.originalButtonHtml || '<i class="fas fa-paper-plane"></i>');
+            textarea.prop('disabled', false);
+            
+            // Show user-friendly error based on status
+            let errorMessage = 'Message sending failed. Please try again.';
+            if (xhr.status === 0) {
+                errorMessage = 'Connection lost. Please check your internet and try again.';
+            } else if (xhr.status === 419) {
+                errorMessage = 'Session expired. Please refresh the page and try again.';
+            } else if (xhr.status >= 500) {
+                errorMessage = 'Server error. Please try again in a moment.';
+            }
+            
+            showNotification('error', errorMessage);
+        }
+    });
+}
+
+// Emergency button reset function (accessible globally)
+window.resetMessagingUI = function() {
+    const sendBtn = $('#send-btn');
+    const textarea = $('#message-textarea');
+    
+    if (sendBtn.length) {
+        sendBtn.prop('disabled', false)
+               .html('<i class="fas fa-paper-plane"></i>');
+        console.log('🔄 Emergency reset: Send button enabled');
+    }
+    
+    if (textarea.length) {
+        textarea.prop('disabled', false);
+        console.log('🔄 Emergency reset: Textarea enabled');
+    }
+    
+    console.log('✅ Emergency UI reset completed. You can now send messages.');
+    showNotification('success', 'Messaging interface reset. You can now send messages.');
+};
+
+// Initialize the messaging fixes
+$(document).ready(function() {
+    if ($('#message-form').length > 0) {
+        addTimeoutProtection();
+        enhanceMessagingAjaxHandling();
+        
+        // Store form submission state for recovery
+        $('#message-form').on('submit', function() {
+            const sendBtn = $(this).find('#send-btn');
+            window.messagingState = {
+                originalButtonHtml: sendBtn.html(),
+                submitTime: Date.now()
+            };
+            
+            // Set timeout protection for this specific submission
+            forceReEnableSendButton();
+        });
+        
+        console.log('✅ Messaging send button fixes initialized');
+        console.log('💡 To manually reset UI, run: resetMessagingUI()');
+    }
+});
+
 </script>
 @endsection
