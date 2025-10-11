@@ -50,64 +50,22 @@ class AppointmentNotification extends Mailable
         
         $subject = $subjects[$this->type] ?? 'Appointment Update - BOKOD CMS';
         
-        // EMERGENCY FIX: Hardcode safe values to bypass config issues
+        // NUCLEAR OPTION: Completely hardcode values to guarantee no null headers
         $fromAddress = 'noreply@resend.dev';
         $fromName = 'BOKOD CMS';
         
-        // Try to get config values but with ultra-safe fallbacks
-        try {
-            $configAddress = config('mail.from.address');
-            $configName = config('mail.from.name');
-            
-            // Only use config if they are valid
-            if (is_string($configAddress) && filter_var($configAddress, FILTER_VALIDATE_EMAIL)) {
-                $fromAddress = $configAddress;
-            }
-            
-            if (is_string($configName) && !empty(trim($configName))) {
-                $fromName = $configName;
-            }
-        } catch (\Exception $e) {
-            // Log config error but continue with safe defaults
-            \Log::warning('AppointmentNotification: Config error, using defaults', [
-                'error' => $e->getMessage()
-            ]);
-        }
-        
-        // Final validation before creating envelope
-        if (!is_string($fromAddress) || !filter_var($fromAddress, FILTER_VALIDATE_EMAIL)) {
-            $fromAddress = 'noreply@resend.dev';
-        }
-        
-        if (!is_string($fromName) || empty(trim($fromName))) {
-            $fromName = 'BOKOD CMS';
-        }
-        
         // Log what we're using for debugging
-        \Log::info('AppointmentNotification envelope', [
+        \Log::info('AppointmentNotification envelope (hardcoded)', [
             'from_address' => $fromAddress,
             'from_name' => $fromName,
             'subject' => $subject
         ]);
 
-        // Create envelope with validated values
-        try {
-            return new Envelope(
-                from: new \Illuminate\Mail\Mailables\Address($fromAddress, $fromName),
-                subject: $subject,
-            );
-        } catch (\Exception $e) {
-            // Ultimate emergency fallback - no FROM specified at all
-            \Log::error('AppointmentNotification envelope creation failed', [
-                'error' => $e->getMessage(),
-                'attempted_address' => $fromAddress,
-                'attempted_name' => $fromName
-            ]);
-            
-            return new Envelope(
-                subject: 'Appointment Update - BOKOD CMS',
-            );
-        }
+        // Create envelope with hardcoded validated values
+        return new Envelope(
+            from: new \Illuminate\Mail\Mailables\Address($fromAddress, $fromName),
+            subject: $subject,
+        );
     }
 
     /**
