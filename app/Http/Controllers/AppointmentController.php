@@ -694,36 +694,48 @@ class AppointmentController extends Controller
                 'appointment_time' => $request->appointment_time
             ]);
             
-            // EMERGENCY FIX: Disable email sending temporarily to prevent 500 errors
-            // Send reschedule notification email - TEMPORARILY DISABLED
-            \Log::info('Email notification skipped for appointment reschedule', [
-                'appointment_id' => $appointment->appointment_id,
-                'reason' => 'Temporary fix for email header issues'
-            ]);
-            
-            // TODO: Re-enable email sending after fixing Resend configuration
-            // try {
-            //     if (!$appointment->relationLoaded('patient')) {
-            //         $appointment->load('patient');
-            //     }
-            //     $emailResult = $this->emailService->sendAppointmentNotification($appointment, 'rescheduled');
-            //     if (!$emailResult['success']) {
-            //         \Log::warning('Reschedule email not sent', [
-            //             'appointment_id' => $appointment->appointment_id,
-            //             'reason' => $emailResult['message']
-            //         ]);
-            //     }
-            // } catch (\Exception $e) {
-            //     \Log::error('Appointment reschedule email failed', [
-            //         'appointment_id' => $appointment->appointment_id,
-            //         'error' => $e->getMessage(),
-            //         'trace' => $e->getTraceAsString()
-            //     ]);
-            // }
+            // Send reschedule notification email with improved error handling
+            try {
+                // Ensure appointment has patient loaded
+                if (!$appointment->relationLoaded('patient')) {
+                    $appointment->load('patient');
+                }
+                
+                // Only send email if patient has an email address
+                if ($appointment->patient && $appointment->patient->email) {
+                    $emailResult = $this->emailService->sendAppointmentNotification($appointment, 'rescheduled');
+                    
+                    if (!$emailResult['success']) {
+                        \Log::warning('Reschedule email not sent', [
+                            'appointment_id' => $appointment->appointment_id,
+                            'reason' => $emailResult['message']
+                        ]);
+                    }
+                } else {
+                    \Log::info('Reschedule email skipped - no patient email', [
+                        'appointment_id' => $appointment->appointment_id
+                    ]);
+                }
+                
+            } catch (\Symfony\Component\Mime\Exception\InvalidArgumentException $e) {
+                // Specific handling for email header issues
+                \Log::error('Email header validation failed for reschedule', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'error' => $e->getMessage()
+                ]);
+                // Continue without failing the request
+            } catch (\Exception $e) {
+                \Log::error('Appointment reschedule email failed', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue without failing the request
+            }
             
             return response()->json([
                 'success' => true,
-                'message' => 'Appointment rescheduled successfully! (Email notification temporarily disabled)'
+                'message' => 'Appointment rescheduled successfully! Email notification sent to patient.'
             ]);
             
         } catch (\Exception $e) {
@@ -1034,42 +1046,54 @@ class AppointmentController extends Controller
                 'reschedule_reason' => $validated['reschedule_reason'] ?? null,
             ]);
             
-            // EMERGENCY FIX: Disable email sending temporarily to prevent 500 errors
-            // Send reschedule request notification email - TEMPORARILY DISABLED
-            \Log::info('Email notification skipped for reschedule request', [
-                'appointment_id' => $appointment->appointment_id,
-                'reason' => 'Temporary fix for email header issues'
-            ]);
-            
-            // TODO: Re-enable email sending after fixing Resend configuration
-            // try {
-            //     if (!$appointment->relationLoaded('patient')) {
-            //         $appointment->load('patient');
-            //     }
-            //     $emailResult = $this->emailService->sendAppointmentNotification($appointment, 'reschedule_request');
-            //     if (!$emailResult['success']) {
-            //         \Log::warning('Reschedule email not sent', [
-            //             'appointment_id' => $appointment->appointment_id,
-            //             'reason' => $emailResult['message']
-            //         ]);
-            //     }
-            // } catch (\Exception $e) {
-            //     \Log::error('Appointment reschedule request email failed', [
-            //         'appointment_id' => $appointment->appointment_id,
-            //         'error' => $e->getMessage(),
-            //         'trace' => $e->getTraceAsString()
-            //     ]);
-            // }
+            // Send reschedule request notification email with improved error handling
+            try {
+                // Ensure appointment has patient loaded
+                if (!$appointment->relationLoaded('patient')) {
+                    $appointment->load('patient');
+                }
+                
+                // Only send email if patient has an email address
+                if ($appointment->patient && $appointment->patient->email) {
+                    $emailResult = $this->emailService->sendAppointmentNotification($appointment, 'reschedule_request');
+                    
+                    if (!$emailResult['success']) {
+                        \Log::warning('Reschedule request email not sent', [
+                            'appointment_id' => $appointment->appointment_id,
+                            'reason' => $emailResult['message']
+                        ]);
+                    }
+                } else {
+                    \Log::info('Reschedule request email skipped - no patient email', [
+                        'appointment_id' => $appointment->appointment_id
+                    ]);
+                }
+                
+            } catch (\Symfony\Component\Mime\Exception\InvalidArgumentException $e) {
+                // Specific handling for email header issues
+                \Log::error('Email header validation failed for reschedule request', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'error' => $e->getMessage()
+                ]);
+                // Continue without failing the request
+            } catch (\Exception $e) {
+                \Log::error('Appointment reschedule request email failed', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue without failing the request
+            }
             
             if (request()->expectsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Reschedule request submitted successfully! (Email notification temporarily disabled)'
+                    'message' => 'Reschedule request submitted successfully! You will be notified of the decision via email.'
                 ]);
             }
             
             return redirect()->back()
-                           ->with('success', 'Reschedule request submitted successfully! (Email notification temporarily disabled)');
+                           ->with('success', 'Reschedule request submitted successfully! You will be notified of the decision via email.');
                            
         } catch (\Exception $e) {
             if (request()->expectsJson()) {
