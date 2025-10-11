@@ -56,16 +56,16 @@ class AppointmentNotification extends Mailable implements ShouldQueue
         
         // Ensure we have valid FROM values
         if (empty($fromAddress)) {
-            $fromAddress = 'noreply@bokod-cms.com';
+            $fromAddress = 'noreply@resend.dev';
         }
         if (empty($fromName)) {
-            $fromName = 'BOKOD CMS';
+            $fromName = 'Bokod Medical CMS';
         }
 
         // Additional safety for production environment
         try {
-            $fromAddressSafe = filter_var($fromAddress, FILTER_VALIDATE_EMAIL) ? $fromAddress : 'noreply@bokod-cms.com';
-            $fromNameSafe = !empty($fromName) && is_string($fromName) ? $fromName : 'BOKOD CMS';
+            $fromAddressSafe = filter_var($fromAddress, FILTER_VALIDATE_EMAIL) ? $fromAddress : 'noreply@resend.dev';
+            $fromNameSafe = !empty($fromName) && is_string($fromName) ? $fromName : 'Bokod Medical CMS';
             
             return new Envelope(
                 from: new \Illuminate\Mail\Mailables\Address($fromAddressSafe, $fromNameSafe),
