@@ -3,7 +3,7 @@
 @section('content')
     <h2>📅 Your Appointment Has Been Rescheduled</h2>
     
-    <p>Dear {{ $patient->patient_name }},</p>
+    <p>Dear {{ $patient->patient_name ?? 'Patient' }},</p>
     
     <div class="info-box">
         <p><strong>Important:</strong> Your appointment has been rescheduled to a new date and time.</p>
@@ -18,15 +18,15 @@
         </tr>
         <tr>
             <th>New Date</th>
-            <td>{{ $appointment->appointment_date->format('F j, Y (l)') }}</td>
+            <td>{{ $appointment->appointment_date ? $appointment->appointment_date->format('F j, Y (l)') : 'Not set' }}</td>
         </tr>
         <tr>
             <th>New Time</th>
-            <td>{{ $appointment->appointment_time->format('g:i A') }}</td>
+            <td>{{ $appointment->appointment_time ? $appointment->appointment_time->format('g:i A') : 'Not set' }}</td>
         </tr>
         <tr>
             <th>Reason</th>
-            <td>{{ $appointment->reason }}</td>
+            <td>{{ $appointment->reason ?? 'Not specified' }}</td>
         </tr>
         <tr>
             <th>Status</th>

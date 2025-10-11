@@ -89,7 +89,37 @@ class EnhancedEmailService
                 ];
             }
             
-            Mail::to($appointment->patient->email)->send($mailable);
+            // Ultra-safe email sending with multiple fallbacks
+            try {
+                Mail::to($appointment->patient->email)->send($mailable);
+            } catch (\Symfony\Component\Mime\Exception\InvalidArgumentException $e) {
+                // Specific handling for null header errors
+                Log::error('Email header validation failed', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'patient_email' => $appointment->patient->email,
+                    'error' => $e->getMessage(),
+                    'type' => $type
+                ]);
+                
+                return [
+                    'success' => false,
+                    'message' => 'Email configuration error - appointment update completed without email notification'
+                ];
+            } catch (\Exception $e) {
+                // Any other email sending errors
+                Log::error('Email sending failed', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'patient_email' => $appointment->patient->email,
+                    'error' => $e->getMessage(),
+                    'type' => $type,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                return [
+                    'success' => false,
+                    'message' => 'Email delivery failed - appointment update completed without email notification'
+                ];
+            }
 
             Log::info('Appointment notification sent', [
                 'appointment_id' => $appointment->appointment_id,
