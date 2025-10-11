@@ -15,8 +15,8 @@ Set these in your **Render.com Dashboard** → **Environment** section:
 ```bash
 # Email Service Configuration
 MAIL_MAILER=resend
-MAIL_FROM_ADDRESS=admin@bokod-medical-cms.com
-MAIL_FROM_NAME=Bokod Medical CMS
+MAIL_FROM_ADDRESS=noreply@resend.dev
+MAIL_FROM_NAME=BOKOD CMS Test
 RESEND_API_KEY=re_axaZaCT1_MQHxHKjn7vfEW82sWJAsMvs3
 
 # Optional but recommended
@@ -39,8 +39,8 @@ MAIL_ENCRYPTION=null
 | Variable | Value |
 |----------|-------|
 | `MAIL_MAILER` | `resend` |
-| `MAIL_FROM_ADDRESS` | `admin@bokod-medical-cms.com` |
-| `MAIL_FROM_NAME` | `Bokod Medical CMS` |
+| `MAIL_FROM_ADDRESS` | `noreply@resend.dev` |
+| `MAIL_FROM_NAME` | `BOKOD CMS Test` |
 | `RESEND_API_KEY` | `re_axaZaCT1_MQHxHKjn7vfEW82sWJAsMvs3` |
 
 ### Step 2: Deploy the Latest Code
