@@ -6487,10 +6487,6 @@ $(document).ready(function() {
         enhanceFileInput();
     }
     
-    // Demo notification
-    setTimeout(() => {
-        showNotification('success', 'You can now drag & drop files into the chat! 📋');
-    }, 4000);
 });
 
 // ===============================
