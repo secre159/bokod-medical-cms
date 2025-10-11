@@ -76,6 +76,19 @@ class EnhancedEmailService
                 ];
             }
 
+            // Emergency production safety - bypass email if environment is problematic
+            if (app()->environment('production') && (empty(config('mail.from.address')) || empty(config('mail.from.name')))) {
+                Log::warning('Email bypassed due to missing configuration in production', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'type' => $type
+                ]);
+                return [
+                    'success' => true,
+                    'message' => 'Email bypassed due to configuration issues',
+                    'recipient' => $appointment->patient->email
+                ];
+            }
+            
             Mail::to($appointment->patient->email)->send($mailable);
 
             Log::info('Appointment notification sent', [

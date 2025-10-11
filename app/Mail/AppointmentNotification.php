@@ -62,10 +62,21 @@ class AppointmentNotification extends Mailable implements ShouldQueue
             $fromName = 'BOKOD CMS';
         }
 
-        return new Envelope(
-            from: new \Illuminate\Mail\Mailables\Address($fromAddress, $fromName),
-            subject: $subject,
-        );
+        // Additional safety for production environment
+        try {
+            $fromAddressSafe = filter_var($fromAddress, FILTER_VALIDATE_EMAIL) ? $fromAddress : 'noreply@bokod-cms.com';
+            $fromNameSafe = !empty($fromName) && is_string($fromName) ? $fromName : 'BOKOD CMS';
+            
+            return new Envelope(
+                from: new \Illuminate\Mail\Mailables\Address($fromAddressSafe, $fromNameSafe),
+                subject: $subject,
+            );
+        } catch (\Exception $e) {
+            // Ultra-safe fallback
+            return new Envelope(
+                subject: 'Appointment Update - BOKOD CMS',
+            );
+        }
     }
 
     /**
