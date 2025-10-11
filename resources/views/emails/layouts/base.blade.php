@@ -203,7 +203,15 @@
             <p>If you have any questions, please contact our support team.</p>
             
             @php
-                $footerUrls = app('App\Services\UrlService')::getEmailFooterUrls();
+                try {
+                    $footerUrls = app('App\Services\UrlService')::getEmailFooterUrls();
+                } catch (\Exception $e) {
+                    $footerUrls = [
+                        'portal' => '#',
+                        'password_reset' => '#',
+                        'support' => '#',
+                    ];
+                }
             @endphp
             
             <div style="margin: 20px 0; border-top: 1px solid #4a5568; padding-top: 15px;">

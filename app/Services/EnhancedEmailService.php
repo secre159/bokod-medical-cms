@@ -25,12 +25,42 @@ class EnhancedEmailService
     public function sendAppointmentNotification(Appointment $appointment, string $type, array $additionalData = [], bool $testMode = false): array
     {
         try {
-            $appointment->load('patient');
+            $appointment->load('patient', 'patient.user');
             
-            if (!$appointment->patient || !$appointment->patient->email) {
+            if (!$appointment->patient) {
+                Log::error('Appointment notification failed - No patient found', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'type' => $type
+                ]);
+                return [
+                    'success' => false,
+                    'message' => 'Patient not found for appointment'
+                ];
+            }
+            
+            if (!$appointment->patient->email) {
+                Log::error('Appointment notification failed - No patient email', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'patient_id' => $appointment->patient->id,
+                    'patient_name' => $appointment->patient->patient_name,
+                    'type' => $type
+                ]);
                 return [
                     'success' => false,
                     'message' => 'Patient email not found'
+                ];
+            }
+            
+            // Validate email format
+            if (!filter_var($appointment->patient->email, FILTER_VALIDATE_EMAIL)) {
+                Log::error('Appointment notification failed - Invalid email format', [
+                    'appointment_id' => $appointment->appointment_id,
+                    'patient_email' => $appointment->patient->email,
+                    'type' => $type
+                ]);
+                return [
+                    'success' => false,
+                    'message' => 'Invalid patient email format'
                 ];
             }
 

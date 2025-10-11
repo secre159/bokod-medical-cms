@@ -1019,12 +1019,29 @@ class AppointmentController extends Controller
             
             // Send reschedule request notification email
             try {
-                $this->emailService->sendAppointmentNotification($appointment, 'reschedule_request');
+                // Ensure appointment has patient loaded
+                if (!$appointment->relationLoaded('patient')) {
+                    $appointment->load('patient');
+                }
+                
+                $emailResult = $this->emailService->sendAppointmentNotification($appointment, 'reschedule_request');
+                
+                if (!$emailResult['success']) {
+                    \Log::warning('Reschedule email not sent', [
+                        'appointment_id' => $appointment->appointment_id,
+                        'reason' => $emailResult['message']
+                    ]);
+                }
+                
             } catch (\Exception $e) {
                 \Log::error('Appointment reschedule request email failed', [
                     'appointment_id' => $appointment->appointment_id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
                 ]);
+                
+                // Don't fail the reschedule request if email fails
+                // Continue with success response
             }
             
             if (request()->expectsJson()) {

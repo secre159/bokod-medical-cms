@@ -23,6 +23,11 @@ class AppointmentNotification extends Mailable implements ShouldQueue
      */
     public function __construct(Appointment $appointment, string $type, array $additionalData = [])
     {
+        // Ensure appointment has required relationships loaded
+        if (!$appointment->relationLoaded('patient')) {
+            $appointment->load('patient');
+        }
+        
         $this->appointment = $appointment;
         $this->type = $type;
         $this->additionalData = $additionalData;
@@ -42,9 +47,24 @@ class AppointmentNotification extends Mailable implements ShouldQueue
             'rescheduled' => 'Appointment Rescheduled - BOKOD CMS',
             'reschedule_request' => 'Reschedule Request Received - BOKOD CMS',
         ];
+        
+        $subject = $subjects[$this->type] ?? 'Appointment Update - BOKOD CMS';
+        
+        // Get FROM address from config, with fallback
+        $fromAddress = config('mail.from.address', 'noreply@bokod-cms.com');
+        $fromName = config('mail.from.name', 'BOKOD CMS');
+        
+        // Ensure we have valid FROM values
+        if (empty($fromAddress)) {
+            $fromAddress = 'noreply@bokod-cms.com';
+        }
+        if (empty($fromName)) {
+            $fromName = 'BOKOD CMS';
+        }
 
         return new Envelope(
-            subject: $subjects[$this->type] ?? 'Appointment Update - BOKOD CMS',
+            from: new \Illuminate\Mail\Mailables\Address($fromAddress, $fromName),
+            subject: $subject,
         );
     }
 
@@ -57,7 +77,7 @@ class AppointmentNotification extends Mailable implements ShouldQueue
             view: "emails.appointments.{$this->type}",
             with: [
                 'appointment' => $this->appointment,
-                'patient' => $this->appointment->patient,
+                'patient' => $this->appointment->patient ?? null,
                 'additionalData' => $this->additionalData,
             ],
         );

@@ -3,7 +3,7 @@
 @section('content')
     <h2>📋 Reschedule Request Received</h2>
     
-    <p>Dear {{ $patient->patient_name }},</p>
+    <p>Dear {{ $patient->patient_name ?? 'Patient' }},</p>
     
     <div class="info-box">
         <p><strong>Thank you!</strong> We have received your request to reschedule your appointment.</p>
@@ -18,11 +18,11 @@
         </tr>
         <tr>
             <th>Current Date</th>
-            <td>{{ $appointment->appointment_date->format('F j, Y (l)') }}</td>
+            <td>{{ $appointment->appointment_date ? $appointment->appointment_date->format('F j, Y (l)') : 'Not set' }}</td>
         </tr>
         <tr>
             <th>Current Time</th>
-            <td>{{ $appointment->appointment_time->format('g:i A') }}</td>
+            <td>{{ $appointment->appointment_time ? $appointment->appointment_time->format('g:i A') : 'Not set' }}</td>
         </tr>
         @if($appointment->requested_date && $appointment->requested_time)
         <tr>
@@ -36,7 +36,7 @@
         @endif
         <tr>
             <th>Reason</th>
-            <td>{{ $appointment->reason }}</td>
+            <td>{{ $appointment->reason ?? 'Not specified' }}</td>
         </tr>
         @if($appointment->reschedule_reason)
         <tr>
