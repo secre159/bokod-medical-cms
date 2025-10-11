@@ -4219,13 +4219,7 @@ $(document).ready(function() {
         
         if (conversationItems > 0) {
             console.log('✅ Ready for long press + swipe left to archive');
-            
-            // Add instruction tooltip after a few seconds
-            setTimeout(() => {
-                if ($('.conversation-item').length > 0) {
-                    showNotification('💡 Tip: Long press + swipe left on conversations to archive', 'info');
-                }
-            }, 3000);
+            // Removed auto tip notification (was showing an info banner)
         }
     }, 1000);
     
