@@ -694,48 +694,17 @@ class AppointmentController extends Controller
                 'appointment_time' => $request->appointment_time
             ]);
             
-            // Send reschedule notification email with improved error handling
-            try {
-                // Ensure appointment has patient loaded
-                if (!$appointment->relationLoaded('patient')) {
-                    $appointment->load('patient');
-                }
-                
-                // Only send email if patient has an email address
-                if ($appointment->patient && $appointment->patient->email) {
-                    $emailResult = $this->emailService->sendAppointmentNotification($appointment, 'rescheduled');
-                    
-                    if (!$emailResult['success']) {
-                        \Log::warning('Reschedule email not sent', [
-                            'appointment_id' => $appointment->appointment_id,
-                            'reason' => $emailResult['message']
-                        ]);
-                    }
-                } else {
-                    \Log::info('Reschedule email skipped - no patient email', [
-                        'appointment_id' => $appointment->appointment_id
-                    ]);
-                }
-                
-            } catch (\Symfony\Component\Mime\Exception\InvalidArgumentException $e) {
-                // Specific handling for email header issues
-                \Log::error('Email header validation failed for reschedule', [
-                    'appointment_id' => $appointment->appointment_id,
-                    'error' => $e->getMessage()
-                ]);
-                // Continue without failing the request
-            } catch (\Exception $e) {
-                \Log::error('Appointment reschedule email failed', [
-                    'appointment_id' => $appointment->appointment_id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                // Continue without failing the request
-            }
+            // TEMPORARILY DISABLE EMAIL SENDING TO STOP CRASHES
+            \Log::info('Appointment rescheduled successfully - email notifications temporarily disabled', [
+                'appointment_id' => $appointment->appointment_id,
+                'patient_id' => $appointment->patient_id,
+                'new_date' => $request->appointment_date,
+                'new_time' => $request->appointment_time
+            ]);
             
             return response()->json([
                 'success' => true,
-                'message' => 'Appointment rescheduled successfully! Email notification sent to patient.'
+                'message' => 'Appointment rescheduled successfully! (Email notifications temporarily disabled)'
             ]);
             
         } catch (\Exception $e) {
