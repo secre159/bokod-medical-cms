@@ -196,8 +196,8 @@
                                         {{ $medicine->expiry_date->format('F d, Y') }}
                                         @if($medicine->expiry_date->isPast())
                                             <br><span class="badge badge-danger">Expired</span>
-                                        @elseif($medicine->expiry_date->diffInDays(now()) <= 30)
-                                            <br><span class="badge badge-warning">Expires in {{ $medicine->expiry_date->diffInDays(now()) }} days</span>
+                                        @elseif($medicine->expiry_date->startOfDay()->diffInDays(now()->startOfDay(), false) <= 30 && $medicine->expiry_date->isFuture())
+                                            <br><span class="badge badge-warning">Expires in {{ now()->startOfDay()->diffInDays($medicine->expiry_date->startOfDay(), false) }} days</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -517,7 +517,7 @@
                                 @if($medicine->expiry_date->isPast())
                                     Expired
                                 @else
-                                    {{ $medicine->expiry_date->diffInDays(now()) }}
+                                    {{ now()->startOfDay()->diffInDays($medicine->expiry_date->startOfDay(), false) }}
                                 @endif
                             </span>
                         </div>

@@ -277,18 +277,18 @@
                                         @if($medicine->expiry_date)
                                             <br><small class="text-muted">{{ $medicine->expiry_date->format('M d, Y') }}</small>
                                         @endif
-                                    @elseif($medicine->expiry_date && $medicine->expiry_date->diffInDays() <= 30)
+                                    @elseif($medicine->expiry_date && now()->startOfDay()->diffInDays($medicine->expiry_date->startOfDay(), false) <= 30 && $medicine->expiry_date->isFuture())
                                         <span class="badge badge-warning">Expiring Soon</span>
                                         <br><small class="text-muted">{{ $medicine->expiry_date->format('M d, Y') }}</small>
-                                        <br><small class="text-warning">{{ $medicine->expiry_date->diffInDays() }} days left</small>
-                                    @elseif($medicine->expiry_date && $medicine->expiry_date->diffInDays() <= 90)
+                                        <br><small class="text-warning">{{ now()->startOfDay()->diffInDays($medicine->expiry_date->startOfDay(), false) }} days left</small>
+                                    @elseif($medicine->expiry_date && now()->startOfDay()->diffInDays($medicine->expiry_date->startOfDay(), false) <= 90 && $medicine->expiry_date->isFuture())
                                         <span class="badge badge-info">Expiring in 3 months</span>
                                         <br><small class="text-muted">{{ $medicine->expiry_date->format('M d, Y') }}</small>
-                                        <br><small class="text-info">{{ $medicine->expiry_date->diffInDays() }} days left</small>
+                                        <br><small class="text-info">{{ now()->startOfDay()->diffInDays($medicine->expiry_date->startOfDay(), false) }} days left</small>
                                     @elseif($medicine->expiry_date)
                                         <span class="badge badge-success">Good</span>
                                         <br><small class="text-muted">Exp: {{ $medicine->expiry_date->format('M d, Y') }}</small>
-                                        <br><small class="text-success">{{ $medicine->expiry_date->diffInDays() }} days left</small>
+                                        <br><small class="text-success">{{ now()->startOfDay()->diffInDays($medicine->expiry_date->startOfDay(), false) }} days left</small>
                                     @else
                                         <span class="badge badge-secondary">No Date</span>
                                         <br><small class="text-muted">Not specified</small>

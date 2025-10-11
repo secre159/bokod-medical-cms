@@ -97,11 +97,11 @@
                     </div>
                     @endif
                     
-                    <div class="mt-3">
-                        <small class="text-muted">
-                            Account age: {{ $stats['account_age'] }} days
-                        </small>
-                    </div>
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    Account age: {{ now()->startOfDay()->diffInDays($user->created_at->startOfDay()) }} days
+                                </small>
+                            </div>
                 </div>
             </div>
         </div>
