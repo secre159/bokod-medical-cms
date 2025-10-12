@@ -109,8 +109,8 @@ return [
     |
     */
 
-    'preloader' => [
-        'enabled' => true,
+'preloader' => [
+        'enabled' => false,
         'mode' => 'fullscreen',
         'img' => [
             'path' => 'images/logo.png',
