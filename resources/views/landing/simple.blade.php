@@ -410,11 +410,11 @@
     </section>
 
     <!-- Vision and Mission Section -->
-    <section class="py-20 bg-gradient-to-r from-blue-900 to-indigo-900 text-white">
+    <section class="py-20 bg-gradient-to-r from-green-800 to-green-900 text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <h2 class="text-3xl sm:text-4xl font-bold mb-4">Benguet State University - Bokod Campus</h2>
-                <p class="text-lg text-blue-100">Guiding Principles of Academic Excellence</p>
+                <p class="text-lg text-green-100">Guiding Principles of Academic Excellence</p>
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -422,11 +422,11 @@
                 <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-8 border border-white border-opacity-20">
                     <div class="flex items-center mb-6">
                         <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
-                            <i class="fas fa-eye text-blue-900 text-xl"></i>
+                            <i class="fas fa-eye text-green-900 text-xl"></i>
                         </div>
                         <h3 class="text-2xl font-bold">Vision</h3>
                     </div>
-                    <p class="text-lg leading-relaxed text-blue-50">
+                    <p class="text-lg leading-relaxed text-green-50">
                         A premier university in transformative education, innovative research, inclusive extension services, sustainable development, and stewardship of culture and the environment.
                     </p>
                 </div>
@@ -434,12 +434,12 @@
                 <!-- Mission -->
                 <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-8 border border-white border-opacity-20">
                     <div class="flex items-center mb-6">
-                        <div class="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center mr-4">
-                            <i class="fas fa-bullseye text-blue-900 text-xl"></i>
+                        <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-bullseye text-green-900 text-xl"></i>
                         </div>
                         <h3 class="text-2xl font-bold">Mission</h3>
                     </div>
-                    <p class="text-lg leading-relaxed text-blue-50">
+                    <p class="text-lg leading-relaxed text-green-50">
                         Cultivate resilient and future-ready human capital through excellent teaching, responsive research, proactive and sustainable community engagements, strategic partnerships, and progressive leadership.
                     </p>
                 </div>
@@ -449,8 +449,8 @@
             <div class="mt-12 text-center">
                 <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 max-w-4xl mx-auto border border-white border-opacity-20">
                     <h4 class="text-xl font-bold mb-3">Campus Health Excellence</h4>
-                    <p class="text-blue-100">
-                        Our campus clinic management system embodies BSU's mission by providing excellent healthcare services, conducting health research, engaging with the campus community proactively, and leading in innovative digital health solutions for educational institutions.
+                    <p class="text-green-100">
+                        Our campus clinic embodies BSU's mission by providing excellent healthcare services, conducting health research, engaging with the campus community proactively, and leading in innovative health solutions for educational institutions.
                     </p>
                 </div>
             </div>
