@@ -351,9 +351,6 @@
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <div class="animate-fadeInUp">
-                <div class="inline-block p-2 bg-yellow-400/20 backdrop-blur-sm rounded-full mb-6 border border-yellow-400/30">
-                    <i class="fas fa-hospital text-3xl text-yellow-300"></i>
-                </div>
                 <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
                     <span class="block text-gradient">BSU-Bokod</span>
                     <span class="block">Campus Clinic</span>
