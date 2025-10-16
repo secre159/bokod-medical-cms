@@ -302,22 +302,38 @@ class MessagingController extends Controller
     {
         $user = Auth::user();
         
+        // Use more efficient query with specific selects
         $conversation = Conversation::forUser($user->id)
-            ->with(['patient.user', 'admin'])
+            ->select(['id', 'patient_id', 'admin_id', 'is_active'])
+            ->with([
+                'patient.user:id,name,role',
+                'admin:id,name,role'
+            ])
             ->findOrFail($conversationId);
         
-        // Load messages with sender information
-        $messagesQuery = $conversation->messages()->with(['sender']);
+        // Load messages with optimized query - limit to recent messages to improve performance
+        $messages = $conversation->messages()
+            ->with(['sender:id,name,role'])
+            ->select(['id', 'conversation_id', 'sender_id', 'message', 'message_type', 'priority', 'created_at', 'file_name', 'file_path', 'file_type', 'reactions'])
+            ->orderBy('created_at', 'desc')
+            ->limit(100) // Limit to last 100 messages for performance
+            ->get()
+            ->reverse() // Reverse to show oldest first
+            ->values(); // Reset keys
         
-        $messages = $messagesQuery->orderBy('created_at', 'asc')->get();
-        
-        // Add formatted reactions to each message
+        // Add formatted reactions to each message (only if they have reactions)
         $messages->each(function ($message) {
-            $message->formatted_reactions = $message->getFormattedReactions();
+            if ($message->reactions) {
+                $message->formatted_reactions = $message->getFormattedReactions();
+            } else {
+                $message->formatted_reactions = [];
+            }
         });
         
-        // Mark messages as read
-        $conversation->markAsReadFor($user->id);
+        // Mark messages as read (do this in background to not slow response)
+        dispatch(function () use ($conversation, $user) {
+            $conversation->markAsReadFor($user->id);
+        })->afterResponse();
         
         return response()->json([
             'messages' => $messages,
@@ -660,21 +676,28 @@ class MessagingController extends Controller
         $user = Auth::user();
         $conversationId = $request->conversation_id;
         
-        // Verify user has access to this conversation
-        $conversation = Conversation::forUser($user->id)->find($conversationId);
-        if (!$conversation) {
+        // Cache conversation access check to avoid repeated DB queries
+        $accessCacheKey = "conversation_access_{$user->id}_{$conversationId}";
+        $hasAccess = Cache::remember($accessCacheKey, 60, function () use ($user, $conversationId) {
+            return Conversation::forUser($user->id)->where('id', $conversationId)->exists();
+        });
+        
+        if (!$hasAccess) {
             return response()->json(['error' => 'Conversation not found or access denied'], 404);
         }
         
-        // Get the other user in the conversation
-        $otherUserId = null;
-        if ($user->role === 'patient') {
-            // For patients, check if admin is typing
-            $otherUserId = $conversation->admin_id;
-        } else {
-            // For admins, check if patient is typing  
-            $otherUserId = $conversation->patient_id;
-        }
+        // Cache the other user ID to avoid repeated conversation lookups
+        $otherUserCacheKey = "other_user_{$conversationId}_{$user->role}";
+        $otherUserId = Cache::remember($otherUserCacheKey, 300, function () use ($conversationId, $user) {
+            $conversation = Conversation::find($conversationId);
+            if (!$conversation) return null;
+            
+            if ($user->role === 'patient') {
+                return $conversation->admin_id;
+            } else {
+                return $conversation->patient_id;
+            }
+        });
         
         if (!$otherUserId) {
             return response()->json(['is_typing' => false]);

@@ -86,11 +86,6 @@ class AdminLTEServiceProvider extends ServiceProvider
             // If custom logo is uploaded, use proper storage disk URL, otherwise use default
             if ($appLogo && $appLogo !== 'images/logo.png') {
                 $logoUrl = $this->getStorageUrl($appLogo);
-                // Debug: Log the generated URL
-                \Log::info('AdminLTE: Logo URL generated', [
-                    'logo_path' => $appLogo,
-                    'generated_url' => $logoUrl
-                ]);
                 Config::set('adminlte.logo_img', $logoUrl);
                 Config::set('adminlte.auth_logo.img.path', $logoUrl);
                 Config::set('adminlte.preloader.img.path', $logoUrl);
@@ -108,11 +103,6 @@ class AdminLTEServiceProvider extends ServiceProvider
             // Enable favicon if configured
             if ($appFavicon) {
                 $faviconUrl = $this->getStorageUrl($appFavicon);
-                // Debug: Log the generated favicon URL
-                \Log::info('AdminLTE: Favicon URL generated', [
-                    'favicon_path' => $appFavicon,
-                    'generated_url' => $faviconUrl
-                ]);
                 Config::set('adminlte.use_full_favicon', true);
                 // Store favicon URL for use in views
                 Config::set('app.favicon', $faviconUrl);
@@ -128,39 +118,32 @@ class AdminLTEServiceProvider extends ServiceProvider
     }
     
     /**
-     * Get the proper storage URL for a file path
+     * Get the proper storage URL for a file path with caching
      */
     private function getStorageUrl($filePath)
     {
-        try {
-            // Use the configured fallback disk (should be Cloudinary)
-            $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
-            $url = $disk->url($filePath);
-            
-            // Debug: Log the URL generation process
-            \Log::info('getStorageUrl debug', [
-                'file_path' => $filePath,
-                'fallback_disk' => config('filesystems.fallback_disk', 'public'),
-                'generated_url' => $url,
-                'url_empty' => empty($url)
-            ]);
-            
-            // If URL is empty, try to construct it manually
-            if (empty($url) && config('filesystems.fallback_disk') === 'cloudinary') {
-                $cloudName = env('CLOUDINARY_CLOUD_NAME');
-                $manualUrl = "https://res.cloudinary.com/{$cloudName}/image/upload/{$filePath}";
-                \Log::info('Constructing manual Cloudinary URL', [
-                    'file_path' => $filePath,
-                    'manual_url' => $manualUrl
-                ]);
-                return $manualUrl;
+        // Cache the URL for 1 hour to avoid repeated Cloudinary API calls
+        $cacheKey = 'storage_url_' . md5($filePath);
+        
+        return \Cache::remember($cacheKey, 3600, function () use ($filePath) {
+            try {
+                // Use the configured fallback disk (should be Cloudinary)
+                $disk = \Storage::disk(config('filesystems.fallback_disk', 'public'));
+                $url = $disk->url($filePath);
+                
+                // If URL is empty, try to construct it manually
+                if (empty($url) && config('filesystems.fallback_disk') === 'cloudinary') {
+                    $cloudName = env('CLOUDINARY_CLOUD_NAME');
+                    $manualUrl = "https://res.cloudinary.com/{$cloudName}/image/upload/{$filePath}";
+                    return $manualUrl;
+                }
+                
+                return $url;
+            } catch (\Exception $e) {
+                // If there's an error, fall back to local storage URL
+                \Log::warning('Error getting storage URL for ' . $filePath . ': ' . $e->getMessage());
+                return 'storage/' . $filePath;
             }
-            
-            return $url;
-        } catch (\Exception $e) {
-            // If there's an error, fall back to local storage URL
-            \Log::warning('Error getting storage URL for ' . $filePath . ': ' . $e->getMessage());
-            return 'storage/' . $filePath;
-        }
+        });
     }
 }
