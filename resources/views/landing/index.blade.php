@@ -1,15 +1,15 @@
 @extends('landing.layout')
 
-@section('title', 'Bokod Medical CMS - Modern Healthcare Management System')
-@section('description', 'Streamline your medical practice with our comprehensive CMS. Manage patients, appointments, prescriptions, and healthcare records efficiently.')
+@section('title', 'BSU-Bokod Campus Clinic - University Health Management System')
+@section('description', 'Comprehensive campus health management system for Benguet State University - Bokod Campus. Manage student health records, appointments, and campus wellness efficiently.')
 
 @section('content')
 <!-- Loading Screen -->
 <div class="loading-screen">
     <div class="text-center">
         <div class="loader mb-4"></div>
-        <h3 class="text-white text-xl font-semibold">Loading Bokod Medical CMS</h3>
-        <p class="text-gray-200 mt-2">Preparing your healthcare management experience...</p>
+        <h3 class="text-white text-xl font-semibold">Loading BSU-Bokod Campus Clinic</h3>
+        <p class="text-gray-200 mt-2">Preparing your campus health management experience...</p>
     </div>
 </div>
 
@@ -23,11 +23,11 @@
             <div class="flex items-center">
                 <div class="flex-shrink-0 flex items-center">
                     @if(config('app.favicon'))
-                        <img src="{{ asset(config('app.favicon')) }}" alt="Bokod Medical CMS" class="h-8 w-8 mr-3">
+                        <img src="{{ config('app.favicon') }}" alt="BSU-Bokod Campus Clinic" class="h-8 w-8 mr-3">
                     @else
                         <i class="fas fa-hospital-alt text-2xl text-indigo-600 mr-3"></i>
                     @endif
-                    <span class="text-xl font-bold text-gray-900">Bokod Medical CMS</span>
+                    <span class="text-xl font-bold text-gray-900">BSU-Bokod Campus Clinic</span>
                 </div>
                 <div class="hidden md:ml-10 md:flex md:space-x-8">
                     <a href="#features" class="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors">Features</a>
@@ -186,13 +186,13 @@
                                         <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
                                         <div class="w-3 h-3 bg-green-500 rounded-full"></div>
                                     </div>
-                                    <div class="flex-1 bg-white rounded px-3 py-1 text-xs text-gray-600">bokodmedical.com/dashboard</div>
+                                    <div class="flex-1 bg-white rounded px-3 py-1 text-xs text-gray-600">bsu-bokod-clinic.edu.ph/dashboard</div>
                                 </div>
                                 
                                 <!-- Desktop Interface -->
                                 <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-4">
                                     <div class="flex items-center justify-between mb-3">
-                                        <h3 class="text-sm font-bold text-gray-900">School Health Portal v2.1</h3>
+                                    <h3 class="text-sm font-bold text-gray-900">BSU-Bokod Campus Health Portal v2.1</h3>
                                         <div class="flex items-center space-x-2">
                                             <div class="w-2 h-2 bg-green-400 rounded-full"></div>
                                             <span class="text-xs text-gray-600">Live School Data</span>
@@ -203,7 +203,7 @@
                                     <div class="grid grid-cols-2 gap-2 mb-3">
                                         <div class="bg-white rounded p-2 text-center border">
                                             <div class="text-lg font-bold text-blue-600">{{ number_format($stats['total_patients'] ?? 847) }}</div>
-                                            <div class="text-xs text-gray-600">Students Enrolled</div>
+                                            <div class="text-xs text-gray-600">University Students</div>
                                         </div>
                                         <div class="bg-white rounded p-2 text-center border">
                                             <div class="text-lg font-bold text-green-600">{{ number_format($stats['total_appointments'] ?? 23) }}</div>
@@ -1220,14 +1220,14 @@
             <div class="md:col-span-2">
                 <div class="flex items-center mb-4">
                     @if(config('app.favicon'))
-                        <img src="{{ asset(config('app.favicon')) }}" alt="Bokod Medical CMS" class="h-8 w-8 mr-3">
+                        <img src="{{ config('app.favicon') }}" alt="BSU-Bokod Campus Clinic" class="h-8 w-8 mr-3">
                     @else
                         <i class="fas fa-hospital-alt text-2xl text-indigo-400 mr-3"></i>
                     @endif
-                    <span class="text-xl font-bold">Bokod Medical CMS</span>
+                    <span class="text-xl font-bold">BSU-Bokod Campus Clinic</span>
                 </div>
                 <p class="text-gray-300 mb-4 max-w-md">
-                    Professional healthcare management system designed to streamline medical practices and improve patient care through modern technology.
+                    Professional campus health management system for Benguet State University - Bokod Campus, designed to streamline campus clinic operations and improve student healthcare through modern digital solutions.
                 </p>
                 <div class="flex space-x-4">
                     <a href="#" class="text-gray-400 hover:text-white transition-colors">
@@ -1276,7 +1276,7 @@
         </div>
         
         <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; {{ date('Y') }} Bokod Medical CMS. All rights reserved. Built with ❤️ for healthcare professionals.</p>
+            <p>&copy; {{ date('Y') }} BSU-Bokod Campus Clinic. All rights reserved. Built with ❤️ for university healthcare excellence.</p>
         </div>
     </div>
 </footer>
