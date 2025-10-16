@@ -457,39 +457,39 @@
         </div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <h2 class="text-3xl md:text-4xl font-bold mb-4">
-                🏆 Comprehensive Healthcare Management Platform
+                🏆 Comprehensive Healthcare Services
             </h2>
             <p class="text-xl text-green-100 mb-8 max-w-4xl mx-auto">
-                Designed specifically for Benguet State University - BOKOD CMS provides comprehensive health management with professional-grade security and intuitive design tailored for our campus community.
+                BSU-Bokod Campus Clinic provides comprehensive healthcare services with professional medical staff and modern facilities tailored for our campus community.
             </p>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
                         <i class="fas fa-shield-check text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">HIPAA Compliant</h4>
-                    <p class="text-green-200 text-sm">Enterprise Security</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">General Medicine</h4>
+                    <p class="text-green-200 text-sm">Primary Healthcare</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
-                        <i class="fas fa-mobile-alt text-yellow-300 text-xl"></i>
+                        <i class="fas fa-heartbeat text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">Mobile Ready</h4>
-                    <p class="text-green-200 text-sm">Access Anywhere</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">Emergency Care</h4>
+                    <p class="text-green-200 text-sm">24/7 Available</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
-                        <i class="fas fa-clock text-yellow-300 text-xl"></i>
+                        <i class="fas fa-user-md text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">Real-Time</h4>
-                    <p class="text-green-200 text-sm">Instant Updates</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">Professional Staff</h4>
+                    <p class="text-green-200 text-sm">Licensed Doctors</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
-                        <i class="fas fa-users text-yellow-300 text-xl"></i>
+                        <i class="fas fa-pills text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">Multi-User</h4>
-                    <p class="text-green-200 text-sm">Role-Based Access</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">Pharmacy</h4>
+                    <p class="text-green-200 text-sm">On-site Medications</p>
                 </div>
             </div>
         </div>
@@ -1162,45 +1162,29 @@
                 <i class="fas fa-rocket text-yellow-300 text-2xl"></i>
             </div>
             <h2 class="text-4xl md:text-5xl font-bold mb-6">
-                Ready for Professional-Grade School Healthcare Management?
+                Your Health, Our Priority
             </h2>
             <p class="text-xl md:text-2xl mb-8 text-green-100 max-w-3xl mx-auto leading-relaxed">
-                Experience the complete healthcare management solution with advanced patient tracking, pharmacy management, vital signs monitoring, and intelligent reporting.
+                Providing quality healthcare services to the BSU-Bokod campus community with compassion, professionalism, and excellence.
             </p>
-            
-            <!-- Trust Indicators -->
-            <div class="flex flex-wrap justify-center items-center gap-8 mb-10 text-green-200">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-shield-check text-yellow-300"></i>
-                    <span class="text-sm font-medium">HIPAA Compliant</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-cloud-upload-alt text-yellow-300"></i>
-                    <span class="text-sm font-medium">Cloud-Based</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-headset text-yellow-300"></i>
-                    <span class="text-sm font-medium">24/7 Support</span>
-                </div>
-            </div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 @auth
                     <a href="{{ route('dashboard.index') }}" class="btn-primary bg-white text-blue-600 px-10 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300">
-                        <i class="fas fa-tachometer-alt mr-3"></i>Access Dashboard
+                        <i class="fas fa-user-md mr-3"></i>Patient Portal
                     </a>
                 @else
                     <a href="{{ route('register') }}" class="btn-primary bg-white text-blue-600 px-10 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300">
-                        <i class="fas fa-user-plus mr-3"></i>Start Free Trial
+                        <i class="fas fa-user-plus mr-3"></i>Register as Patient
                     </a>
                     <a href="{{ route('login') }}" class="glass-effect border-2 border-white/30 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300">
-                        <i class="fas fa-sign-in-alt mr-3"></i>Sign In
+                        <i class="fas fa-sign-in-alt mr-3"></i>Staff Login
                     </a>
                 @endauth
             </div>
             
             <p class="mt-6 text-green-200 text-sm">
-                No setup fees • Easy deployment • Dedicated support
+                Open Monday-Friday • Walk-ins welcome • Emergency services available
             </p>
         </div>
     </section>
