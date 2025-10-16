@@ -105,10 +105,10 @@
         <div class="lg:flex lg:items-center lg:justify-between">
             <div class="lg:w-1/2 lg:pr-8">
                 <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                    <span data-typing="School Health Management Made Simple" data-speed="80">School Health Management Made Simple</span>
+                    <span data-typing="BSU-Bokod Campus Clinic" data-speed="80">BSU-Bokod Campus Clinic</span>
                 </h1>
                 <p class="text-lg sm:text-xl text-gray-100 mb-6 sm:mb-8 leading-relaxed">
-                    Comprehensive desktop school clinic system designed for school nurses and health coordinators. Manage student health records, track immunizations, handle medical emergencies, and ensure student wellness with ease.
+                    Comprehensive campus health management system for Benguet State University - Bokod Campus. Manage student health records, track medical visits, handle health emergencies, and ensure campus-wide wellness with advanced digital solutions.
                 </p>
                 
                 <!-- School Health Features Highlights -->
@@ -284,12 +284,60 @@
     </div>
 </section>
 
+<!-- Vision and Mission Section -->
+<section class="section-padding bg-gradient-to-r from-blue-900 to-indigo-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-4">Benguet State University - Bokod Campus</h2>
+            <p class="text-lg text-blue-100">Guiding Principles of Academic Excellence</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Vision -->
+            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-8 border border-white border-opacity-20">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-eye text-blue-900 text-xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">Vision</h3>
+                </div>
+                <p class="text-lg leading-relaxed text-blue-50">
+                    A premier university in transformative education, innovative research, inclusive extension services, sustainable development, and stewardship of culture and the environment.
+                </p>
+            </div>
+            
+            <!-- Mission -->
+            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-8 border border-white border-opacity-20">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-green-400 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-bullseye text-blue-900 text-xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">Mission</h3>
+                </div>
+                <p class="text-lg leading-relaxed text-blue-50">
+                    Cultivate resilient and future-ready human capital through excellent teaching, responsive research, proactive and sustainable community engagements, strategic partnerships, and progressive leadership.
+                </p>
+            </div>
+        </div>
+        
+        <!-- Campus Health Integration -->
+        <div class="mt-12 text-center">
+            <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 max-w-4xl mx-auto border border-white border-opacity-20">
+                <h4 class="text-xl font-bold mb-3">Campus Health Excellence</h4>
+                <p class="text-blue-100">
+                    Our campus clinic management system embodies BSU's mission by providing excellent healthcare services, conducting health research, engaging with the campus community proactively, and leading in innovative digital health solutions for educational institutions.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- Features Section -->
 <section id="features" class="section-padding bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12 md:mb-16">
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">Comprehensive School Health Management</h2>
-            <p class="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto px-4 sm:px-0">Designed specifically for school nurses and health coordinators to manage student wellness, track health records, and ensure school-wide health compliance efficiently.</p>
+            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">Comprehensive Campus Health Management</h2>
+            <p class="text-lg md:text-xl text-gray-600 max-w-4xl mx-auto px-4 sm:px-0">Designed specifically for university campus clinics and health centers to manage student wellness, track health records, and ensure campus-wide health compliance efficiently for BSU-Bokod Campus community.</p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
