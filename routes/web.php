@@ -326,6 +326,7 @@ Route::middleware(['auth', 'account.status'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+require __DIR__.'/migration-fix.php'; // TEMPORARY - REMOVE AFTER PRODUCTION FIX
 
 // Debug routes for email diagnosis (admin only)
 Route::middleware(['auth', 'role:admin'])->group(function () {
