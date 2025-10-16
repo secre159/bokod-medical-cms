@@ -7,6 +7,13 @@
     <title>BSU-Bokod Campus Clinic - University Health Management System</title>
     <meta name="description" content="Comprehensive campus health management system for Benguet State University - Bokod Campus. Manage student health records, appointments, and campus wellness efficiently.">
     
+    {{-- Custom Favicon --}}
+    @if(config('app.favicon'))
+        <link rel="icon" type="image/png" href="{{ asset(config('app.favicon')) }}">
+        <link rel="shortcut icon" type="image/png" href="{{ asset(config('app.favicon')) }}">
+        <link rel="apple-touch-icon" href="{{ asset(config('app.favicon')) }}">
+    @endif
+    
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet">
@@ -255,9 +262,13 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
-                            <i class="fas fa-hospital text-yellow-300 text-sm"></i>
-                        </div>
+                        @if(config('app.favicon'))
+                            <img src="{{ asset(config('app.favicon')) }}" alt="BSU-Bokod Campus Clinic" class="h-8 w-8 mr-3">
+                        @else
+                            <div class="w-8 h-8 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
+                                <i class="fas fa-hospital text-yellow-300 text-sm"></i>
+                            </div>
+                        @endif
                         <span class="text-xl font-bold text-gradient">BSU-Bokod Campus Clinic</span>
                     </div>
                 </div>
@@ -1197,9 +1208,13 @@
                 <!-- Brand Section -->
                 <div class="md:col-span-1">
                     <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
-                            <i class="fas fa-hospital text-yellow-300"></i>
-                        </div>
+                        @if(config('app.favicon'))
+                            <img src="{{ asset(config('app.favicon')) }}" alt="BSU-Bokod Campus Clinic" class="h-10 w-10">
+                        @else
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
+                                <i class="fas fa-hospital text-yellow-300"></i>
+                            </div>
+                        @endif
                         <h3 class="text-xl font-bold">BSU-Bokod Campus Clinic</h3>
                     </div>
                     <p class="text-gray-300 mb-6 leading-relaxed">
