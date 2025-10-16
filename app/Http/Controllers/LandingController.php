@@ -23,6 +23,6 @@ class LandingController extends Controller
             'total_users' => User::count(),
         ];
         
-        return view('landing.index', compact('stats'));
+        return view('landing.simple', compact('stats'));
     }
 }
