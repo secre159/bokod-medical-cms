@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
+use App\Rules\PhoneNumberRule;
 use Carbon\Carbon;
 
 class SettingsController extends Controller
@@ -33,7 +34,7 @@ class SettingsController extends Controller
             'app_name' => 'required|string|max:255',
             'app_description' => 'nullable|string|max:500',
             'contact_email' => 'required|email|max:255',
-            'contact_phone' => 'nullable|string|max:20',
+            'contact_phone' => ['nullable', new PhoneNumberRule],
             'address' => 'nullable|string|max:500',
             'timezone' => 'required|string',
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
