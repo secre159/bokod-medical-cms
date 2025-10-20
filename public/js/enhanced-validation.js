@@ -23,7 +23,8 @@
                 philippinesInternational: /^\+639[0-9]{9}$/,
                 validChars: /^[0-9+\s()-]*$/
             },
-            validNetworkCodes: ['17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '46', '47', '48', '49', '73', '74', '81', '82', '88', '89', '92', '93', '94', '95', '96', '97', '98', '99']
+            // Remove strict network code validation - allow any digits after 09
+            validNetworkCodes: [] // No longer used - simplified validation
         },
         email: {
             maxLength: 254, // RFC standard
@@ -155,32 +156,22 @@
             
             const digitsOnly = value.replace(/[^0-9]/g, '');
             
-            // Philippines local format
+            // Philippines local format - simplified validation
             if (value.startsWith('09')) {
                 if (digitsOnly.length === 11) {
-                    const networkCode = digitsOnly.substring(2, 4);
-                    if (CONFIG.phone.validNetworkCodes.includes(networkCode)) {
-                        this.showSuccess('Valid Philippines mobile number');
-                        this.formatPhilippinesLocal(value);
-                    } else {
-                        this.showError('Invalid Philippines network code');
-                    }
+                    this.showSuccess('Valid Philippines mobile number');
+                    this.formatPhilippinesLocal(value);
                 } else if (digitsOnly.length < 11) {
                     this.showWarning(`Need ${11 - digitsOnly.length} more digits`);
                 } else {
                     this.showError('Philippines numbers should be exactly 11 digits');
                 }
             }
-            // Philippines international format
+            // Philippines international format - simplified validation  
             else if (value.startsWith('+63')) {
                 if (digitsOnly.length === 13) {
-                    const networkCode = digitsOnly.substring(4, 6);
-                    if (CONFIG.phone.validNetworkCodes.includes(networkCode)) {
-                        this.showSuccess('Valid Philippines international number');
-                        this.formatPhilippinesInternational(value);
-                    } else {
-                        this.showError('Invalid Philippines network code');
-                    }
+                    this.showSuccess('Valid Philippines international number');
+                    this.formatPhilippinesInternational(value);
                 } else if (digitsOnly.length < 13) {
                     this.showWarning(`Need ${13 - digitsOnly.length} more digits`);
                 } else {

@@ -10,8 +10,8 @@ class PhoneNumberRule implements ValidationRule
     /**
      * Run the validation rule.
      * 
-     * Enforces Philippine mobile number format: 09XXXXXXXXX (exactly 11 digits)
-     * Must start with '09' followed by 9 digits with valid network codes
+     * Simplified Philippine mobile number validation: 09XXXXXXXXX (exactly 11 digits)
+     * Must start with '09' followed by 9 digits - no strict network code validation
      *
      * @param  \Closure(string, ?string=): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
@@ -57,22 +57,7 @@ class PhoneNumberRule implements ValidationRule
             return;
         }
         
-        // Additional validation: Check for valid network prefixes (updated 2024)
-        $networkCode = substr($cleanNumber, 2, 2);
-        $validNetworkCodes = [
-            // Globe/TM network codes
-            '05', '06', '15', '16', '17', '26', '27', '35', '36', '37', '94', '95', '96', '97',
-            // Smart/TNT/Sun network codes (verified active prefixes)
-            '07', '08', '09', '10', '11', '13', '14', '18', '19', '20', '21', '22', '23', 
-            '28', '29', '30', '31', '32', '33', '34', '38', '39', '40', '42', '43', '44', 
-            '81', '83', '84', '89', '98', '99',
-            // DITO network codes
-            '91', '92', '93'
-        ];
-        
-        if (!in_array($networkCode, $validNetworkCodes)) {
-            $fail('The :attribute field contains an invalid Philippines network code "' . $networkCode . '". Valid examples: 0917 (Globe), 0905 (Globe), 0998 (Smart), 0913 (Smart), 0991 (DITO).');
-            return;
-        }
+        // That's it! No strict network code validation - just 11 digits starting with 09
+        // This allows for flexibility with newer or less common network prefixes
     }
 }
