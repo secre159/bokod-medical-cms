@@ -14,7 +14,7 @@ php artisan migrate --force
 
 # Run the messaging system fix
 echo "🔧 Running messaging system database fix..."
-php fix-production-messaging-database.php
+php scripts/maintenance/fix-production-messaging-database.php
 
 # Clear caches after fixes
 echo "🧹 Clearing caches..."

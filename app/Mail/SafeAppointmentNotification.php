@@ -50,9 +50,12 @@ class SafeAppointmentNotification extends Mailable
         
         $subject = $subjects[$this->type] ?? 'Appointment Update - BOKOD CMS';
         
-        // ULTRA-SAFE: Hardcoded values that are guaranteed to work
-        $fromAddress = 'noreply@resend.dev';
-        $fromName = 'BOKOD CMS';
+        // Prefer configured sender, fallback to safe defaults
+        $configuredAddress = config('mail.from.address');
+        $configuredName = config('mail.from.name');
+        
+        $fromAddress = filter_var($configuredAddress, FILTER_VALIDATE_EMAIL) ? $configuredAddress : 'noreply@resend.dev';
+        $fromName = (is_string($configuredName) && trim($configuredName) !== '') ? $configuredName : 'BOKOD CMS';
         
         // Log for debugging
         \Log::info('SafeAppointmentNotification creating envelope', [

@@ -554,6 +554,9 @@
     padding: 8px;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    /* Ensure container maintains its width */
+    width: 100%;
+    min-width: 0;
 }
 
 .message-input-container:focus-within {
@@ -601,6 +604,8 @@
     display: flex;
     align-items: flex-end;
     position: relative;
+    min-width: 0; /* Allow flex item to shrink */
+    gap: 8px; /* Space between textarea and send button */
 }
 
 .message-textarea {
@@ -617,6 +622,11 @@
     overflow-y: auto;
     outline: none;
     font-family: inherit;
+    /* Ensure text wraps properly */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    min-width: 0; /* Allow shrinking */
 }
 
 .message-textarea::placeholder {
@@ -636,8 +646,11 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-left: 8px;
     box-shadow: 0 1px 3px rgba(0, 122, 204, 0.3);
+    /* Keep send button fixed in position */
+    flex-shrink: 0;
+    align-self: flex-end;
+    margin: 0; /* Remove margin, use gap instead */
 }
 
 .send-btn:hover {
@@ -672,23 +685,38 @@
     .message-input-container {
         border-radius: 20px;
         padding: 6px;
+        /* Ensure proper flex behavior on mobile */
+        flex-wrap: nowrap;
+        align-items: flex-end;
+    }
+    
+    .message-input-wrapper {
+        gap: 6px; /* Smaller gap on mobile */
+        flex: 1;
+        min-width: 0;
     }
     
     .action-btn {
         width: 36px;
         height: 36px;
         font-size: 14px;
+        flex-shrink: 0; /* Prevent shrinking */
     }
     
     .message-textarea {
         font-size: 14px;
         padding: 10px 12px;
+        /* Ensure proper text wrapping on mobile */
+        word-break: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
     }
     
     .send-btn {
         width: 40px;
         height: 40px;
         font-size: 14px;
+        flex-shrink: 0; /* Prevent shrinking on mobile */
     }
     
     .file-preview-container {
@@ -6620,6 +6648,105 @@ $(document).ready(function() {
         
         console.log('✅ Messaging send button fixes initialized');
         console.log('💡 To manually reset UI, run: resetMessagingUI()');
+    }
+});
+
+// ===============================
+// TEXTAREA AUTO-RESIZE & LAYOUT FIX
+// ===============================
+
+// Auto-resize textarea function
+function autoResizeTextarea(textarea) {
+    if (!textarea) return;
+    
+    // Reset height to auto to get proper scroll height
+    textarea.style.height = 'auto';
+    
+    // Calculate the scroll height, respecting max-height
+    const maxHeight = 120; // pixels, matching CSS max-height
+    const minHeight = 24;  // pixels, matching CSS min-height
+    let newHeight = Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight));
+    
+    textarea.style.height = newHeight + 'px';
+    
+    // If content exceeds max height, enable scrolling
+    if (textarea.scrollHeight > maxHeight) {
+        textarea.style.overflowY = 'auto';
+    } else {
+        textarea.style.overflowY = 'hidden';
+    }
+}
+
+// Initialize auto-resize functionality
+function initializeTextareaAutoResize() {
+    const textarea = document.getElementById('message-textarea');
+    if (!textarea) return;
+    
+    // Add input event listener for auto-resize
+    textarea.addEventListener('input', function() {
+        autoResizeTextarea(this);
+    });
+    
+    // Add paste event listener
+    textarea.addEventListener('paste', function() {
+        // Use setTimeout to allow paste content to be processed
+        setTimeout(() => autoResizeTextarea(this), 0);
+    });
+    
+    // Handle keyboard events
+    textarea.addEventListener('keydown', function(e) {
+        // Allow Shift+Enter for new lines, Enter alone for submit
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            // Trigger form submission
+            const form = document.getElementById('message-form');
+            if (form && this.value.trim() !== '') {
+                form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            }
+            return false;
+        }
+        
+        // Auto-resize on keydown for immediate feedback
+        setTimeout(() => autoResizeTextarea(this), 0);
+    });
+    
+    // Handle initial resize on focus
+    textarea.addEventListener('focus', function() {
+        autoResizeTextarea(this);
+    });
+    
+    console.log('✅ Textarea auto-resize initialized');
+}
+
+// Enhanced form submission handling
+function enhanceFormSubmission() {
+    const form = document.getElementById('message-form');
+    const textarea = document.getElementById('message-textarea');
+    
+    if (!form || !textarea) return;
+    
+    form.addEventListener('submit', function() {
+        // Reset textarea height after sending
+        setTimeout(() => {
+            if (textarea.value === '') {
+                textarea.style.height = '24px'; // Reset to min height
+                textarea.style.overflowY = 'hidden';
+            }
+        }, 100);
+    });
+    
+    console.log('✅ Form submission enhancement initialized');
+}
+
+// Initialize textarea enhancements when document is ready
+$(document).ready(function() {
+    if ($('#message-textarea').length > 0) {
+        // Use setTimeout to ensure DOM is fully rendered
+        setTimeout(() => {
+            initializeTextareaAutoResize();
+            enhanceFormSubmission();
+            console.log('✅ Message textarea layout fixes initialized');
+        }, 100);
     }
 });
 
