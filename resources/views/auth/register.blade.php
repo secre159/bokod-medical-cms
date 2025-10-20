@@ -1305,25 +1305,14 @@ function isValidEmailFormat(email) {
     return true;
 }
 
-// Philippine phone number validation matching backend rules
+// Philippine phone number validation matching simplified backend rules
 function isValidPhoneFormat(phone) {
     // Remove all non-digit characters for validation
     const cleanNumber = phone.replace(/[^0-9]/g, '');
     
-    // Check if it follows Philippine mobile format: 09XXXXXXXXX (exactly 11 digits)
-    if (!/^09[0-9]{9}$/.test(cleanNumber)) {
-        return false;
-    }
-    
-    // Check for valid network prefixes (simplified version)
-    const networkCode = cleanNumber.substring(2, 4);
-    const validNetworkCodes = [
-        '17', '05', '06', '15', '16', '26', '27', '35', '36', '37', '94', '95', '96', '97', // Globe/TM
-        '07', '08', '09', '10', '11', '12', '13', '14', '18', '19', '20', '21', '22', '23', '28', '29', '30', '31', '32', '33', '34', '38', '39', '40', '41', '42', '43', '44', '89', '98', '99', // Smart/TNT/Sun
-        '91', '92', '93' // DITO
-    ];
-    
-    return validNetworkCodes.includes(networkCode);
+    // Simplified validation: Check if it follows Philippine mobile format: 09XXXXXXXXX (exactly 11 digits)
+    // No strict network code validation - allows any digits after 09
+    return /^09[0-9]{9}$/.test(cleanNumber);
 }
 
 // Password visibility toggle function
