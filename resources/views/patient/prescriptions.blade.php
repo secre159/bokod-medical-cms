@@ -32,20 +32,18 @@
     @else
         @php
             $patient = auth()->user()->patient;
-            $allPrescriptions = collect();
             
-            // Get prescriptions from all appointments
-            foreach($patient->appointments()->with(['prescriptions.medicine'])->get() as $appointment) {
-                if ($appointment->prescriptions) {
-                    foreach($appointment->prescriptions as $prescription) {
-                        $prescription->appointment_date = $appointment->appointment_date;
-                        $prescription->appointment_reason = $appointment->reason;
-                        $allPrescriptions->push($prescription);
-                    }
+            // Get prescriptions directly from patient
+            $allPrescriptions = $patient->prescriptions()->with(['medicine', 'appointment'])->orderBy('created_at', 'desc')->get();
+            
+            // Add appointment data if available
+            foreach($allPrescriptions as $prescription) {
+                if ($prescription->appointment) {
+                    $prescription->appointment_date = $prescription->appointment->appointment_date;
+                    $prescription->appointment_reason = $prescription->appointment->reason;
                 }
             }
             
-            $allPrescriptions = $allPrescriptions->sortByDesc('created_at');
             $activePrescriptions = $allPrescriptions->where('status', 'active');
             $completedPrescriptions = $allPrescriptions->where('status', 'completed');
             $pendingPrescriptions = $allPrescriptions->where('status', 'pending');

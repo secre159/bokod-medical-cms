@@ -4,8 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>BOKOD CMS - Complete School Health Management</title>
-    <meta name="description" content="BOKOD CMS - Professional clinic management system for Benguet State University with comprehensive patient tracking, pharmacy management, vital signs monitoring, and intelligent reporting.">
+    <title>BSU-Bokod Campus Clinic - University Health Management System</title>
+    <meta name="description" content="Comprehensive campus health management system for Benguet State University - Bokod Campus. Manage student health records, appointments, and campus wellness efficiently.">
+    
+    {{-- Custom Favicon --}}
+    @if(config('app.favicon'))
+        <link rel="icon" type="image/png" href="{{ asset(config('app.favicon')) }}">
+        <link rel="shortcut icon" type="image/png" href="{{ asset(config('app.favicon')) }}">
+        <link rel="apple-touch-icon" href="{{ asset(config('app.favicon')) }}">
+    @endif
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -255,10 +262,14 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
-                            <i class="fas fa-hospital text-yellow-300 text-sm"></i>
-                        </div>
-                        <span class="text-xl font-bold text-gradient">BOKOD CMS</span>
+                        @if(config('app.favicon'))
+                            <img src="{{ asset(config('app.favicon')) }}" alt="BSU-Bokod Campus Clinic" class="h-8 w-8 mr-3">
+                        @else
+                            <div class="w-8 h-8 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
+                                <i class="fas fa-hospital text-yellow-300 text-sm"></i>
+                            </div>
+                        @endif
+                        <span class="text-xl font-bold text-gradient">BSU-Bokod Campus Clinic</span>
                     </div>
                 </div>
                 
@@ -340,22 +351,19 @@
         
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <div class="animate-fadeInUp">
-                <div class="inline-block p-2 bg-yellow-400/20 backdrop-blur-sm rounded-full mb-6 border border-yellow-400/30">
-                    <i class="fas fa-hospital text-3xl text-yellow-300"></i>
-                </div>
                 <h1 class="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                    <span class="block text-gradient">Complete School</span>
-                    <span class="block">Health Management</span>
+                    <span class="block text-gradient">BSU-Bokod</span>
+                    <span class="block">Campus Clinic</span>
                 </h1>
                 <p class="text-xl md:text-2xl mb-8 text-green-100 max-w-3xl mx-auto leading-relaxed">
-                    Comprehensive clinic management with patient records, appointment scheduling, prescription tracking, inventory management, and real-time health monitoring
+                    Comprehensive campus health management system for Benguet State University - Bokod Campus. Manage student health records, track medical visits, handle health emergencies, and ensure campus-wide wellness.
                 </p>
                 
                 <!-- Hero Stats -->
                 <div class="flex flex-wrap justify-center gap-8 mb-10 text-sm">
                     <div class="text-center">
                         <div class="text-2xl font-bold text-yellow-300 mb-1">{{ number_format($stats['total_patients'] ?? 847) }}</div>
-                        <div class="text-green-100">BSU Students</div>
+                        <div class="text-green-100">University Students</div>
                     </div>
                     <div class="text-center">
                         <div class="text-2xl font-bold text-yellow-300 mb-1">{{ number_format($stats['total_appointments'] ?? 156) }}+</div>
@@ -401,6 +409,54 @@
         </div>
     </section>
 
+    <!-- Vision and Mission Section -->
+    <section class="py-20 bg-gradient-to-r from-green-800 to-green-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Benguet State University - Bokod Campus</h2>
+                <p class="text-lg text-green-100">Guiding Principles of Academic Excellence</p>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Vision -->
+                <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-8 border border-white border-opacity-20">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-eye text-green-900 text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold">Vision</h3>
+                    </div>
+                    <p class="text-lg leading-relaxed text-green-50">
+                        A premier university in transformative education, innovative research, inclusive extension services, sustainable development, and stewardship of culture and the environment.
+                    </p>
+                </div>
+                
+                <!-- Mission -->
+                <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-2xl p-8 border border-white border-opacity-20">
+                    <div class="flex items-center mb-6">
+                        <div class="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-bullseye text-green-900 text-xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold">Mission</h3>
+                    </div>
+                    <p class="text-lg leading-relaxed text-green-50">
+                        Cultivate resilient and future-ready human capital through excellent teaching, responsive research, proactive and sustainable community engagements, strategic partnerships, and progressive leadership.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Campus Health Integration -->
+            <div class="mt-12 text-center">
+                <div class="bg-white bg-opacity-10 backdrop-blur-sm rounded-xl p-6 max-w-4xl mx-auto border border-white border-opacity-20">
+                    <h4 class="text-xl font-bold mb-3">Campus Health Excellence</h4>
+                    <p class="text-green-100">
+                        Our campus clinic embodies BSU's mission by providing excellent healthcare services, conducting health research, engaging with the campus community proactively, and leading in innovative health solutions for educational institutions.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Feature Showcase Banner -->
     <section class="py-16 bg-gradient-to-r from-green-600 via-green-700 to-green-800 text-white relative overflow-hidden">
         <div class="absolute inset-0 opacity-20">
@@ -409,39 +465,39 @@
         </div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <h2 class="text-3xl md:text-4xl font-bold mb-4">
-                🏆 Comprehensive Healthcare Management Platform
+                🏆 Comprehensive Healthcare Services
             </h2>
             <p class="text-xl text-green-100 mb-8 max-w-4xl mx-auto">
-                Designed specifically for Benguet State University - BOKOD CMS provides comprehensive health management with professional-grade security and intuitive design tailored for our campus community.
+                BSU-Bokod Campus Clinic provides comprehensive healthcare services with professional medical staff and modern facilities tailored for our campus community.
             </p>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
                         <i class="fas fa-shield-check text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">HIPAA Compliant</h4>
-                    <p class="text-green-200 text-sm">Enterprise Security</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">General Medicine</h4>
+                    <p class="text-green-200 text-sm">Primary Healthcare</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
-                        <i class="fas fa-mobile-alt text-yellow-300 text-xl"></i>
+                        <i class="fas fa-heartbeat text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">Mobile Ready</h4>
-                    <p class="text-green-200 text-sm">Access Anywhere</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">Emergency Care</h4>
+                    <p class="text-green-200 text-sm">24/7 Available</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
-                        <i class="fas fa-clock text-yellow-300 text-xl"></i>
+                        <i class="fas fa-user-md text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">Real-Time</h4>
-                    <p class="text-green-200 text-sm">Instant Updates</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">Professional Staff</h4>
+                    <p class="text-green-200 text-sm">Licensed Doctors</p>
                 </div>
                 <div class="text-center">
                     <div class="w-16 h-16 bg-yellow-400/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-yellow-300/30">
-                        <i class="fas fa-users text-yellow-300 text-xl"></i>
+                        <i class="fas fa-pills text-yellow-300 text-xl"></i>
                     </div>
-                    <h4 class="font-semibold text-yellow-300 mb-1">Multi-User</h4>
-                    <p class="text-green-200 text-sm">Role-Based Access</p>
+                    <h4 class="font-semibold text-yellow-300 mb-1">Pharmacy</h4>
+                    <p class="text-green-200 text-sm">On-site Medications</p>
                 </div>
             </div>
         </div>
@@ -1114,45 +1170,29 @@
                 <i class="fas fa-rocket text-yellow-300 text-2xl"></i>
             </div>
             <h2 class="text-4xl md:text-5xl font-bold mb-6">
-                Ready for Professional-Grade School Healthcare Management?
+                Your Health, Our Priority
             </h2>
             <p class="text-xl md:text-2xl mb-8 text-green-100 max-w-3xl mx-auto leading-relaxed">
-                Experience the complete healthcare management solution with advanced patient tracking, pharmacy management, vital signs monitoring, and intelligent reporting.
+                Providing quality healthcare services to the BSU-Bokod campus community with compassion, professionalism, and excellence.
             </p>
-            
-            <!-- Trust Indicators -->
-            <div class="flex flex-wrap justify-center items-center gap-8 mb-10 text-green-200">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-shield-check text-yellow-300"></i>
-                    <span class="text-sm font-medium">HIPAA Compliant</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-cloud-upload-alt text-yellow-300"></i>
-                    <span class="text-sm font-medium">Cloud-Based</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-headset text-yellow-300"></i>
-                    <span class="text-sm font-medium">24/7 Support</span>
-                </div>
-            </div>
             
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 @auth
                     <a href="{{ route('dashboard.index') }}" class="btn-primary bg-white text-blue-600 px-10 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300">
-                        <i class="fas fa-tachometer-alt mr-3"></i>Access Dashboard
+                        <i class="fas fa-user-md mr-3"></i>Patient Portal
                     </a>
                 @else
                     <a href="{{ route('register') }}" class="btn-primary bg-white text-blue-600 px-10 py-4 rounded-xl font-bold text-lg shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300">
-                        <i class="fas fa-user-plus mr-3"></i>Start Free Trial
+                        <i class="fas fa-user-plus mr-3"></i>Register as Patient
                     </a>
                     <a href="{{ route('login') }}" class="glass-effect border-2 border-white/30 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all duration-300">
-                        <i class="fas fa-sign-in-alt mr-3"></i>Sign In
+                        <i class="fas fa-sign-in-alt mr-3"></i>Staff Login
                     </a>
                 @endauth
             </div>
             
             <p class="mt-6 text-green-200 text-sm">
-                No setup fees • Easy deployment • Dedicated support
+                Open Monday-Friday • Walk-ins welcome • Emergency services available
             </p>
         </div>
     </section>
@@ -1165,13 +1205,17 @@
                 <!-- Brand Section -->
                 <div class="md:col-span-1">
                     <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
-                            <i class="fas fa-hospital text-yellow-300"></i>
-                        </div>
-                        <h3 class="text-xl font-bold">BOKOD CMS</h3>
+                        @if(config('app.favicon'))
+                            <img src="{{ asset(config('app.favicon')) }}" alt="BSU-Bokod Campus Clinic" class="h-10 w-10">
+                        @else
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center border border-yellow-400">
+                                <i class="fas fa-hospital text-yellow-300"></i>
+                            </div>
+                        @endif
+                        <h3 class="text-xl font-bold">BSU-Bokod Campus Clinic</h3>
                     </div>
                     <p class="text-gray-300 mb-6 leading-relaxed">
-                        Professional healthcare management system designed specifically for Benguet State University campus community.
+                        Professional campus health management system for Benguet State University - Bokod Campus, designed to streamline campus clinic operations and improve student healthcare.
                     </p>
                     <div class="flex space-x-4">
                         <div class="w-10 h-10 bg-gray-700 hover:bg-blue-600 rounded-lg flex items-center justify-center cursor-pointer transition-colors">
@@ -1250,8 +1294,8 @@
             <div class="border-t border-gray-700 mt-12 pt-8">
                 <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                     <div class="text-gray-300">
-                        <p>&copy; {{ date('Y') }} BOKOD CMS. All rights reserved.</p>
-                        <p class="text-sm mt-1">Built with ❤️ for the Benguet State University community.</p>
+                        <p>&copy; {{ date('Y') }} BSU-Bokod Campus Clinic. All rights reserved.</p>
+                        <p class="text-sm mt-1">Built with ❤️ for university healthcare excellence.</p>
                     </div>
                     <div class="flex items-center space-x-6 text-sm text-gray-300">
                         <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>

@@ -109,8 +109,11 @@
                 </p>
                 <div class="mt-4">
                     <button type="button" class="btn btn-primary" id="selectPatientBtn">
-                        <i class="fas fa-user-plus mr-2"></i>Select Patient
+                        <i class="fas fa-search mr-2"></i>Choose Patient
                     </button>
+                    <div class="mt-2">
+                        <small class="text-muted">Click to open patient selection dropdown above</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -511,6 +514,28 @@
 .text-info { color: #17a2b8 !important; }
 .text-warning { color: #ffc107 !important; }
 .text-danger { color: #dc3545 !important; }
+
+/* Highlight effect for patient dropdown */
+.highlight-dropdown {
+    animation: highlightPulse 1s ease-in-out;
+    background-color: rgba(0, 123, 255, 0.1) !important;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    transition: all 0.3s ease;
+}
+
+@keyframes highlightPulse {
+    0% { background-color: rgba(0, 123, 255, 0.2); }
+    50% { background-color: rgba(0, 123, 255, 0.4); }
+    100% { background-color: rgba(0, 123, 255, 0.1); }
+}
+
+/* Button loading state styling */
+#selectPatientBtn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 </style>
 @endsection
 
@@ -602,11 +627,52 @@ $(document).ready(function() {
     // Manual button for selecting patient (fallback)
     $('#selectPatientBtn').on('click', function() {
         console.log('Manual select patient button clicked');
-        if (typeof $.fn.select2 !== 'undefined') {
-            $('#patient_id').select2('open');
-        } else {
-            $('#patient_id').focus();
+        
+        // Add visual feedback
+        const btn = $(this);
+        const originalHtml = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Opening...')
+           .prop('disabled', true);
+        
+        // First, ensure the filters card is expanded
+        const filtersCard = $('#filtersCard');
+        if (filtersCard.hasClass('collapsed-card')) {
+            console.log('Expanding filters card...');
+            filtersCard.removeClass('collapsed-card');
+            $('#toggleIcon').removeClass('fa-plus').addClass('fa-minus');
+            $('#toggleText').text('Hide');
         }
+        
+        // Highlight the patient dropdown briefly
+        const patientDropdown = $('#patient_id').closest('.form-group');
+        patientDropdown.addClass('highlight-dropdown');
+        
+        // Scroll to the filters section
+        $('html, body').animate({
+            scrollTop: filtersCard.offset().top - 20
+        }, 300);
+        
+        // Wait a moment for the card to expand, then focus on dropdown
+        setTimeout(function() {
+            if (typeof $.fn.select2 !== 'undefined') {
+                console.log('Opening Select2 dropdown...');
+                try {
+                    $('#patient_id').select2('open');
+                } catch (error) {
+                    console.error('Select2 open failed:', error);
+                    $('#patient_id').focus();
+                }
+            } else {
+                console.log('Focusing on regular dropdown...');
+                $('#patient_id').focus();
+            }
+            
+            // Restore button and remove highlight
+            setTimeout(function() {
+                btn.html(originalHtml).prop('disabled', false);
+                patientDropdown.removeClass('highlight-dropdown');
+            }, 500);
+        }, 400);
     });
     
     // Manual filter card toggle handler
