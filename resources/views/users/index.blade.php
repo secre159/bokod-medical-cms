@@ -546,7 +546,7 @@ $(document).ready(function() {
     // Enable drag-to-resize columns (header + body stay in sync)
     $('#usersTable').colResizable({
         liveDrag: true,
-        resizeMode: 'fit',
+        resizeMode: 'overflow',
         draggingClass: 'dragging',
         minWidth: 60,
     });

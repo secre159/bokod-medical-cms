@@ -338,7 +338,7 @@
             // Enable drag-to-resize columns (header + body stay in sync)
             $('#patientsTable').colResizable({
                 liveDrag: true,
-                resizeMode: 'fit',
+                resizeMode: 'overflow',
                 draggingClass: 'dragging',
                 minWidth: 60,
             });
