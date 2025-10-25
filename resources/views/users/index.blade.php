@@ -195,7 +195,7 @@
                                 </div>
                             </td>
                             <td>
-                                {{ $user->email }}
+                                <x-masked-email :email="$user->email" />
                                 @if($user->phone)
                                     <br><small class="text-muted">
                                         <i class="fas fa-phone mr-1"></i>{{ $user->phone }}
