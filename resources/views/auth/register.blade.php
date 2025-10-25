@@ -1,202 +1,121 @@
 @extends('adminlte::auth.auth-page', ['auth_type' => 'register'])
 
 @section('adminlte_css_pre')
-    <link rel="stylesheet" href="{{ asset('vendor/icheck-bootstrap/icheck-bootstrap.min.css') }}">
     <style>
-        /* BSU Official Color Palette */
-        :root {
-            --bsu-primary-green: #0F5132;
-            --bsu-secondary-green: #198754;
-            --bsu-light-green: #20c997;
-            --bsu-accent-yellow: #FFD60A;
-            --bsu-golden-yellow: #FFC107;
-            --text-dark: #1a202c;
-            --text-light: #6c757d;
-            --success-color: #198754;
-            --warning-color: #FFC107;
-            --error-color: #dc3545;
-        }
-        
+        /* Clean, responsive styling */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--bsu-primary-green) 0%, var(--bsu-secondary-green) 50%, var(--bsu-light-green) 100%);
-            min-height: 100vh;
-            position: relative;
-            overflow-x: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f8f9fa;
+            padding: 20px 0;
         }
         
-        /* Background decoration - BSU themed */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 25% 25%, rgba(255, 214, 10, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(25, 135, 84, 0.1) 0%, transparent 70%);
-            animation: float 20s ease-in-out infinite;
-            z-index: -2;
-        }
-        
-        /* Floating shapes - BSU themed */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(25, 135, 84, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 214, 10, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
-            z-index: -1;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(-30px, -50px) rotate(120deg); }
-            66% { transform: translate(30px, -20px) rotate(240deg); }
+        .register-box {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
         }
         
         .card {
-            border: none;
-            box-shadow: 
-                0 25px 50px rgba(0,0,0,0.25),
-                0 10px 25px rgba(0,0,0,0.15),
-                inset 0 1px 0 rgba(255,255,255,0.1);
-            max-width: 1200px;
-            margin: 1rem auto;
-            border-radius: 1rem;
-            backdrop-filter: blur(10px);
-            background: rgba(255,255,255,0.95);
-            position: relative;
-            z-index: 1;
-        }
-        
-        .registration-header {
-            background: linear-gradient(135deg, var(--bsu-primary-green) 0%, var(--bsu-secondary-green) 100%);
-            color: white;
-            padding: 1.5rem 2rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .registration-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: 
-                radial-gradient(circle at 20% 20%, rgba(255, 214, 10, 0.1) 0%, transparent 30%),
-                radial-gradient(circle at 80% 80%, rgba(255, 214, 10, 0.05) 0%, transparent 30%);
-            z-index: 0;
-        }
-        
-        .registration-header h3,
-        .registration-header p {
-            position: relative;
-            z-index: 1;
-        }
-        
-        .registration-header h3 {
-            font-size: 2rem;
-            margin-bottom: 0.75rem;
-            font-weight: 700;
-        }
-        
-        .registration-header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin: 0;
-        }
-        
-        .registration-content {
-            padding: 0 !important;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
             background: white;
         }
         
+        .card-header {
+            background: #198754;
+            color: white;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            padding: 20px;
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            font-weight: 500;
+            font-size: 1.5rem;
+        }
+        
         .card-body {
-            padding: 0 !important;
+            padding: 30px;
         }
         
-        .section-header {
-            background: rgba(25, 135, 84, 0.05);
-            padding: 0.5rem 1rem;
-            margin: 0 -2rem 1rem -2rem;
-            border-left: 4px solid var(--bsu-secondary-green);
+        .form-section h5 {
+            color: #198754;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: var(--text-dark);
-            display: flex;
-            align-items: center;
-        }
-        
-        .section-header i {
-            margin-right: 0.5rem;
-            color: var(--bsu-secondary-green);
-        }
-        
-        .form-row, .row {
-            margin-bottom: 1rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #198754;
+            padding-bottom: 10px;
         }
         
         .form-group {
-            margin-bottom: 1rem !important;
+            margin-bottom: 20px;
         }
         
         .form-label {
             font-weight: 500;
-            font-size: 0.875rem;
             color: #495057;
-            margin-bottom: 0.25rem;
+            margin-bottom: 5px;
         }
         
         .form-control {
-            padding: 0.75rem 1rem;
+            padding: 12px 16px;
             font-size: 1rem;
-            border: 2px solid #ced4da;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
         }
         
         .form-control:focus {
-            border-color: var(--bsu-secondary-green);
-            box-shadow: 0 0 0 0.125rem rgba(25, 135, 84, 0.25);
+            border-color: #198754;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
         }
         
-        .btn-register {
-            background: linear-gradient(135deg, var(--bsu-secondary-green) 0%, var(--bsu-light-green) 100%);
-            border: none;
+        .btn-primary {
+            background-color: #198754;
+            border-color: #198754;
             color: white;
-            padding: 0.75rem 2rem;
             font-weight: 500;
-            border-radius: 0.25rem;
+            padding: 12px 30px;
+            border-radius: 4px;
+            transition: all 0.15s ease-in-out;
         }
         
-        .info-note {
-            background: rgba(25, 135, 84, 0.1);
-            border: 1px solid rgba(25, 135, 84, 0.3);
-            color: var(--bsu-primary-green);
-            padding: 0.75rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            margin-top: 1rem;
+        .btn-primary:hover,
+        .btn-primary:focus {
+            background-color: #157347;
+            border-color: #146c43;
         }
         
-        .col-form {
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c2c7;
+            color: #721c24;
+            border-radius: 4px;
         }
         
-        /* Multi-step form styles */
-        .form-step {
-            display: none;
+        .text-muted {
+            color: #6c757d !important;
+        }
+        
+        .card-footer {
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            border-radius: 0 0 8px 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        a {
+            color: #198754;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: #146c43;
+            text-decoration: underline;
         }
         .form-step.active {
             display: block;
@@ -713,20 +632,7 @@
                                 <label class="form-label">Course/Program</label>
                                 <select name="course" id="course" class="form-control @error('course') is-invalid @enderror" required>
                                     <option value="">Select your course/program</option>
-                                    <optgroup label="EDUCATION">
-                                        <option value="Major in English" {{ old('course') == 'Major in English' ? 'selected' : '' }}>Major in English</option>
-                                        <option value="Major in Filipino" {{ old('course') == 'Major in Filipino' ? 'selected' : '' }}>Major in Filipino</option>
-                                        <option value="Social Science" {{ old('course') == 'Social Science' ? 'selected' : '' }}>Social Science</option>
-                                    </optgroup>
-                                    <optgroup label="CRIMINOLOGY">
-                                        <option value="Criminology" {{ old('course') == 'Criminology' ? 'selected' : '' }}>Criminology</option>
-                                        <option value="BPA" {{ old('course') == 'BPA' ? 'selected' : '' }}>BPA</option>
-                                    </optgroup>
-                                    <optgroup label="CAT">
-                                        <option value="BSIT" {{ old('course') == 'BSIT' ? 'selected' : '' }}>BSIT</option>
-                                        <option value="Entrep" {{ old('course') == 'Entrep' ? 'selected' : '' }}>Entrep</option>
-                                        <option value="BIT" {{ old('course') == 'BIT' ? 'selected' : '' }}>BIT</option>
-                                    </optgroup>
+                                    @include('components.course-options', ['selected' => old('course')])
                                 </select>
                                 @error('course')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>

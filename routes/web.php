@@ -80,6 +80,9 @@ Route::middleware(['auth', 'account.status'])->group(function () {
     
     // Admin routes
     Route::middleware('role:admin')->group(function () {
+        // Courses management
+        Route::resource('courses', App\Http\Controllers\Admin\CourseController::class)->only(['index','create','store']);
+
         // Patient management - specific routes FIRST
         Route::get('/patients/history', [PatientController::class, 'history'])->name('patients.history');
         Route::post('/patients/{patient}/reset-password', [PatientController::class, 'resetPassword'])->name('patients.resetPassword');

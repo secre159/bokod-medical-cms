@@ -109,21 +109,8 @@
                             <label for="course">Course/Department</label>
                             <select name="course" id="course" class="form-control @error('course') is-invalid @enderror">
                                 <option value="">Select course/program</option>
-                                <optgroup label="EDUCATION">
-                                    <option value="Major in English" {{ old('course') == 'Major in English' ? 'selected' : '' }}>Major in English</option>
-                                    <option value="Major in Filipino" {{ old('course') == 'Major in Filipino' ? 'selected' : '' }}>Major in Filipino</option>
-                                    <option value="Social Science" {{ old('course') == 'Social Science' ? 'selected' : '' }}>Social Science</option>
-                                </optgroup>
-                                <optgroup label="CRIMINOLOGY">
-                                    <option value="Criminology" {{ old('course') == 'Criminology' ? 'selected' : '' }}>Criminology</option>
-                                    <option value="BPA" {{ old('course') == 'BPA' ? 'selected' : '' }}>BPA</option>
-                                </optgroup>
-                                <optgroup label="CAT">
-                                    <option value="BSIT" {{ old('course') == 'BSIT' ? 'selected' : '' }}>BSIT</option>
-                                    <option value="Entrep" {{ old('course') == 'Entrep' ? 'selected' : '' }}>Entrep</option>
-                                    <option value="BIT" {{ old('course') == 'BIT' ? 'selected' : '' }}>BIT</option>
-                                </optgroup>
-                            </select>
+                                @include('components.course-options', ['selected' => old('course')])
+                            </select
                             @error('course')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

@@ -4,6 +4,25 @@
     <link rel="stylesheet" href="{{ asset('vendor/icheck-bootstrap/icheck-bootstrap.min.css') }}">
 @stop
 
+@section('adminlte_css')
+<style>
+    body.login-page {
+        background: linear-gradient(135deg, #1a5d3a 0%, #2d7a4f 50%, #16a34a 100%);
+        min-height: 100vh;
+    }
+    .login-box .card, .register-box .card {
+        border-radius: 12px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+    }
+    .btn-success {
+        background: linear-gradient(135deg, #f7d917 0%, #fde047 100%);
+        color: #1a5d3a;
+        border: none;
+    }
+    .btn-success:hover { filter: brightness(0.95); }
+</style>
+@stop
+
 @section('auth_header', __('Reset Password'))
 
 @section('auth_body')

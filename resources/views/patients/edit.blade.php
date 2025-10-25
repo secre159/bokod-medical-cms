@@ -122,20 +122,7 @@
                             <label for="course">Course/Department</label>
                             <select name="course" id="course" class="form-control @error('course') is-invalid @enderror">
                                 <option value="">Select course/program</option>
-                                <optgroup label="EDUCATION">
-                                    <option value="Major in English" {{ old('course', $patient->course) == 'Major in English' ? 'selected' : '' }}>Major in English</option>
-                                    <option value="Major in Filipino" {{ old('course', $patient->course) == 'Major in Filipino' ? 'selected' : '' }}>Major in Filipino</option>
-                                    <option value="Social Science" {{ old('course', $patient->course) == 'Social Science' ? 'selected' : '' }}>Social Science</option>
-                                </optgroup>
-                                <optgroup label="CRIMINOLOGY">
-                                    <option value="Criminology" {{ old('course', $patient->course) == 'Criminology' ? 'selected' : '' }}>Criminology</option>
-                                    <option value="BPA" {{ old('course', $patient->course) == 'BPA' ? 'selected' : '' }}>BPA</option>
-                                </optgroup>
-                                <optgroup label="CAT">
-                                    <option value="BSIT" {{ old('course', $patient->course) == 'BSIT' ? 'selected' : '' }}>BSIT</option>
-                                    <option value="Entrep" {{ old('course', $patient->course) == 'Entrep' ? 'selected' : '' }}>Entrep</option>
-                                    <option value="BIT" {{ old('course', $patient->course) == 'BIT' ? 'selected' : '' }}>BIT</option>
-                                </optgroup>
+                                @include('components.course-options', ['selected' => old('course', $patient->course)])
                             </select>
                             @error('course')
                                 <div class="invalid-feedback">{{ $message }}</div>
