@@ -425,6 +425,10 @@
     }
     .table td { white-space: nowrap; }
 
+    /* Sticky table header */
+    #usersTable thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
+    .dataTables_scrollHead thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
+
     /* Column resize grips */
     .JCLRgrips { height: 0; position: relative; }
     .JCLRgrip { position: absolute; z-index: 5; }
@@ -544,12 +548,25 @@ $(document).ready(function() {
     });
 
     // Enable drag-to-resize columns (colResizable plugin)
-    $('#usersTable').colResizable({
+    const resizableTable = $('.dataTables_scrollHeadInner table').length ? $('.dataTables_scrollHeadInner table') : $('#usersTable');
+    resizableTable.colResizable({
         liveDrag: true,
         resizeMode: 'fit',
         draggingClass: 'dragging',
         gripInnerHtml: "<div class='JColResizer'></div>",
         partialRefresh: true
+    });
+
+    // Reapply grips after redraws (sorting/paging)
+    dt.on('draw', function(){
+        try { resizableTable.colResizable({ disable: true }); } catch(e) {}
+        resizableTable.colResizable({
+            liveDrag: true,
+            resizeMode: 'fit',
+            draggingClass: 'dragging',
+            gripInnerHtml: "<div class='JColResizer'></div>",
+            partialRefresh: true
+        });
     });
     @endif
     
