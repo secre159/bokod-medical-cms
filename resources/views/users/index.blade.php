@@ -165,7 +165,7 @@
         </div>
         <div class="card-body table-responsive">
             @if($users->count() > 0)
-                <table class="table table-bordered table-striped table-sm" id="usersTable">
+                <table class="table table-bordered table-striped table-sm resizable-table" id="usersTable">
                     <thead>
                         <tr>
                             <th width="6%">ID</th>
@@ -424,6 +424,12 @@
         white-space: nowrap;
     }
     .table td { white-space: nowrap; }
+
+    /* Column resize grips */
+    .JCLRgrips { height: 0; position: relative; }
+    .JCLRgrip { position: absolute; z-index: 5; }
+    .JCLRgrip .JColResizer { position: absolute; background: transparent; width: 8px; margin-left: -4px; cursor: col-resize; }
+    .dragging .JColResizer { border-left: 2px dashed #007bff; }
     
     .dropdown-menu {
         min-width: 180px;
@@ -507,6 +513,7 @@
 @endsection
 
 @section('js')
+<script src="https://cdn.jsdelivr.net/npm/colresizable/colResizable-1.6.min.js"></script>
 <script>
 $(document).ready(function() {
     // Initialize tooltips
@@ -517,19 +524,32 @@ $(document).ready(function() {
         $('#filterForm').submit();
     });
 
-    // DataTable for better sorting
+    // DataTable for better sorting + adjustable UI
     @if($users->count() > 0)
-    $('#usersTable').DataTable({
-        "paging": false,
+    const dt = $('#usersTable').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "pageLength": 25,
+        "lengthMenu": [10, 25, 50, 100],
         "searching": false,
         "ordering": true,
-        "info": false,
+        "info": true,
         "autoWidth": false,
         "responsive": true,
+        "scrollX": true,
         "order": [[ 0, "desc" ]], // Sort by ID
         "columnDefs": [
             { "orderable": false, "targets": [6] } // Disable sorting on actions column
         ]
+    });
+
+    // Enable drag-to-resize columns (colResizable plugin)
+    $('#usersTable').colResizable({
+        liveDrag: true,
+        resizeMode: 'fit',
+        draggingClass: 'dragging',
+        gripInnerHtml: "<div class='JColResizer'></div>",
+        partialRefresh: true
     });
     @endif
     
