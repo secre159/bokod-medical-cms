@@ -165,7 +165,7 @@
         </div>
         <div class="card-body table-responsive">
             @if($users->count() > 0)
-                <table class="table table-bordered table-striped table-sm resizable-table" id="usersTable">
+                <table class="table table-bordered table-striped table-sm" id="usersTable">
                     <thead>
                         <tr>
                             <th width="6%">ID</th>
@@ -427,17 +427,6 @@
 
     /* Sticky table header */
     #usersTable thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
-    .dataTables_scrollHead thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
-
-    /* Keep header/body columns aligned */
-    .dataTables_scrollHeadInner table,
-    .dataTables_scrollBody table { table-layout: fixed; width: 100% !important; }
-
-    /* Column resize grips */
-    .JCLRgrips { height: 0; position: relative; }
-    .JCLRgrip { position: absolute; z-index: 5; }
-    .JCLRgrip .JColResizer { position: absolute; background: transparent; width: 8px; margin-left: -4px; cursor: col-resize; }
-    .dragging .JColResizer { border-left: 2px dashed #007bff; }
     
     .dropdown-menu {
         min-width: 180px;
@@ -521,7 +510,6 @@
 @endsection
 
 @section('js')
-<script src="https://cdn.jsdelivr.net/npm/colresizable/colResizable-1.6.min.js"></script>
 <script>
 $(document).ready(function() {
     // Initialize tooltips
@@ -532,74 +520,22 @@ $(document).ready(function() {
         $('#filterForm').submit();
     });
 
-    // DataTable for better sorting + adjustable UI
+    // DataTable for sorting only (pagination handled by Laravel below)
     @if($users->count() > 0)
-    const dt = $('#usersTable').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "pageLength": 25,
-        "lengthMenu": [10, 25, 50, 100],
+    $('#usersTable').DataTable({
+        "paging": false,
+        "lengthChange": false,
         "searching": false,
         "ordering": true,
-        "info": true,
+        "info": false,
         "autoWidth": false,
         "responsive": true,
-        "scrollX": true,
         "order": [[ 0, "desc" ]], // Sort by ID
         "columnDefs": [
             { "orderable": false, "targets": [6] } // Disable sorting on actions column
         ]
     });
-
-    // Enable drag-to-resize columns (colResizable plugin)
-    const resizableTable = $('.dataTables_scrollHeadInner table').length ? $('.dataTables_scrollHeadInner table') : $('#usersTable');
-    function syncColumnWidths() {
-        const headTable = $('.dataTables_scrollHeadInner table');
-        const bodyTable = $('.dataTables_scrollBody table');
-        const ths = (headTable.length ? headTable : resizableTable).find('thead th');
-        if (!ths.length) return;
-        ths.each(function(i){
-            const w = Math.round($(this).outerWidth());
-            if (headTable.length) {
-                headTable.find('thead th').eq(i).css('width', w);
-                bodyTable.find('thead th').eq(i).css('width', w);
-                bodyTable.find('tbody tr').each(function(){
-                    $(this).children('td').eq(i).css('width', w);
-                });
-            } else {
-                // No scroll: same table, ensure body cells align
-                resizableTable.find('tbody tr').each(function(){
-                    $(this).children('td').eq(i).css('width', w);
-                });
-            }
-        });
-    }
-
-    resizableTable.colResizable({
-        liveDrag: true,
-        resizeMode: 'fit',
-        draggingClass: 'dragging',
-        gripInnerHtml: "<div class='JColResizer'></div>",
-        partialRefresh: true,
-        onResize: syncColumnWidths,
-        onResizeEnd: syncColumnWidths
-    });
-
-    // Reapply grips after redraws (sorting/paging)
-    dt.on('draw', function(){
-        try { resizableTable.colResizable({ disable: true }); } catch(e) {}
-        resizableTable.colResizable({
-            liveDrag: true,
-            resizeMode: 'fit',
-            draggingClass: 'dragging',
-            gripInnerHtml: "<div class='JColResizer'></div>",
-            partialRefresh: true,
-            onResize: syncColumnWidths,
-            onResizeEnd: syncColumnWidths
-        });
-        syncColumnWidths();
-    });
-
+    @endif
     // Initial sync
     syncColumnWidths();
     @endif
