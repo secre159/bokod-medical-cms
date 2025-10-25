@@ -97,11 +97,11 @@
         </div>
         <div class="card-body table-responsive p-0">
             @if($patients->count() > 0)
-                <table class="table table-hover text-nowrap">
+                <table class="table table-bordered table-striped table-sm" id="patientsTable">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Patient Name</th>
+                            <th>Patient</th>
                             <th>Email</th>
                             <th>Phone</th>
                             <th>Gender</th>
@@ -118,21 +118,30 @@
                                     <strong>#{{ $patient->id }}</strong>
                                 </td>
                                 <td>
-                                    <div class="user-block">
-                                        <div class="username">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar mr-2">
+                                            @if($patient->user)
+                                                <x-user-avatar :user="$patient->user" size="thumbnail" width="32px" height="32px" class="img-circle elevation-1" />
+                                            @else
+                                                <div class="avatar-placeholder bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
+                                                    {{ strtoupper(substr($patient->patient_name,0,1)) }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div>
                                             <strong>{{ $patient->patient_name }}</strong>
                                             @if($patient->archived)
                                                 <span class="badge badge-secondary badge-sm ml-1">Archived</span>
                                             @endif
+                                            @if($patient->position)
+                                                <br><small class="text-muted">{{ $patient->position }}</small>
+                                            @endif
                                         </div>
-                                        @if($patient->position)
-                                            <div class="description">{{ $patient->position }}</div>
-                                        @endif
                                     </div>
                                 </td>
                                 <td>
                                     @if($patient->email)
-                                        <a href="mailto:{{ $patient->email }}">{{ $patient->email }}</a>
+                                        <a href="mailto:{{ $patient->email }}"><x-masked-email :email="$patient->email" /></a>
                                     @else
                                         <span class="text-muted">No email</span>
                                     @endif
@@ -288,21 +297,52 @@
         .table-secondary {
             opacity: 0.7;
         }
-        .btn-group .btn {
-            margin-right: 2px;
-        }
+        .btn-group .btn { margin-right: 2px; }
+
+        /* Compact table and sticky header */
+        .table th { font-weight:600; background:#f8f9fa; white-space:nowrap; }
+        .table td { white-space:nowrap; }
+        #patientsTable thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
+
+        /* Column resize grips (colResizable) */
+        .JCLRgrips { height: 0; position: relative; }
+        .JCLRgrip { position: absolute; z-index: 5; }
+        .JCLRgrip .JColResizer { position: absolute; background: transparent; width: 8px; margin-left: -4px; cursor: col-resize; height: 100vh; top: 0; }
+        .dragging .JColResizer { border-left: 2px dashed #007bff; }
+
+        .avatar-placeholder { font-weight:600; }
     </style>
 @stop
 
 @section('js')
+    <script src="https://cdn.jsdelivr.net/npm/colresizable/colResizable-1.6.min.js"></script>
     <script>
         $(document).ready(function() {
             // Auto-dismiss alerts after 5 seconds
-            setTimeout(function() {
-                $('.alert').fadeOut('slow');
-            }, 5000);
-            
-            console.log('Patients index page loaded successfully!');
+            setTimeout(function() { $('.alert').fadeOut('slow'); }, 5000);
+
+            // DataTable for sorting only (Laravel handles pagination)
+            @if($patients->count() > 0)
+            $('#patientsTable').DataTable({
+                paging: false,
+                lengthChange: false,
+                searching: false,
+                ordering: true,
+                info: false,
+                autoWidth: false,
+                responsive: true,
+                order: [[0, 'desc']],
+                columnDefs: [ { orderable: false, targets: [8] } ]
+            });
+
+            // Enable drag-to-resize columns (header + body stay in sync)
+            $('#patientsTable').colResizable({
+                liveDrag: true,
+                resizeMode: 'fit',
+                draggingClass: 'dragging',
+                minWidth: 60,
+            });
+            @endif
         });
     </script>
 @stop
