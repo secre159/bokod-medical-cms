@@ -165,16 +165,16 @@
         </div>
         <div class="card-body table-responsive">
             @if($users->count() > 0)
-                <table class="table table-bordered table-striped" id="usersTable">
+                <table class="table table-bordered table-striped table-sm" id="usersTable">
                     <thead>
                         <tr>
-                            <th width="5%">ID</th>
-                            <th width="20%">Name</th>
-                            <th width="25%">Email</th>
-                            <th width="15%">Role</th>
-                            <th width="15%">Status</th>
-                            <th width="15%">Last Login</th>
-                            <th width="15%">Actions</th>
+                            <th width="6%">ID</th>
+                            <th width="24%">Name</th>
+                            <th width="16%">Email</th>
+                            <th width="14%">Role</th>
+                            <th width="12%">Status</th>
+                            <th width="18%">Last Login</th>
+                            <th width="10%">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -421,7 +421,9 @@
     .table th {
         font-weight: 600;
         background-color: #f8f9fa;
+        white-space: nowrap;
     }
+    .table td { white-space: nowrap; }
     
     .dropdown-menu {
         min-width: 180px;
