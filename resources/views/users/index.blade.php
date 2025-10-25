@@ -427,6 +427,12 @@
 
     /* Sticky table header */
     #usersTable thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
+
+    /* Column resize grips (colResizable) */
+    .JCLRgrips { height: 0; position: relative; }
+    .JCLRgrip { position: absolute; z-index: 5; }
+    .JCLRgrip .JColResizer { position: absolute; background: transparent; width: 8px; margin-left: -4px; cursor: col-resize; height: 100vh; top: 0; }
+    .dragging .JColResizer { border-left: 2px dashed #007bff; }
     
     .dropdown-menu {
         min-width: 180px;
@@ -510,6 +516,7 @@
 @endsection
 
 @section('js')
+<script src="https://cdn.jsdelivr.net/npm/colresizable/colResizable-1.6.min.js"></script>
 <script>
 $(document).ready(function() {
     // Initialize tooltips
@@ -534,6 +541,14 @@ $(document).ready(function() {
         "columnDefs": [
             { "orderable": false, "targets": [6] } // Disable sorting on actions column
         ]
+    });
+
+    // Enable drag-to-resize columns (header + body stay in sync)
+    $('#usersTable').colResizable({
+        liveDrag: true,
+        resizeMode: 'fit',
+        draggingClass: 'dragging',
+        minWidth: 60,
     });
     @endif
     
