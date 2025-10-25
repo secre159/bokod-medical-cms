@@ -429,6 +429,10 @@
     #usersTable thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
     .dataTables_scrollHead thead th { position: sticky; top: 0; z-index: 3; background: #f8f9fa; }
 
+    /* Keep header/body columns aligned */
+    .dataTables_scrollHeadInner table,
+    .dataTables_scrollBody table { table-layout: fixed; width: 100% !important; }
+
     /* Column resize grips */
     .JCLRgrips { height: 0; position: relative; }
     .JCLRgrip { position: absolute; z-index: 5; }
@@ -549,12 +553,36 @@ $(document).ready(function() {
 
     // Enable drag-to-resize columns (colResizable plugin)
     const resizableTable = $('.dataTables_scrollHeadInner table').length ? $('.dataTables_scrollHeadInner table') : $('#usersTable');
+    function syncColumnWidths() {
+        const headTable = $('.dataTables_scrollHeadInner table');
+        const bodyTable = $('.dataTables_scrollBody table');
+        const ths = (headTable.length ? headTable : resizableTable).find('thead th');
+        if (!ths.length) return;
+        ths.each(function(i){
+            const w = Math.round($(this).outerWidth());
+            if (headTable.length) {
+                headTable.find('thead th').eq(i).css('width', w);
+                bodyTable.find('thead th').eq(i).css('width', w);
+                bodyTable.find('tbody tr').each(function(){
+                    $(this).children('td').eq(i).css('width', w);
+                });
+            } else {
+                // No scroll: same table, ensure body cells align
+                resizableTable.find('tbody tr').each(function(){
+                    $(this).children('td').eq(i).css('width', w);
+                });
+            }
+        });
+    }
+
     resizableTable.colResizable({
         liveDrag: true,
         resizeMode: 'fit',
         draggingClass: 'dragging',
         gripInnerHtml: "<div class='JColResizer'></div>",
-        partialRefresh: true
+        partialRefresh: true,
+        onResize: syncColumnWidths,
+        onResizeEnd: syncColumnWidths
     });
 
     // Reapply grips after redraws (sorting/paging)
@@ -565,9 +593,15 @@ $(document).ready(function() {
             resizeMode: 'fit',
             draggingClass: 'dragging',
             gripInnerHtml: "<div class='JColResizer'></div>",
-            partialRefresh: true
+            partialRefresh: true,
+            onResize: syncColumnWidths,
+            onResizeEnd: syncColumnWidths
         });
+        syncColumnWidths();
     });
+
+    // Initial sync
+    syncColumnWidths();
     @endif
     
     // Handle filter card toggle behavior
