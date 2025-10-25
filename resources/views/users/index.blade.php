@@ -536,9 +536,6 @@ $(document).ready(function() {
         ]
     });
     @endif
-    // Initial sync
-    syncColumnWidths();
-    @endif
     
     // Handle filter card toggle behavior
     const hasActiveFilters = {{ (request('role') || request('status') || request('search')) ? 'true' : 'false' }};
