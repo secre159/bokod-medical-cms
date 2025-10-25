@@ -168,13 +168,13 @@
                 <table class="table table-bordered table-striped table-sm" id="usersTable">
                     <thead>
                         <tr>
-                            <th width="6%">ID</th>
-                            <th width="24%">Name</th>
-                            <th width="16%">Email</th>
-                            <th width="14%">Role</th>
-                            <th width="12%">Status</th>
-                            <th width="18%">Last Login</th>
-                            <th width="10%">Actions</th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
