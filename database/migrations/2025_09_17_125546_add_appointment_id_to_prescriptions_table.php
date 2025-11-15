@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('prescriptions', function (Blueprint $table) {
-            $table->unsignedBigInteger('appointment_id')->nullable()->after('patient_id');
-            $table->foreign('appointment_id')->references('appointment_id')->on('appointments')->onDelete('set null');
+            if (!Schema::hasColumn('prescriptions', 'appointment_id')) {
+                $table->unsignedBigInteger('appointment_id')->nullable()->after('patient_id');
+                $table->foreign('appointment_id')->references('id')->on('appointments')->onDelete('set null');
+            }
         });
     }
 
