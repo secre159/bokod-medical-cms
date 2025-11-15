@@ -64,7 +64,7 @@ class DashboardController extends Controller
         
         // Recent appointments with optimized eager loading (include today's appointments regardless of time to show overdue status)
         $upcomingDateLimit = TimezoneHelper::now()->addDays(2)->toDateString();
-        $stats['upcoming_appointments'] = Appointment::select('id', 'patient_id', 'appointment_date', 'appointment_time', 'reason')
+        $stats['upcoming_appointments'] = Appointment::select('id', 'patient_id', 'appointment_date', 'appointment_time')
             ->with(['patient:id,patient_name'])
             ->where('appointment_date', '>=', $today)
             ->where('appointment_date', '<=', $upcomingDateLimit) // Reduced to 2 days
