@@ -17,7 +17,7 @@ return new class extends Migration
                 if (Schema::hasTable('appointments')) {
                     // Use raw foreign to specify non-standard PK column name
                     $table->foreign('appointment_id')
-                          ->references('appointment_id')
+                          ->references('id')
                           ->on('appointments')
                           ->onDelete('set null');
                 }

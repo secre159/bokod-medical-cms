@@ -19,7 +19,7 @@ return new class extends Migration
                 
                 // Use appointment_id instead of id for appointments table reference
                 $table->unsignedBigInteger('appointment_id')->nullable();
-                $table->foreign('appointment_id')->references('appointment_id')->on('appointments')->onDelete('set null');
+                $table->foreign('appointment_id')->references('id')->on('appointments')->onDelete('set null');
                 
                 $table->foreignId('doctor_id')->nullable()->constrained('users')->onDelete('set null');
                 $table->foreignId('nurse_id')->nullable()->constrained('users')->onDelete('set null');

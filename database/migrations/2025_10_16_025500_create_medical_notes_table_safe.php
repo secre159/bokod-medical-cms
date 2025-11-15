@@ -19,7 +19,7 @@ return new class extends Migration
                 
                 // Use appointment_id reference to appointments table
                 $table->unsignedBigInteger('appointment_id')->nullable();
-                $table->foreign('appointment_id')->references('appointment_id')->on('appointments')->onDelete('cascade');
+                $table->foreign('appointment_id')->references('id')->on('appointments')->onDelete('cascade');
                 
                 $table->foreignId('patient_visit_id')->nullable()->constrained('patient_visits')->onDelete('cascade');
                 $table->string('title')->nullable();

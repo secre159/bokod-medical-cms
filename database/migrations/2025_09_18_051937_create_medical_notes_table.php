@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('medical_notes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->foreignId('appointment_id')->nullable()->constrained('appointments', 'appointment_id')->onDelete('cascade');
+            $table->foreignId('appointment_id')->nullable()->constrained('appointments')->onDelete('cascade');
             $table->foreignId('patient_visit_id')->nullable()->constrained('patient_visits')->onDelete('cascade');
             $table->string('title')->nullable();
             $table->text('content');
