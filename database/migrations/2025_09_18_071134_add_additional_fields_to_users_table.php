@@ -13,29 +13,52 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Add avatar field (separate from profile_picture)
-            $table->string('avatar')->nullable()->after('profile_picture');
+            if (!Schema::hasColumn('users', 'avatar')) {
+                $table->string('avatar')->nullable();
+            }
             
             // Add personal information fields
-            $table->string('phone', 20)->nullable()->after('email');
-            $table->date('date_of_birth')->nullable()->after('phone');
-            $table->enum('gender', ['male', 'female', 'other'])->nullable()->after('date_of_birth');
-            $table->text('address')->nullable()->after('gender');
+            if (!Schema::hasColumn('users', 'phone')) {
+                $table->string('phone', 20)->nullable();
+            }
+            if (!Schema::hasColumn('users', 'date_of_birth')) {
+                $table->date('date_of_birth')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'gender')) {
+                $table->enum('gender', ['male', 'female', 'other'])->nullable();
+            }
+            if (!Schema::hasColumn('users', 'address')) {
+                $table->text('address')->nullable();
+            }
             
             // Add emergency contact information
-            $table->string('emergency_contact')->nullable()->after('address');
-            $table->string('emergency_phone', 20)->nullable()->after('emergency_contact');
+            if (!Schema::hasColumn('users', 'emergency_contact')) {
+                $table->string('emergency_contact')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'emergency_phone')) {
+                $table->string('emergency_phone', 20)->nullable();
+            }
             
             // Add medical information (for patients)
-            $table->text('medical_history')->nullable()->after('emergency_phone');
-            $table->text('allergies')->nullable()->after('medical_history');
-            $table->text('notes')->nullable()->after('allergies');
+            if (!Schema::hasColumn('users', 'medical_history')) {
+                $table->text('medical_history')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'allergies')) {
+                $table->text('allergies')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'notes')) {
+                $table->text('notes')->nullable();
+            }
             
             // Add audit fields
-            $table->unsignedBigInteger('created_by')->nullable()->after('notes');
-            $table->timestamp('last_login_at')->nullable()->after('created_by');
-            
-            // Add foreign key constraint
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            if (!Schema::hasColumn('users', 'created_by')) {
+                $table->unsignedBigInteger('created_by')->nullable();
+                // Add foreign key constraint only if column was just created
+                $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            }
+            if (!Schema::hasColumn('users', 'last_login_at')) {
+                $table->timestamp('last_login_at')->nullable();
+            }
         });
     }
 
