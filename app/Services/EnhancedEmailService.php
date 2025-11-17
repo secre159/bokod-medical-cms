@@ -189,7 +189,10 @@ class EnhancedEmailService
         } catch (Exception $e) {
             Log::error('Failed to send patient welcome email', [
                 'patient_id' => $patient->id ?? null,
-                'error' => $e->getMessage()
+                'patient_email' => $patient->email ?? 'N/A',
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return [
