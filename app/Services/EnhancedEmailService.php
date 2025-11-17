@@ -173,12 +173,28 @@ class EnhancedEmailService
                 ];
             }
 
-            Mail::to($patient->email)->send($mailable);
-
-            Log::info('Patient welcome email sent', [
-                'patient_id' => $patient->id,
-                'patient_email' => $patient->email
-            ]);
+            // Send with timeout to prevent hanging
+            $startTime = microtime(true);
+            
+            try {
+                Mail::to($patient->email)->send($mailable);
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                
+                Log::info('Patient welcome email sent', [
+                    'patient_id' => $patient->id,
+                    'patient_email' => $patient->email,
+                    'send_duration_ms' => $duration
+                ]);
+            } catch (\Exception $sendEx) {
+                $duration = round((microtime(true) - $startTime) * 1000, 2);
+                Log::error('Email send threw exception', [
+                    'patient_id' => $patient->id,
+                    'patient_email' => $patient->email,
+                    'send_duration_ms' => $duration,
+                    'error' => $sendEx->getMessage()
+                ]);
+                throw $sendEx;
+            }
 
             return [
                 'success' => true,

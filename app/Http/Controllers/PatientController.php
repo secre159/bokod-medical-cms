@@ -12,12 +12,13 @@ use App\Services\EnhancedEmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use App\Rules\PhoneNumberRule;
 use App\Rules\EmailValidationRule;
-
+use App\Jobs\SendPatientWelcomeEmail;
 class PatientController extends Controller
 {
     protected $emailService;
@@ -134,18 +135,8 @@ class PatientController extends Controller
             
             DB::commit();
             
-            // Dispatch email in background after DB commit (fire-and-forget)
-            dispatch(function () use ($patient, $randomPassword) {
-                try {
-                    app(\App\Services\EnhancedEmailService::class)->sendPatientWelcome($patient, $randomPassword);
-                } catch (\Throwable $e) {
-                    \Log::error('Background welcome email failed', [
-                        'patient_id' => $patient->id,
-                        'error' => $e->getMessage(),
-                        'password' => $randomPassword
-                    ]);
-                }
-            })->afterResponse();
+            // Dispatch welcome email job (sync queue = runs immediately)
+            SendPatientWelcomeEmail::dispatch($patient->id, $randomPassword);
             
             return redirect()->route('patients.index')
                            ->with('success', 'Patient created successfully! Login credentials will be sent to their email shortly.');
