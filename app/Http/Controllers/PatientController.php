@@ -132,26 +132,23 @@ class PatientController extends Controller
             $validated['user_id'] = $user->id;
             $patient = Patient::create($validated);
             
-            // Send welcome email with credentials
-            $emailResult = $this->emailService->sendPatientWelcome($patient, $randomPassword);
-            
-            if ($emailResult['success']) {
-                $welcomeEmailStatus = 'Welcome email with login credentials sent successfully to ' . $patient->email;
-                $successMessage = 'Patient created successfully! Login credentials have been sent to their email address.';
-            } else {
-                $welcomeEmailStatus = 'Patient created but welcome email failed to send: ' . $emailResult['message'];
-                $successMessage = 'Patient created successfully, but failed to send login credentials via email. Please provide credentials manually: Email: ' . $patient->email . ', Password: ' . $randomPassword;
-                \Log::error('Welcome email failed', [
-                    'patient_id' => $patient->id, 
-                    'error' => $emailResult['message'],
-                    'password' => $randomPassword // Log password for manual recovery if needed
-                ]);
-            }
-            
             DB::commit();
             
+            // Dispatch email in background after DB commit (fire-and-forget)
+            dispatch(function () use ($patient, $randomPassword) {
+                try {
+                    app(\App\Services\EnhancedEmailService::class)->sendPatientWelcome($patient, $randomPassword);
+                } catch (\Throwable $e) {
+                    \Log::error('Background welcome email failed', [
+                        'patient_id' => $patient->id,
+                        'error' => $e->getMessage(),
+                        'password' => $randomPassword
+                    ]);
+                }
+            })->afterResponse();
+            
             return redirect()->route('patients.index')
-                           ->with('success', $successMessage);
+                           ->with('success', 'Patient created successfully! Login credentials will be sent to their email shortly.');
                            
         } catch (\Exception $e) {
             DB::rollback();
