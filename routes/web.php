@@ -47,6 +47,57 @@ Route::get('/health', function () {
     ]);
 })->name('health.check');
 
+// Email test route - diagnose SMTP issues
+Route::get('/test-email-direct', function () {
+    try {
+        $config = [
+            'MAIL_MAILER' => config('mail.default'),
+            'MAIL_HOST' => config('mail.mailers.smtp.host'),
+            'MAIL_PORT' => config('mail.mailers.smtp.port'),
+            'MAIL_USERNAME' => config('mail.mailers.smtp.username'),
+            'MAIL_PASSWORD' => config('mail.mailers.smtp.password') ? '****' . substr(config('mail.mailers.smtp.password'), -4) : 'NOT SET',
+            'MAIL_ENCRYPTION' => config('mail.mailers.smtp.encryption'),
+            'MAIL_FROM_ADDRESS' => config('mail.from.address'),
+            'MAIL_FROM_NAME' => config('mail.from.name'),
+        ];
+
+        // Try to send a test email
+        \Illuminate\Support\Facades\Mail::raw(
+            'Test email from Bokod CMS at ' . now()->toDateTimeString(),
+            function ($message) {
+                $message->to(config('mail.from.address'))
+                       ->subject('Gmail SMTP Test - Bokod CMS');
+            }
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Test email sent successfully!',
+            'config' => $config,
+            'timestamp' => now()->toDateTimeString()
+        ]);
+
+    } catch (\Symfony\Component\Mailer\Exception\TransportException $e) {
+        return response()->json([
+            'success' => false,
+            'error_type' => 'SMTP Transport Error',
+            'error' => $e->getMessage(),
+            'config' => $config ?? [],
+            'hint' => 'This is usually a connection or authentication issue with Gmail SMTP',
+            'timestamp' => now()->toDateTimeString()
+        ], 500);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error_type' => get_class($e),
+            'error' => $e->getMessage(),
+            'trace' => explode("\n", $e->getTraceAsString()),
+            'config' => $config ?? [],
+            'timestamp' => now()->toDateTimeString()
+        ], 500);
+    }
+});
+
 // Test routes removed - authentication system working properly
 
 // Landing page route
