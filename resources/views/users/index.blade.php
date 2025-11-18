@@ -230,9 +230,9 @@
                                     <span class="text-muted">Never</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="actions-cell">
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" data-display="static">
+                                    <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
                                         Actions
                                     </button>
                                     <div class="dropdown-menu">
@@ -440,11 +440,19 @@
         z-index: 2000; /* above sticky thead and card content */
     }
 
-    /* Critical: prevent clipping inside tables */
-    .table .dropdown,
-    .table .btn-group { position: static; }
+    /* Anchor dropdown to the button and prevent clipping */
+    .table td { position: relative; overflow: visible; }
+    .table .btn-group,
+    .table .dropdown { position: relative; }
 
     .dataTables_wrapper { overflow: visible !important; }
+
+    /* Ensure Actions cell stacks above following rows */
+    .table td.actions-cell { position: relative; overflow: visible; }
+    .table td.actions-cell .dropdown-menu { z-index: 1060; margin-top: 0.25rem; }
+
+    /* Raise the active row above others while dropdown is open (fallback) */
+    .table tbody tr.dropdown-open { position: relative; z-index: 1050; }
 
     /* Allow overflow so dropdown is clickable inside responsive table */
     .card-body.table-responsive {
@@ -505,6 +513,9 @@
         resize: vertical;
         min-height: 100px;
     }
+
+    /* When open, let menu clicks win even under the button edge */
+    .dropdown-open-btn { pointer-events: none; }
     
     #confirmStartChat:disabled {
         opacity: 0.7;
@@ -594,6 +605,27 @@ $(document).ready(function() {
             }
         }, 100);
     });
+
+    // Make the Actions cell/row stack above neighbors while dropdown is open
+    $(document)
+      .on('show.bs.dropdown', '.table .dropdown', function () {
+        const $row = $(this).closest('tr');
+        const $cell = $(this).closest('td');
+        const $btn  = $(this).find('[data-toggle="dropdown"]');
+        $row.addClass('dropdown-open');
+        $cell.addClass('actions-cell');
+        // Ensure menu renders above row/button
+        $(this).find('.dropdown-menu').css({ zIndex: 1060 });
+        // Prevent the toggle button from intercepting clicks over the menu edge
+        $btn.addClass('dropdown-open-btn');
+      })
+      .on('hide.bs.dropdown', '.table .dropdown', function () {
+        const $row = $(this).closest('tr');
+        const $btn  = $(this).find('[data-toggle="dropdown"]');
+        $row.removeClass('dropdown-open');
+        $(this).find('.dropdown-menu').removeAttr('style');
+        $btn.removeClass('dropdown-open-btn');
+      });
 });
 
 let currentUserId = null;
