@@ -434,8 +434,15 @@
     .JCLRgrip .JColResizer { position: absolute; background: transparent; width: 8px; margin-left: -4px; cursor: col-resize; height: 100vh; top: 0; }
     .dragging .JColResizer { border-left: 2px dashed #007bff; }
     
+    /* Ensure dropdown shows above sticky header and outside table wrapper */
     .dropdown-menu {
         min-width: 180px;
+        z-index: 2000; /* above sticky thead and card content */
+    }
+
+    /* Allow overflow so dropdown is clickable inside responsive table */
+    .card-body.table-responsive {
+        overflow: visible !important;
     }
     
     .badge {
