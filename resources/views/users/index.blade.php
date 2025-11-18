@@ -232,7 +232,7 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">
+                                    <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown" data-boundary="viewport" data-display="static">
                                         Actions
                                     </button>
                                     <div class="dropdown-menu">
@@ -439,6 +439,12 @@
         min-width: 180px;
         z-index: 2000; /* above sticky thead and card content */
     }
+
+    /* Critical: prevent clipping inside tables */
+    .table .dropdown,
+    .table .btn-group { position: static; }
+
+    .dataTables_wrapper { overflow: visible !important; }
 
     /* Allow overflow so dropdown is clickable inside responsive table */
     .card-body.table-responsive {
