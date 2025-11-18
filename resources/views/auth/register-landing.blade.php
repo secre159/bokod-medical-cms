@@ -248,7 +248,7 @@
     </head>
     <body class="landing-form flex items-center justify-center">
         <div class="form-container">
-            <h1 class="form-title">Register as BSU Student</h1>
+            <h1 class="form-title">Register as Patient</h1>
             <p class="form-subtitle">Create your account to book appointments online!</p>
 
             <form method="POST" action="{{ route('register') }}" id="landingRegisterForm">
@@ -332,7 +332,6 @@
                             <option value="2nd Year" {{ old('year_level') == '2nd Year' ? 'selected' : '' }}>2nd Year</option>
                             <option value="3rd Year" {{ old('year_level') == '3rd Year' ? 'selected' : '' }}>3rd Year</option>
                             <option value="4th Year" {{ old('year_level') == '4th Year' ? 'selected' : '' }}>4th Year</option>
-                            <option value="5th Year" {{ old('year_level') == '5th Year' ? 'selected' : '' }}>5th Year</option>
                         </select>
                         @error('year_level')<div class="error-message">{{ $message }}</div>@enderror
                     </div>
@@ -391,23 +390,6 @@
 
                 <!-- STEP 3: Emergency & Health -->
                 <div class="form-grid lr-step" data-step="3" style="display:none;">
-                    <!-- Agreements moved to top for visibility on small screens -->
-                    <div class="form-group full-width">
-                        <label for="terms_agreement" style="display:flex;align-items:center;font-weight:400;">
-                            <input id="terms_agreement" type="checkbox" name="terms_agreement" required style="margin-right:.5rem;accent-color:#22c55e;">
-                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Terms and Conditions</a></span>
-                        </label>
-                        @error('terms_agreement')<div class="error-message">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="privacy_agreement" style="display:flex;align-items:center;font-weight:400;">
-                            <input id="privacy_agreement" type="checkbox" name="privacy_agreement" required style="margin-right:.5rem;accent-color:#22c55e;">
-                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Privacy Policy</a></span>
-                        </label>
-                        @error('privacy_agreement')<div class="error-message">{{ $message }}</div>@enderror
-                    </div>
-
                     <!-- Emergency Contact Name -->
                     <div class="form-group">
                         <label for="emergency_contact_name" class="form-label">Emergency Contact Name</label>
@@ -450,8 +432,23 @@
                         @error('weight')<div class="error-message">{{ $message }}</div>@enderror
                     </div>
 
-                    
+                    <!-- Agreements moved to top for visibility on small screens -->
+                    <div class="form-group full-width">
+                        <label for="terms_agreement" style="display:flex;align-items:center;font-weight:400;">
+                            <input id="terms_agreement" type="checkbox" name="terms_agreement" required style="margin-right:.5rem;accent-color:#22c55e;">
+                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Terms and Conditions</a></span>
+                        </label>
+                        @error('terms_agreement')<div class="error-message">{{ $message }}</div>@enderror
+                    </div>
 
+                    <div class="form-group full-width">
+                        <label for="privacy_agreement" style="display:flex;align-items:center;font-weight:400;">
+                            <input id="privacy_agreement" type="checkbox" name="privacy_agreement" required style="margin-right:.5rem;accent-color:#22c55e;">
+                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Privacy Policy</a></span>
+                        </label>
+                        @error('privacy_agreement')<div class="error-message">{{ $message }}</div>@enderror
+                    </div>
+                    
                     <div class="form-group full-width" style="display:flex;justify-content:space-between;gap:.5rem;">
                         <button type="button" class="form-button" onclick="lrBack()" style="background:linear-gradient(135deg,#e5e7eb,#e5e7eb);">Back</button>
                         <button type="submit" class="form-button">Create Account</button>

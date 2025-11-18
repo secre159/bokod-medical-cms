@@ -25,5 +25,27 @@ return Application::configure(basePath: dirname(__DIR__))
         \App\Providers\AdminLTEServiceProvider::class,
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Redirect access-denied cases to landing page for web (HTML) requests
+        $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+            return redirect()->route('landing')->with('warning', 'Access denied.');
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+            return redirect()->route('landing')->with('warning', 'Access denied.');
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, \Illuminate\Http\Request $request) {
+            if (method_exists($e, 'getStatusCode') && $e->getStatusCode() === 403) {
+                if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
+                    return response()->json(['message' => 'Forbidden'], 403);
+                }
+                return redirect()->route('landing')->with('warning', 'Access denied.');
+            }
+        });
     })->create();

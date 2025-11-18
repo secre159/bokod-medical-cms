@@ -110,7 +110,7 @@
                             <select name="course" id="course" class="form-control @error('course') is-invalid @enderror">
                                 <option value="">Select course/program</option>
                                 @include('components.course-options', ['selected' => old('course')])
-                            </select
+                            </select>
                             @error('course')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
