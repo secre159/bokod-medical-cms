@@ -596,6 +596,11 @@ class SettingsController extends Controller
                 if (!$publicId) {
                     return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
                 }
+                // Normalize Cloudinary public_id (no .gz)
+                if (str_ends_with($publicId, '.gz')) {
+                    $publicId = substr($publicId, 0, -3);
+                }
+                Log::info('Restore requested for public_id', ['public_id' => $publicId]);
                 // Optional: create safety backup first
                 $this->createPgBackup();
                 // Put app in maintenance during restore
