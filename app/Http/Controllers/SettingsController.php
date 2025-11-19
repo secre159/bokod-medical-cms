@@ -1341,21 +1341,8 @@ class SettingsController extends Controller
         $items = $this->mapCloudinaryResources($resp->json('resources') ?? []);
 
         // Fallback to Search API if nothing found (some accounts require search for prefix across folders)
-        if (count($items) === 0) {
-            // Broad search: any raw asset whose public_id contains pg_
-            $search = Http::withBasicAuth($key, $secret)
-                ->asJson()
-                ->post("https://api.cloudinary.com/v1_1/{$cloud}/resources/search", [
-                    'expression' => "resource_type:raw AND public_id:*pg_*",
-                    'max_results' => 100,
-                    'sort_by' => [['created_at' => 'desc']],
-                ]);
-            if ($search->ok()) {
-                $items = $this->mapCloudinaryResources($search->json('resources') ?? []);
-            } else {
-                Log::warning('Cloudinary search failed', ['status' => $search->status(), 'body' => $search->body()]);
-            }
-        }
+        // Optional: We can add Search API later if needed. Admin API + final raw fallback should be enough.
+        
 
         if (count($items) === 0) {
             // Final safety: list recent raw resources without prefix and filter client-side
@@ -1383,9 +1370,18 @@ class SettingsController extends Controller
             $bytes = $r['bytes'] ?? 0;
             $createdAt = $r['created_at'] ?? null;
             $created = $createdAt ? Carbon::parse($createdAt) : now();
+            $base = basename($publicId);
+            // Normalize display name: if it already ends with .gz, keep it; else if ends with .dump, append .gz
+            if (str_ends_with($base, '.gz')) {
+                $display = $base;
+            } elseif (str_ends_with($base, '.dump')) {
+                $display = $base . '.gz';
+            } else {
+                $display = $base;
+            }
             $items[] = [
                 'filename' => $this->b64urlEncode($publicId),
-                'display_name' => basename($publicId) . '.gz',
+                'display_name' => $display,
                 'size' => $this->formatBytes($bytes),
                 'size_bytes' => $bytes,
                 'created_at' => $created->format('Y-m-d H:i:s'),
