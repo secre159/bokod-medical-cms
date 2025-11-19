@@ -1348,26 +1348,9 @@ $(document).ready(function() {
             }
         );
     }
-                                    <li>Check that all data appears correctly</li>
-                                    <li>The safety backup is available if you need to revert</li>
-                                    <li>Consider testing all system functions</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" onclick="window.location.reload()">Refresh Page</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        $('body').append(modalHtml);
-        $('#restoreSuccessModal').modal('show');
-        $('#restoreSuccessModal').on('hidden.bs.modal', function() {
-            $(this).remove();
-        });
+    // Minimal restore success handler (avoids complex inline templates)
+    window.showRestoreSuccessModal = function(response) {
+        showAlert('success', response && response.message ? response.message : 'Database restored successfully.');
     }
     
     function showAlert(type, message) {
