@@ -27,7 +27,9 @@ pg_dump --no-owner --no-privileges --format=custom "$INTERNAL_DATABASE_URL" | gz
 
 # Signed upload to Cloudinary raw/upload
 EPOCH=$(date +%s)
-STRING_TO_SIGN="folder=${BACKUP_FOLDER}&public_id=${PUBLIC_ID}&timestamp=${EPOCH}"
+# Include all params (alphabetically) used in the request for signature
+# folder, overwrite, public_id, timestamp
+STRING_TO_SIGN="folder=${BACKUP_FOLDER}&overwrite=true&public_id=${PUBLIC_ID}&timestamp=${EPOCH}"
 SIG=$(php -r 'echo sha1($argv[1].$argv[2]);' "$STRING_TO_SIGN" "$CLOUDINARY_API_SECRET")
 
 UPLOAD_URL="https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload"
