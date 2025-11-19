@@ -1341,17 +1341,30 @@ class SettingsController extends Controller
 
         // Fallback to Search API if nothing found (some accounts require search for prefix across folders)
         if (count($items) === 0) {
+            // Broad search: any raw asset whose public_id contains pg_
             $search = Http::withBasicAuth($key, $secret)
                 ->asJson()
                 ->post("https://api.cloudinary.com/v1_1/{$cloud}/resources/search", [
-                    'expression' => "resource_type:raw AND public_id:{$prefix}*",
+                    'expression' => "resource_type:raw AND public_id:*pg_*",
                     'max_results' => 100,
-                    'sort_by' => [['public_id' => 'desc']],
+                    'sort_by' => [['created_at' => 'desc']],
                 ]);
             if ($search->ok()) {
                 $items = $this->mapCloudinaryResources($search->json('resources') ?? []);
             } else {
                 Log::warning('Cloudinary search failed', ['status' => $search->status(), 'body' => $search->body()]);
+            }
+        }
+
+        if (count($items) === 0) {
+            // Final safety: list recent raw resources without prefix and filter client-side
+            $raw = Http::withBasicAuth($key, $secret)
+                ->get("https://api.cloudinary.com/v1_1/{$cloud}/resources/raw", ['max_results' => 100]);
+            if ($raw->ok()) {
+                $items = array_values(array_filter(
+                    $this->mapCloudinaryResources($raw->json('resources') ?? []),
+                    fn($i) => str_contains($i['display_name'] ?? '', 'pg_')
+                ));
             }
         }
 
