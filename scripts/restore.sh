@@ -30,23 +30,12 @@ TS=$(date +%s)
 TO_SIGN="public_id=${PUBLIC_ID}&timestamp=${TS}"
 SIG=$(printf "%s" "${TO_SIGN}${CLOUDINARY_API_SECRET}" | sha1sum | awk '{print $1}')
 
-# Request signed URL JSON (avoids python dependency)
-DL_JSON=$(curl -sS -G "https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/download" \
-  --data-urlencode "public_id=${PUBLIC_ID}" \
-  --data "api_key=${CLOUDINARY_API_KEY}" \
-  --data "timestamp=${TS}" \
-  --data "signature=${SIG}")
-
-SECURE_URL=$(php -r '$j=json_decode(stream_get_contents(STDIN),true); echo $j["url"]??"";' <<<"$DL_JSON")
-if [ -z "${SECURE_URL}" ]; then
-  echo "Failed to fetch signed download URL for ${PUBLIC_ID}: $DL_JSON" >&2
-  exit 2
-fi
-
-echo "Downloading (signed): ${SECURE_URL}"
-HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$TMP_FILE" "$SECURE_URL")
+# Try direct delivery with HTTP Basic Auth (works regardless of access mode)
+DELIVERY_URL="https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/raw/upload/${PUBLIC_ID}.gz"
+echo "Downloading (auth) from: ${DELIVERY_URL}"
+HTTP_CODE=$(curl -sSL -u "${CLOUDINARY_API_KEY}:${CLOUDINARY_API_SECRET}" -w "%{http_code}" -o "$TMP_FILE" "$DELIVERY_URL")
 if [ "$HTTP_CODE" != "200" ]; then
-  echo "Signed download failed with HTTP $HTTP_CODE for public_id: ${PUBLIC_ID}" >&2
+  echo "Authenticated download failed with HTTP $HTTP_CODE for public_id: ${PUBLIC_ID}" >&2
   exit 2
 fi
 
