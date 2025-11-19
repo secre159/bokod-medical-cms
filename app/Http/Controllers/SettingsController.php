@@ -1367,8 +1367,6 @@ class SettingsController extends Controller
                 ));
             }
         }
-            }
-        }
 
         // newest first by created_at when available
         usort($items, fn($a,$b) => strcmp($b['created_at'], $a['created_at']));
