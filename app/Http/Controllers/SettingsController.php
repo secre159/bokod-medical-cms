@@ -509,7 +509,10 @@ class SettingsController extends Controller
                     return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
                 }
                 Log::info('Backup download requested', ['public_id' => $publicId]);
-                // Always use Cloudinary signed download URL to avoid 401 on raw delivery
+                // Normalize: Cloudinary raw assets use public_id without .gz extension
+                if (str_ends_with($publicId, '.gz')) {
+                    $publicId = substr($publicId, 0, -3);
+                }
                 $cloud = env('CLOUDINARY_CLOUD_NAME');
                 $key = env('CLOUDINARY_API_KEY');
                 $secret = env('CLOUDINARY_API_SECRET');
