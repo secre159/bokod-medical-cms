@@ -509,15 +509,15 @@ class SettingsController extends Controller
                     return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
                 }
                 Log::info('Backup download requested', ['public_id' => $publicId]);
-                $secureUrl = $this->cloudFindSecureUrl($publicId);
-                if (!$secureUrl) {
-                    // Fallback deterministic delivery URL
-                    $cloud = env('CLOUDINARY_CLOUD_NAME');
-                    $fallback = "https://res.cloudinary.com/{$cloud}/raw/upload/{$publicId}.gz";
-                    Log::warning('Cloudinary secure_url not found, using fallback', ['fallback' => $fallback]);
-                    return redirect()->away($fallback);
-                }
-                return redirect()->away($secureUrl);
+                // Always use Cloudinary signed download URL to avoid 401 on raw delivery
+                $cloud = env('CLOUDINARY_CLOUD_NAME');
+                $key = env('CLOUDINARY_API_KEY');
+                $secret = env('CLOUDINARY_API_SECRET');
+                $ts = time();
+                $toSign = 'public_id=' . $publicId . '&timestamp=' . $ts;
+                $sig = sha1($toSign . $secret);
+                $downloadUrl = "https://api.cloudinary.com/v1_1/{$cloud}/raw/download?public_id=" . urlencode($publicId) . "&api_key={$key}&timestamp={$ts}&signature={$sig}";
+                return redirect()->away($downloadUrl);
             }
 
             // Legacy local download
