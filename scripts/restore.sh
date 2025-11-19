@@ -19,39 +19,28 @@ if [ $# -lt 1 ]; then
 fi
 
 PUBLIC_ID="$1"  # e.g., backups/pg_20251119_031500.dump
-export PUBLIC_ID
-
-LIST_URL="https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/resources/raw/upload?prefix=${PUBLIC_ID}&max_results=100"
-TMP_JSON="/tmp/cloud_list.json"
-
-echo "Querying Cloudinary for ${PUBLIC_ID}"
-curl -sS -u "${CLOUDINARY_API_KEY}:${CLOUDINARY_API_SECRET}" -G "$LIST_URL" > "$TMP_JSON"
-
-SECURE_URL=$(php -r '
-  $json = json_decode(file_get_contents(getenv("TMP_JSON")), true);
-  $id = getenv("PUBLIC_ID");
-  foreach (($json["resources"] ?? []) as $r) {
-    if (($r["public_id"] ?? "") === $id) { echo $r["secure_url"] ?? ""; exit; }
-  }
-' )
-
-if [ -z "${SECURE_URL:-}" ]; then
-  # Try deterministic delivery URL
-  FALLBACK_URL="https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/raw/upload/${PUBLIC_ID}.gz"
-  echo "Admin API did not return a match. Trying fallback URL: $FALLBACK_URL" >&2
-  CODE=$(curl -sI -o /dev/null -w "%{http_code}" "$FALLBACK_URL")
-  if [ "$CODE" = "200" ]; then
-    SECURE_URL="$FALLBACK_URL"
-  else
-    echo "Backup not found for public_id: ${PUBLIC_ID}" >&2
-    echo "Response:" && cat "$TMP_JSON" && echo "" >&2
-    exit 2
-  fi
+# Normalize: ensure no .gz suffix in public_id for signed download
+if [[ "$PUBLIC_ID" == *.gz ]]; then
+  PUBLIC_ID="${PUBLIC_ID%.gz}"
 fi
-
 TMP_FILE="/tmp/restore.dump.gz"
-echo "Downloading: ${SECURE_URL}"
-curl -sS -L "$SECURE_URL" -o "$TMP_FILE"
+
+# Build Cloudinary signed download URL for raw asset
+TS=$(date +%s)
+TO_SIGN="public_id=${PUBLIC_ID}&timestamp=${TS}"
+SIG=$(printf "%s" "${TO_SIGN}${CLOUDINARY_API_SECRET}" | sha1sum | awk '{print $1}')
+DL_URL="https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/download?public_id=$(python3 - <<PY
+import urllib.parse,os
+print(urllib.parse.quote(os.environ['PUBLIC_ID']))
+PY
+)&api_key=${CLOUDINARY_API_KEY}&timestamp=${TS}&signature=${SIG}"
+
+echo "Downloading (signed): ${DL_URL}"
+HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$TMP_FILE" "$DL_URL")
+if [ "$HTTP_CODE" != "200" ]; then
+  echo "Signed download failed with HTTP $HTTP_CODE for public_id: ${PUBLIC_ID}" >&2
+  exit 2
+fi
 
 # Optional: put app in maintenance mode if running from web dyno
 # php artisan down || true
