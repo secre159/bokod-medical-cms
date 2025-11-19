@@ -1251,7 +1251,7 @@ $(document).ready(function() {
         }
         
         let html = '<div class="table-responsive"><table class="table table-striped table-hover">';
-        html += '<thead><tr><th width="35%">Backup File</th><th width="15%">Size</th><th width="20%">Created</th><th width="30%">Actions</th></tr></thead><tbody>';
+        html += '<thead><tr><th width=\"35%\">Backup File</th><th width=\"15%\">Size</th><th width=\"20%\">Created</th><th width=\"30%\">Actions</th></tr></thead><tbody>';
         
         backups.forEach(function(backup) {
             html += '<tr>';
@@ -1260,11 +1260,11 @@ $(document).ready(function() {
             html += '<td>' + backup.size + '</td>';
             html += '<td>' + backup.created_at + '<br><small class="text-muted">' + backup.created_human + '</small></td>';
             html += '<td>';
-            html += '<button class="btn btn-sm btn-primary mr-1" onclick="downloadBackup(\'' + backup.filename + '\')">';
+            html += '<button class="btn btn-sm btn-primary mr-1" onclick="window.downloadBackup(\'' + backup.filename + '\')">';
             html += '<i class="fas fa-download mr-1"></i>Download</button>';
-            html += '<button class="btn btn-sm btn-warning mr-1" onclick="restoreBackup(\'' + backup.filename + '\')">';
+            html += '<button class="btn btn-sm btn-warning mr-1" onclick="window.restoreBackup(\'' + backup.filename + '\')">';
             html += '<i class="fas fa-undo mr-1"></i>Restore</button>';
-            html += '<button class="btn btn-sm btn-danger" onclick="deleteBackup(\'' + backup.filename + '\')">';
+            html += '<button class="btn btn-sm btn-danger" onclick="window.deleteBackup(\'' + backup.filename + '\')">';
             html += '<i class="fas fa-trash mr-1"></i>Delete</button>';
             html += '</td>';
             html += '</tr>';
@@ -1274,27 +1274,25 @@ $(document).ready(function() {
         $('#backupsList').html(html);
     }
     
-    // Download backup
-    function downloadBackup(filename) {
+    // Expose handlers globally for inline onclick
+    window.downloadBackup = function(filename) {
         const url = '{{ route("settings.downloadBackup", "FILENAME") }}'.replace('FILENAME', filename);
         window.location.href = url;
     }
     
-    // Restore backup
-    function restoreBackup(filename) {
+    window.restoreBackup = function(filename) {
         showConfirmModal(
             'Restore Database',
             '<div class="alert alert-warning mb-3"><i class="fas fa-exclamation-triangle mr-2"></i><strong>CRITICAL WARNING:</strong> This will replace ALL current data with the backup data!</div>' +
             '<p><strong>What will happen:</strong></p>' +
             '<ul>' +
             '<li>Current database will be backed up as safety backup</li>' +
-            '<li>All current data will be replaced with backup "' + filename + '"</li>' +
+            '<li>All current data will be replaced with backup</li>' +
             '<li>This action affects patients, appointments, prescriptions, etc.</li>' +
             '</ul>' +
-            '<p><strong>Are you absolutely sure you want to restore from "' + filename + '"?</strong></p>',
+            '<p><strong>Are you absolutely sure you want to restore?</strong></p>',
             'danger',
             function() {
-                // Show loading state
                 $('#backupModal').find('.modal-body').prepend('<div id="restoreProgress" class="alert alert-info"><i class="fas fa-spinner fa-spin mr-2"></i>Restoring database... This may take several minutes. Please do not close this window.</div>');
                 
                 $.ajax({
@@ -1303,17 +1301,15 @@ $(document).ready(function() {
                     data: {
                         _token: '{{ csrf_token() }}'
                     },
-                    timeout: 300000 // 5 minute timeout
+                    timeout: 300000
                 }).done(function(response) {
                     $('#restoreProgress').remove();
                     if (response.success) {
                         showAlert('success', response.message);
-                        loadBackups(); // Refresh the list
-                        
-                        // Show success modal with details
+                        loadBackups();
                         showRestoreSuccessModal(response);
                     } else {
-                        showAlert('error', response.message);
+                        showAlert('error', response.message || 'Restore failed');
                     }
                 }).fail(function(xhr) {
                     $('#restoreProgress').remove();
@@ -1327,32 +1323,31 @@ $(document).ready(function() {
         );
     }
     
-    // Show restore success modal
-    function showRestoreSuccessModal(response) {
-        const modalHtml = `
-            <div class="modal fade" id="restoreSuccessModal" tabindex="-1" role="dialog">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header bg-success text-white">
-                            <h4 class="modal-title"><i class="fas fa-check-circle mr-2"></i>Database Restored Successfully</h4>
-                            <button type="button" class="close text-white" data-dismiss="modal">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="alert alert-success">
-                                <h6><i class="fas fa-check mr-2"></i>Restore completed successfully!</h6>
-                            </div>
-                            <p><strong>Restore Details:</strong></p>
-                            <ul>
-                                <li><strong>Restored from:</strong> ${response.restored_from}</li>
-                                <li><strong>Safety backup created:</strong> ${response.safety_backup}</li>
-                                <li><strong>Restore time:</strong> ${response.restore_time}</li>
-                            </ul>
-                            <div class="alert alert-info">
-                                <h6><i class="fas fa-info-circle mr-2"></i>Important Notes:</h6>
-                                <ul class="mb-0">
-                                    <li>Please refresh your browser to see the restored data</li>
+    window.deleteBackup = function(filename) {
+        showConfirmModal(
+            'Delete Backup',
+            'Are you sure you want to delete this backup? This action cannot be undone.',
+            'danger',
+            function() {
+                $.ajax({
+                    url: '{{ route("settings.deleteBackup", "FILENAME") }}'.replace('FILENAME', filename),
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    }
+                }).done(function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        loadBackups();
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                }).fail(function() {
+                    showAlert('error', 'Error deleting backup');
+                });
+            }
+        );
+    }
                                     <li>Check that all data appears correctly</li>
                                     <li>The safety backup is available if you need to revert</li>
                                     <li>Consider testing all system functions</li>

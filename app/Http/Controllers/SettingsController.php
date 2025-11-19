@@ -1333,6 +1333,7 @@ class SettingsController extends Controller
         $prefix = env('BACKUP_FOLDER', 'backups') . '/pg_';
 
         // First try Admin API list with prefix
+        // List primary prefix
         $resp = Http::withBasicAuth($key, $secret)
             ->get("https://api.cloudinary.com/v1_1/{$cloud}/resources/raw/upload", [
                 'prefix' => $prefix,
@@ -1340,9 +1341,15 @@ class SettingsController extends Controller
             ]);
         $items = $this->mapCloudinaryResources($resp->json('resources') ?? []);
 
-        // Fallback to Search API if nothing found (some accounts require search for prefix across folders)
-        // Optional: We can add Search API later if needed. Admin API + final raw fallback should be enough.
-        
+        // Also list legacy double-foldered backups/backups/ prefix and merge
+        $legacy = Http::withBasicAuth($key, $secret)
+            ->get("https://api.cloudinary.com/v1_1/{$cloud}/resources/raw/upload", [
+                'prefix' => 'backups/backups/pg_',
+                'max_results' => 100,
+            ]);
+        if ($legacy->ok()) {
+            $items = array_merge($items, $this->mapCloudinaryResources($legacy->json('resources') ?? []));
+        }
 
         if (count($items) === 0) {
             // Final safety: list recent raw resources without prefix and filter client-side
@@ -1353,6 +1360,8 @@ class SettingsController extends Controller
                     $this->mapCloudinaryResources($raw->json('resources') ?? []),
                     fn($i) => str_contains($i['display_name'] ?? '', 'pg_')
                 ));
+            }
+        }
             }
         }
 
