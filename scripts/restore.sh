@@ -29,14 +29,22 @@ TMP_FILE="/tmp/restore.dump.gz"
 TS=$(date +%s)
 TO_SIGN="public_id=${PUBLIC_ID}&timestamp=${TS}"
 SIG=$(printf "%s" "${TO_SIGN}${CLOUDINARY_API_SECRET}" | sha1sum | awk '{print $1}')
-DL_URL="https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/download?public_id=$(python3 - <<PY
-import urllib.parse,os
-print(urllib.parse.quote(os.environ['PUBLIC_ID']))
-PY
-)&api_key=${CLOUDINARY_API_KEY}&timestamp=${TS}&signature=${SIG}"
 
-echo "Downloading (signed): ${DL_URL}"
-HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$TMP_FILE" "$DL_URL")
+# Request signed URL JSON (avoids python dependency)
+DL_JSON=$(curl -sS -G "https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/download" \
+  --data-urlencode "public_id=${PUBLIC_ID}" \
+  --data "api_key=${CLOUDINARY_API_KEY}" \
+  --data "timestamp=${TS}" \
+  --data "signature=${SIG}")
+
+SECURE_URL=$(php -r '$j=json_decode(stream_get_contents(STDIN),true); echo $j["url"]??"";' <<<"$DL_JSON")
+if [ -z "${SECURE_URL}" ]; then
+  echo "Failed to fetch signed download URL for ${PUBLIC_ID}: $DL_JSON" >&2
+  exit 2
+fi
+
+echo "Downloading (signed): ${SECURE_URL}"
+HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$TMP_FILE" "$SECURE_URL")
 if [ "$HTTP_CODE" != "200" ]; then
   echo "Signed download failed with HTTP $HTTP_CODE for public_id: ${PUBLIC_ID}" >&2
   exit 2
