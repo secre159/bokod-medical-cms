@@ -509,7 +509,11 @@ class SettingsController extends Controller
             if ($this->isPostgres()) {
                 if (env('BACKUP_STORAGE', 'cloudinary') === 'local') {
                     $path = rtrim(env('BACKUP_DIR', '/var/data/backups'), '/');
-                    $safe = basename($this->b64urlDecode($filename));
+                    $decoded = $this->b64urlDecode($filename);
+                    if (!$decoded) {
+                        return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
+                    }
+                    $safe = basename($decoded);
                     $full = $path . '/' . $safe;
                     if (!file_exists($full)) {
                         return response()->json(['success' => false, 'message' => 'Backup file not found'], 404);
@@ -606,7 +610,11 @@ class SettingsController extends Controller
             Log::info('Restore requested', ['encoded' => $filename]);
             if ($this->isPostgres()) {
                 if (env('BACKUP_STORAGE', 'cloudinary') === 'local') {
-                    $safe = basename($this->b64urlDecode($filename));
+                    $decoded = $this->b64urlDecode($filename);
+                    if (!$decoded) {
+                        return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
+                    }
+                    $safe = basename($decoded);
                     $result = $this->restorePgBackupLocal($safe);
                     return response()->json($result, $result['success'] ? 200 : 500);
                 }
@@ -1514,8 +1522,8 @@ class SettingsController extends Controller
         }
     }
 
-    private function b64urlEncode(string $s): string {
-        $pad = strlen($s) % 4; if ($pad) $s .= str_repeat('=', 4 - $pad);
+    private function b64urlDecode(string $s): ?string {
+        $pad = strlen($s) % 4; if ($pad) { $s .= str_repeat('=', 4 - $pad); }
         $raw = base64_decode(strtr($s, '-_', '+/'), true);
         return $raw === false ? null : $raw;
     }
