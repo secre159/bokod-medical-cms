@@ -19,12 +19,24 @@ BACKUP_FOLDER="${BACKUP_FOLDER:-backups}"
 
 TS="$(date +%Y%m%d_%H%M%S)"
 BASE="pg_${TS}.dump"           # base name without .gz
-PUBLIC_ID="${BASE}"            # let Cloudinary folder param place it in backups/
-FILE="/tmp/${BASE}.gz"         # local file name to upload
+FILE="/tmp/${BASE}.gz"         # local temp file
+
+BACKUP_STORAGE="${BACKUP_STORAGE:-cloudinary}"
+BACKUP_DIR="${BACKUP_DIR:-/var/data/backups}"
 
 echo "Creating pg_dump -> ${FILE}"
 pg_dump --no-owner --no-privileges --format=custom "$INTERNAL_DATABASE_URL" | gzip -9 > "$FILE"
 
+if [ "$BACKUP_STORAGE" = "local" ]; then
+  mkdir -p "$BACKUP_DIR"
+  DEST="${BACKUP_DIR}/${BASE}.gz"
+  mv "$FILE" "$DEST"
+  echo "Local backup complete: $DEST"
+  exit 0
+fi
+
+# Cloudinary upload path
+PUBLIC_ID="${BASE}"
 # Signed upload to Cloudinary raw/upload
 EPOCH=$(date +%s)
 # Include all params (alphabetically) used in the request for signature

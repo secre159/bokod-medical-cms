@@ -459,8 +459,12 @@ class SettingsController extends Controller
     public function listBackups()
     {
         try {
-            // PostgreSQL: list from Cloudinary raw backups folder
+            // PostgreSQL: prefer local disk when configured
             if ($this->isPostgres()) {
+                if (env('BACKUP_STORAGE', 'cloudinary') === 'local') {
+                    $items = $this->localListBackups();
+                    return response()->json(['success' => true, 'backups' => $items]);
+                }
                 $items = $this->cloudListBackups();
                 return response()->json(['success' => true, 'backups' => $items]);
             }
@@ -503,6 +507,15 @@ class SettingsController extends Controller
     {
         try {
             if ($this->isPostgres()) {
+                if (env('BACKUP_STORAGE', 'cloudinary') === 'local') {
+                    $path = rtrim(env('BACKUP_DIR', '/var/data/backups'), '/');
+                    $safe = basename($this->b64urlDecode($filename));
+                    $full = $path . '/' . $safe;
+                    if (!file_exists($full)) {
+                        return response()->json(['success' => false, 'message' => 'Backup file not found'], 404);
+                    }
+                    return response()->download($full, $safe);
+                }
                 // filename carries base64url(public_id)
                 $publicId = $this->b64urlDecode($filename);
                 if (!$publicId) {
@@ -592,6 +605,11 @@ class SettingsController extends Controller
         try {
             Log::info('Restore requested', ['encoded' => $filename]);
             if ($this->isPostgres()) {
+                if (env('BACKUP_STORAGE', 'cloudinary') === 'local') {
+                    $safe = basename($this->b64urlDecode($filename));
+                    $result = $this->restorePgBackupLocal($safe);
+                    return response()->json($result, $result['success'] ? 200 : 500);
+                }
                 $publicId = $this->b64urlDecode($filename);
                 if (!$publicId) {
                     return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
@@ -1295,7 +1313,9 @@ class SettingsController extends Controller
             'CLOUDINARY_CLOUD_NAME' => env('CLOUDINARY_CLOUD_NAME'),
             'CLOUDINARY_API_KEY' => env('CLOUDINARY_API_KEY'),
             'CLOUDINARY_API_SECRET' => env('CLOUDINARY_API_SECRET'),
-            'BACKUP_FOLDER' => env('BACKUP_FOLDER', 'backups'),
+'BACKUP_FOLDER' => env('BACKUP_FOLDER', 'backups'),
+            'BACKUP_STORAGE' => env('BACKUP_STORAGE', 'cloudinary'),
+            'BACKUP_DIR' => env('BACKUP_DIR', '/var/data/backups'),
             // Inherit PATH for pg_dump, gzip
         ];
         $process = new Process(['bash', $script]);
@@ -1445,7 +1465,56 @@ class SettingsController extends Controller
     }
 
     private function b64urlEncode(string $s): string { return rtrim(strtr(base64_encode($s), '+/', '-_'), '='); }
-    private function b64urlDecode(string $s): ?string {
+    private function localListBackups(): array
+    {
+        $dir = rtrim(env('BACKUP_DIR', '/var/data/backups'), '/');
+        if (!is_dir($dir)) return [];
+        $items = [];
+        foreach (glob($dir . '/*.dump.gz') ?: [] as $file) {
+            $base = basename($file);
+            $created = date('Y-m-d H:i:s', filemtime($file));
+            $items[] = [
+                'filename' => $this->b64urlEncode($base),
+                'display_name' => $base,
+                'size' => $this->formatBytes(filesize($file)),
+                'size_bytes' => filesize($file),
+                'created_at' => $created,
+                'created_human' => Carbon::createFromTimestamp(filemtime($file))->diffForHumans(),
+                'public_id' => $base,
+            ];
+        }
+        usort($items, fn($a,$b) => strcmp($b['created_at'], $a['created_at']));
+        return $items;
+    }
+
+    private function restorePgBackupLocal(string $name): array
+    {
+        $script = base_path('scripts/restore_local.sh');
+        if (!file_exists($script)) {
+            return ['success' => false, 'message' => 'Local restore script not found'];
+        }
+        $env = [
+            'INTERNAL_DATABASE_URL' => $this->pgDatabaseUrl(),
+            'BACKUP_DIR' => env('BACKUP_DIR', '/var/data/backups'),
+        ];
+        try { Artisan::call('down'); } catch (\Exception $e) { Log::warning('artisan down failed: '.$e->getMessage()); }
+        try {
+            $process = new Process(['bash', $script, $name]);
+            $process->setTimeout(1200);
+            $process->setEnv($env + $_ENV + $_SERVER);
+            $process->run();
+            $out = $process->getOutput() . "\n" . $process->getErrorOutput();
+            Log::info('pg local restore output', ['out' => $out, 'exit' => $process->getExitCode()]);
+            if ($process->isSuccessful()) {
+                return ['success' => true, 'message' => 'Local restore completed from ' . $name, 'restored_from' => $name];
+            }
+            return ['success' => false, 'message' => 'Local restore failed: ' . trim($out)];
+        } finally {
+            try { Artisan::call('up'); } catch (\Exception $e) { Log::warning('artisan up failed: '.$e->getMessage()); }
+        }
+    }
+
+    private function b64urlEncode(string $s): string {
         $pad = strlen($s) % 4; if ($pad) $s .= str_repeat('=', 4 - $pad);
         $raw = base64_decode(strtr($s, '-_', '+/'), true);
         return $raw === false ? null : $raw;
