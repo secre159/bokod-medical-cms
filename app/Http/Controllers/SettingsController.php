@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Symfony\Component\Process\Process;
 use App\Models\Setting;
 use App\Rules\PhoneNumberRule;
 use Carbon\Carbon;
@@ -208,21 +210,21 @@ class SettingsController extends Controller
     public function createBackup()
     {
         try {
+            // PostgreSQL path: run scripts/backup.sh which uploads to Cloudinary (raw/backups)
+            if ($this->isPostgres()) {
+                $result = $this->createPgBackup();
+                return response()->json($result, $result['success'] ? 200 : 500);
+            }
+
+            // Legacy MySQL/local fallback (dev only)
             $filename = 'backup_' . now()->format('Y_m_d_H_i_s') . '.sql';
             $backupPath = storage_path('app/backups/' . $filename);
-            
-            // Ensure backup directory exists
             if (!is_dir(dirname($backupPath))) {
                 mkdir(dirname($backupPath), 0755, true);
             }
-            
-            // Check if we're in a hosted environment or localhost
-            if ($this->isHostedEnvironment()) {
-                return $this->createBackupPHP($filename, $backupPath);
-            } else {
-                return $this->createBackupMySQL($filename, $backupPath);
-            }
-            
+            return $this->isHostedEnvironment()
+                ? $this->createBackupPHP($filename, $backupPath)
+                : $this->createBackupMySQL($filename, $backupPath);
         } catch (\Exception $e) {
             Log::error('Backup creation error: ' . $e->getMessage());
             return response()->json([
@@ -457,23 +459,23 @@ class SettingsController extends Controller
     public function listBackups()
     {
         try {
-            $backupDir = storage_path('app/backups');
-            
-            if (!is_dir($backupDir)) {
-                return response()->json([
-                    'success' => true,
-                    'backups' => []
-                ]);
+            // PostgreSQL: list from Cloudinary raw backups folder
+            if ($this->isPostgres()) {
+                $items = $this->cloudListBackups();
+                return response()->json(['success' => true, 'backups' => $items]);
             }
-            
+
+            // Legacy local listing (MySQL dev)
+            $backupDir = storage_path('app/backups');
+            if (!is_dir($backupDir)) {
+                return response()->json(['success' => true, 'backups' => []]);
+            }
             $backups = [];
             $files = glob($backupDir . '/*.sql');
-            
             foreach ($files as $file) {
                 $filename = basename($file);
                 $filesize = filesize($file);
                 $created = filemtime($file);
-                
                 $backups[] = [
                     'filename' => $filename,
                     'size' => $this->formatBytes($filesize),
@@ -483,21 +485,8 @@ class SettingsController extends Controller
                     'path' => $file
                 ];
             }
-            
-            // Sort by creation time (newest first)
-            usort($backups, function($a, $b) {
-                return $b['size_bytes'] <=> $a['size_bytes'];
-            });
-            
-            usort($backups, function($a, $b) {
-                return strcmp($b['created_at'], $a['created_at']);
-            });
-            
-            return response()->json([
-                'success' => true,
-                'backups' => $backups
-            ]);
-            
+            usort($backups, function($a, $b) { return strcmp($b['created_at'], $a['created_at']); });
+            return response()->json(['success' => true, 'backups' => $backups]);
         } catch (\Exception $e) {
             Log::error('List backups error: ' . $e->getMessage());
             return response()->json([
@@ -513,28 +502,31 @@ class SettingsController extends Controller
     public function downloadBackup($filename)
     {
         try {
-            // Validate filename to prevent directory traversal
-            if (!preg_match('/^backup_\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}\.sql$/', $filename)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid backup filename'
-                ], 400);
+            if ($this->isPostgres()) {
+                // filename carries base64url(public_id)
+                $publicId = $this->b64urlDecode($filename);
+                if (!$publicId) {
+                    return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
+                }
+                $secureUrl = $this->cloudFindSecureUrl($publicId);
+                if (!$secureUrl) {
+                    return response()->json(['success' => false, 'message' => 'Backup not found'], 404);
+                }
+                return redirect()->away($secureUrl);
             }
-            
+
+            // Legacy local download
+            if (!preg_match('/^backup_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.sql$/', $filename)) {
+                return response()->json(['success' => false, 'message' => 'Invalid backup filename'], 400);
+            }
             $filePath = storage_path('app/backups/' . $filename);
-            
             if (!file_exists($filePath)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Backup file not found'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Backup file not found'], 404);
             }
-            
             return response()->download($filePath, $filename, [
                 'Content-Type' => 'application/sql',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"'
             ]);
-            
         } catch (\Exception $e) {
             Log::error('Download backup error: ' . $e->getMessage());
             return response()->json([
@@ -550,32 +542,31 @@ class SettingsController extends Controller
     public function deleteBackup($filename)
     {
         try {
-            // Validate filename to prevent directory traversal
-            if (!preg_match('/^backup_\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}\.sql$/', $filename)) {
+            if ($this->isPostgres()) {
+                $publicId = $this->b64urlDecode($filename);
+                if (!$publicId) {
+                    return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
+                }
+                $deleted = $this->cloudDelete($publicId);
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid backup filename'
-                ], 400);
+                    'success' => $deleted,
+                    'message' => $deleted ? 'Backup deleted successfully' : 'Failed to delete backup'
+                ], $deleted ? 200 : 500);
             }
-            
+
+            // Legacy local delete
+            if (!preg_match('/^backup_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.sql$/', $filename)) {
+                return response()->json(['success' => false, 'message' => 'Invalid backup filename'], 400);
+            }
             $filePath = storage_path('app/backups/' . $filename);
-            
             if (!file_exists($filePath)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Backup file not found'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Backup file not found'], 404);
             }
-            
             if (unlink($filePath)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Backup deleted successfully'
-                ]);
+                return response()->json(['success' => true, 'message' => 'Backup deleted successfully']);
             } else {
                 throw new \Exception('Failed to delete backup file');
             }
-            
         } catch (\Exception $e) {
             Log::error('Delete backup error: ' . $e->getMessage());
             return response()->json([
@@ -591,36 +582,36 @@ class SettingsController extends Controller
     public function restoreBackup($filename)
     {
         try {
-            // Validate filename to prevent directory traversal
-            if (!preg_match('/^backup_\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2}\.sql$/', $filename)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid backup filename'
-                ], 400);
+            if ($this->isPostgres()) {
+                $publicId = $this->b64urlDecode($filename);
+                if (!$publicId) {
+                    return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
+                }
+                // Optional: create safety backup first
+                $this->createPgBackup();
+                // Put app in maintenance during restore
+                try { Artisan::call('down'); } catch (\Exception $e) { Log::warning('artisan down failed: '.$e->getMessage()); }
+                try {
+                    $result = $this->restorePgBackup($publicId);
+                } finally {
+                    try { Artisan::call('up'); } catch (\Exception $e) { Log::warning('artisan up failed: '.$e->getMessage()); }
+                }
+                return response()->json($result, $result['success'] ? 200 : 500);
             }
-            
+
+            // Legacy MySQL/local path
+            if (!preg_match('/^backup_\\d{4}_\\d{2}_\\d{2}_\\d{2}_\\d{2}_\\d{2}\\.sql$/', $filename)) {
+                return response()->json(['success' => false, 'message' => 'Invalid backup filename'], 400);
+            }
             $backupPath = storage_path('app/backups/' . $filename);
-            
             if (!file_exists($backupPath)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Backup file not found'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Backup file not found'], 404);
             }
-            
-            // Create a safety backup before restoring
             $safetyBackupName = 'pre_restore_safety_' . now()->format('Y_m_d_H_i_s') . '.sql';
             $this->createSafetyBackupForRestore($safetyBackupName);
-            
-            // Check if we're in a hosted environment
-            if ($this->isHostedEnvironment()) {
-                $result = $this->restoreBackupPHP($filename, $backupPath, $safetyBackupName);
-            } else {
-                $result = $this->restoreBackupMySQL($filename, $backupPath, $safetyBackupName);
-            }
-            
+            $result = $this->isHostedEnvironment() ? $this->restoreBackupPHP($filename, $backupPath, $safetyBackupName)
+                                                   : $this->restoreBackupMySQL($filename, $backupPath, $safetyBackupName);
             return $result;
-            
         } catch (\Exception $e) {
             Log::error('Database restore error: ' . $e->getMessage());
             return response()->json([
@@ -1063,11 +1054,21 @@ class SettingsController extends Controller
      */
     private function getSystemInfo()
     {
+        $dbVersion = 'Unknown';
+        try {
+            $row = DB::select('select version() as version');
+            $dbVersion = $row[0]->version ?? 'Unknown';
+        } catch (\Exception $e) {
+            try {
+                $row = DB::select('SELECT VERSION() as version');
+                $dbVersion = $row[0]->version ?? 'Unknown';
+            } catch (\Exception $ignored) {}
+        }
         return [
             'php_version' => PHP_VERSION,
             'laravel_version' => app()->version(),
             'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
-            'database_version' => DB::select('SELECT VERSION() as version')[0]->version ?? 'Unknown',
+            'database_version' => $dbVersion,
             'timezone' => config('app.timezone'),
             'debug_mode' => config('app.debug'),
             'app_environment' => config('app.env'),
@@ -1246,5 +1247,152 @@ class SettingsController extends Controller
         
         // Fallback to public disk
         return Storage::disk('public');
+    }
+    /* ===================== NEW: PostgreSQL + Cloudinary helpers ===================== */
+    private function isPostgres(): bool
+    {
+        $default = config('database.default');
+        return $default === 'pgsql' || env('DB_CONNECTION') === 'pgsql';
+    }
+
+    private function pgDatabaseUrl(): string
+    {
+        $url = env('INTERNAL_DATABASE_URL');
+        if ($url) return $url;
+        $url = env('DB_URL');
+        if ($url) return $url;
+        $cfg = config('database.connections.pgsql');
+        $user = $cfg['username'] ?? env('DB_USERNAME');
+        $pass = $cfg['password'] ?? env('DB_PASSWORD');
+        $host = $cfg['host'] ?? env('DB_HOST');
+        $port = $cfg['port'] ?? env('DB_PORT', 5432);
+        $db   = $cfg['database'] ?? env('DB_DATABASE');
+        return sprintf('postgresql://%s:%s@%s:%s/%s', $user, rawurlencode((string)$pass), $host, $port, $db);
+    }
+
+    private function createPgBackup(): array
+    {
+        $script = base_path('scripts/backup.sh');
+        if (!file_exists($script)) {
+            return ['success' => false, 'message' => 'Backup script not found'];
+        }
+        $env = [
+            'INTERNAL_DATABASE_URL' => $this->pgDatabaseUrl(),
+            'CLOUDINARY_CLOUD_NAME' => env('CLOUDINARY_CLOUD_NAME'),
+            'CLOUDINARY_API_KEY' => env('CLOUDINARY_API_KEY'),
+            'CLOUDINARY_API_SECRET' => env('CLOUDINARY_API_SECRET'),
+            'BACKUP_FOLDER' => env('BACKUP_FOLDER', 'backups'),
+            // Inherit PATH for pg_dump, gzip
+        ];
+        $process = new Process(['bash', $script]);
+        $process->setTimeout(600);
+        $process->setEnv($env + $_ENV + $_SERVER);
+        $process->run();
+        $out = $process->getOutput() . "\n" . $process->getErrorOutput();
+        Log::info('pg backup output', ['out' => $out, 'exit' => $process->getExitCode()]);
+        if ($process->isSuccessful()) {
+            $this->updateSetting('last_backup', now()->toDateTimeString());
+            return ['success' => true, 'message' => 'Backup created and uploaded to Cloudinary.'];
+        }
+        return ['success' => false, 'message' => 'Backup failed: ' . trim($out)];
+    }
+
+    private function restorePgBackup(string $publicId): array
+    {
+        $script = base_path('scripts/restore.sh');
+        if (!file_exists($script)) {
+            return ['success' => false, 'message' => 'Restore script not found'];
+        }
+        $env = [
+            'INTERNAL_DATABASE_URL' => $this->pgDatabaseUrl(),
+            'CLOUDINARY_CLOUD_NAME' => env('CLOUDINARY_CLOUD_NAME'),
+            'CLOUDINARY_API_KEY' => env('CLOUDINARY_API_KEY'),
+            'CLOUDINARY_API_SECRET' => env('CLOUDINARY_API_SECRET'),
+        ];
+        $process = new Process(['bash', $script, $publicId]);
+        $process->setTimeout(1200);
+        $process->setEnv($env + $_ENV + $_SERVER);
+        $process->run();
+        $out = $process->getOutput() . "\n" . $process->getErrorOutput();
+        Log::info('pg restore output', ['out' => $out, 'exit' => $process->getExitCode()]);
+        if ($process->isSuccessful()) {
+            $this->updateSetting('last_restore', now()->toDateTimeString());
+            $this->updateSetting('last_restore_file', $publicId);
+            return ['success' => true, 'message' => 'Restore completed from ' . $publicId, 'restored_from' => $publicId, 'restore_time' => now()->toDateTimeString()];
+        }
+        return ['success' => false, 'message' => 'Restore failed: ' . trim($out)];
+    }
+
+    private function cloudListBackups(): array
+    {
+        $cloud = env('CLOUDINARY_CLOUD_NAME');
+        $key = env('CLOUDINARY_API_KEY');
+        $secret = env('CLOUDINARY_API_SECRET');
+        if (!$cloud || !$key || !$secret) return [];
+        $prefix = env('BACKUP_FOLDER', 'backups') . '/pg_';
+        $resp = Http::withBasicAuth($key, $secret)
+            ->get("https://api.cloudinary.com/v1_1/{$cloud}/resources/raw/upload", [
+                'prefix' => $prefix,
+                'max_results' => 100,
+            ]);
+        if (!$resp->ok()) return [];
+        $resources = $resp->json('resources') ?? [];
+        $items = [];
+        foreach ($resources as $r) {
+            $publicId = $r['public_id'] ?? '';
+            $bytes = $r['bytes'] ?? 0;
+            $created = isset($r['created_at']) ? Carbon::parse($r['created_at']) : now();
+            $items[] = [
+                'filename' => $this->b64urlEncode($publicId), // encoded id for route param
+                'display_name' => basename($publicId) . '.gz',
+                'size' => $this->formatBytes($bytes),
+                'size_bytes' => $bytes,
+                'created_at' => $created->format('Y-m-d H:i:s'),
+                'created_human' => $created->diffForHumans(),
+                'public_id' => $publicId,
+            ];
+        }
+        // newest first
+        usort($items, fn($a,$b) => strcmp($b['created_at'], $a['created_at']));
+        return $items;
+    }
+
+    private function cloudFindSecureUrl(string $publicId): ?string
+    {
+        $cloud = env('CLOUDINARY_CLOUD_NAME');
+        $key = env('CLOUDINARY_API_KEY');
+        $secret = env('CLOUDINARY_API_SECRET');
+        $resp = Http::withBasicAuth($key, $secret)
+            ->get("https://api.cloudinary.com/v1_1/{$cloud}/resources/raw/upload", ['prefix' => $publicId, 'max_results' => 100]);
+        if (!$resp->ok()) return null;
+        foreach (($resp->json('resources') ?? []) as $r) {
+            if (($r['public_id'] ?? '') === $publicId) return $r['secure_url'] ?? null;
+        }
+        return null;
+    }
+
+    private function cloudDelete(string $publicId): bool
+    {
+        $cloud = env('CLOUDINARY_CLOUD_NAME');
+        $key = env('CLOUDINARY_API_KEY');
+        $secret = env('CLOUDINARY_API_SECRET');
+        $ts = time();
+        // signature for upload API destroy: sha1("public_id={$publicId}&timestamp={$ts}" . api_secret)
+        $toSign = 'public_id=' . $publicId . '&timestamp=' . $ts;
+        $sig = sha1($toSign . $secret);
+        $resp = Http::asMultipart()->post("https://api.cloudinary.com/v1_1/{$cloud}/raw/destroy", [
+            'public_id' => $publicId,
+            'timestamp' => $ts,
+            'api_key' => $key,
+            'signature' => $sig,
+        ]);
+        return $resp->ok() && ($resp->json('result') ?? '') === 'ok';
+    }
+
+    private function b64urlEncode(string $s): string { return rtrim(strtr(base64_encode($s), '+/', '-_'), '='); }
+    private function b64urlDecode(string $s): ?string {
+        $pad = strlen($s) % 4; if ($pad) $s .= str_repeat('=', 4 - $pad);
+        $raw = base64_decode(strtr($s, '-_', '+/'), true);
+        return $raw === false ? null : $raw;
     }
 }

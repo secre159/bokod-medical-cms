@@ -1255,7 +1255,8 @@ $(document).ready(function() {
         
         backups.forEach(function(backup) {
             html += '<tr>';
-            html += '<td><strong>' + backup.filename + '</strong></td>';
+            const name = backup.display_name ? backup.display_name : backup.filename;
+            html += '<td><strong>' + name + '</strong></td>';
             html += '<td>' + backup.size + '</td>';
             html += '<td>' + backup.created_at + '<br><small class="text-muted">' + backup.created_human + '</small></td>';
             html += '<td>';

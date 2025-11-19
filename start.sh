@@ -6,6 +6,18 @@ echo "Working directory: $(pwd)"
 echo "Database URL: ${DATABASE_URL:0:20}..."
 echo "Port: $PORT"
 
+# If a command is provided as arguments (e.g., Render Start Command / Cron Job), execute it directly
+if [ "$#" -gt 0 ]; then
+    echo "Command args detected. Executing: $*"
+    exec "$@"
+fi
+
+# If this container is started for a worker/cron job, honor WORKER_COMMAND
+if [ -n "${WORKER_COMMAND:-}" ]; then
+    echo "Worker mode detected. Executing WORKER_COMMAND: $WORKER_COMMAND"
+    exec bash -lc "$WORKER_COMMAND"
+fi
+
 # Copy production environment file if it exists
 if [ -f ".env.production" ]; then
     echo "Using production environment configuration..."
