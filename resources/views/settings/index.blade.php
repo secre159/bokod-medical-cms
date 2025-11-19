@@ -1370,33 +1370,6 @@ $(document).ready(function() {
         });
     }
     
-    // Delete backup
-    function deleteBackup(filename) {
-        showConfirmModal(
-            'Delete Backup',
-            'Are you sure you want to delete the backup "' + filename + '"? This action cannot be undone.',
-            'danger',
-            function() {
-                $.ajax({
-                    url: '{{ route("settings.deleteBackup", "FILENAME") }}'.replace('FILENAME', filename),
-                    type: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    }
-                }).done(function(response) {
-                    if (response.success) {
-                        showAlert('success', response.message);
-                        loadBackups(); // Refresh the list
-                    } else {
-                        showAlert('error', response.message);
-                    }
-                }).fail(function() {
-                    showAlert('error', 'Error deleting backup');
-                });
-            }
-        );
-    }
-    
     function showAlert(type, message) {
         const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
         const icon = type === 'success' ? 'fa-check' : 'fa-exclamation-triangle';
