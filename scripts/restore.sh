@@ -36,9 +36,17 @@ SECURE_URL=$(php -r '
 ' )
 
 if [ -z "${SECURE_URL:-}" ]; then
-  echo "Backup not found for public_id: ${PUBLIC_ID}" >&2
-  echo "Response:" && cat "$TMP_JSON" && echo "" >&2
-  exit 2
+  # Try deterministic delivery URL
+  FALLBACK_URL="https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/raw/upload/${PUBLIC_ID}.gz"
+  echo "Admin API did not return a match. Trying fallback URL: $FALLBACK_URL" >&2
+  CODE=$(curl -sI -o /dev/null -w "%{http_code}" "$FALLBACK_URL")
+  if [ "$CODE" = "200" ]; then
+    SECURE_URL="$FALLBACK_URL"
+  else
+    echo "Backup not found for public_id: ${PUBLIC_ID}" >&2
+    echo "Response:" && cat "$TMP_JSON" && echo "" >&2
+    exit 2
+  fi
 fi
 
 TMP_FILE="/tmp/restore.dump.gz"

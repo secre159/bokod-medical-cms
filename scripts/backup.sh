@@ -18,8 +18,8 @@ set -euo pipefail
 BACKUP_FOLDER="${BACKUP_FOLDER:-backups}"
 
 TS="$(date +%Y%m%d_%H%M%S)"
-BASE="pg_${TS}.dump"           # public_id (no .gz)
-PUBLIC_ID="${BACKUP_FOLDER}/${BASE}"
+BASE="pg_${TS}.dump"           # base name without .gz
+PUBLIC_ID="${BASE}"            # let Cloudinary folder param place it in backups/
 FILE="/tmp/${BASE}.gz"         # local file name to upload
 
 echo "Creating pg_dump -> ${FILE}"

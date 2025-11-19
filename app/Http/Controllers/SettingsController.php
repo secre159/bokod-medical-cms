@@ -582,6 +582,7 @@ class SettingsController extends Controller
     public function restoreBackup($filename)
     {
         try {
+            Log::info('Restore requested', ['encoded' => $filename]);
             if ($this->isPostgres()) {
                 $publicId = $this->b64urlDecode($filename);
                 if (!$publicId) {
