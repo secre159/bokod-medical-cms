@@ -508,9 +508,14 @@ class SettingsController extends Controller
                 if (!$publicId) {
                     return response()->json(['success' => false, 'message' => 'Invalid backup id'], 400);
                 }
+                Log::info('Backup download requested', ['public_id' => $publicId]);
                 $secureUrl = $this->cloudFindSecureUrl($publicId);
                 if (!$secureUrl) {
-                    return response()->json(['success' => false, 'message' => 'Backup not found'], 404);
+                    // Fallback deterministic delivery URL
+                    $cloud = env('CLOUDINARY_CLOUD_NAME');
+                    $fallback = "https://res.cloudinary.com/{$cloud}/raw/upload/{$publicId}.gz";
+                    Log::warning('Cloudinary secure_url not found, using fallback', ['fallback' => $fallback]);
+                    return redirect()->away($fallback);
                 }
                 return redirect()->away($secureUrl);
             }
