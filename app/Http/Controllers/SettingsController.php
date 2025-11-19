@@ -1330,20 +1330,47 @@ class SettingsController extends Controller
         $secret = env('CLOUDINARY_API_SECRET');
         if (!$cloud || !$key || !$secret) return [];
         $prefix = env('BACKUP_FOLDER', 'backups') . '/pg_';
+
+        // First try Admin API list with prefix
         $resp = Http::withBasicAuth($key, $secret)
             ->get("https://api.cloudinary.com/v1_1/{$cloud}/resources/raw/upload", [
                 'prefix' => $prefix,
                 'max_results' => 100,
             ]);
-        if (!$resp->ok()) return [];
-        $resources = $resp->json('resources') ?? [];
+        $items = $this->mapCloudinaryResources($resp->json('resources') ?? []);
+
+        // Fallback to Search API if nothing found (some accounts require search for prefix across folders)
+        if (count($items) === 0) {
+            $search = Http::withBasicAuth($key, $secret)
+                ->asJson()
+                ->post("https://api.cloudinary.com/v1_1/{$cloud}/resources/search", [
+                    'expression' => "resource_type:raw AND public_id:{$prefix}*",
+                    'max_results' => 100,
+                    'sort_by' => [['public_id' => 'desc']],
+                ]);
+            if ($search->ok()) {
+                $items = $this->mapCloudinaryResources($search->json('resources') ?? []);
+            } else {
+                Log::warning('Cloudinary search failed', ['status' => $search->status(), 'body' => $search->body()]);
+            }
+        }
+
+        // newest first by created_at when available
+        usort($items, fn($a,$b) => strcmp($b['created_at'], $a['created_at']));
+        return $items;
+    }
+
+    private function mapCloudinaryResources(array $resources): array
+    {
         $items = [];
         foreach ($resources as $r) {
             $publicId = $r['public_id'] ?? '';
+            if ($publicId === '') continue;
             $bytes = $r['bytes'] ?? 0;
-            $created = isset($r['created_at']) ? Carbon::parse($r['created_at']) : now();
+            $createdAt = $r['created_at'] ?? null;
+            $created = $createdAt ? Carbon::parse($createdAt) : now();
             $items[] = [
-                'filename' => $this->b64urlEncode($publicId), // encoded id for route param
+                'filename' => $this->b64urlEncode($publicId),
                 'display_name' => basename($publicId) . '.gz',
                 'size' => $this->formatBytes($bytes),
                 'size_bytes' => $bytes,
@@ -1352,8 +1379,6 @@ class SettingsController extends Controller
                 'public_id' => $publicId,
             ];
         }
-        // newest first
-        usort($items, fn($a,$b) => strcmp($b['created_at'], $a['created_at']));
         return $items;
     }
 
