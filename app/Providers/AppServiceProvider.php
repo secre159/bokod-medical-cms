@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Login;
 use App\Listeners\UpdateLastLoginAt;
+use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -42,6 +44,9 @@ class AppServiceProvider extends ServiceProvider
                 URL::forceRootUrl($url);
             }
         }
+
+        // Apply mail configuration from settings at runtime
+        $this->applyMailConfigFromSettings();
     }
     
     /**
@@ -114,5 +119,49 @@ class AppServiceProvider extends ServiceProvider
         
         // In development, be more permissive
         return !app()->environment('production');
+    }
+
+    /**
+     * Apply mail configuration from DB settings at runtime.
+     */
+    private function applyMailConfigFromSettings(): void
+    {
+        try {
+            $driver = Setting::get('mail_driver', config('mail.default', 'smtp'));
+            if (!in_array($driver, ['smtp','ses','postmark','log','array','failover'])) {
+                $driver = 'smtp';
+            }
+            config(['mail.default' => $driver]);
+
+            // Common FROM settings
+            $fromAddress = Setting::get('mail_from_address', config('mail.from.address'));
+            $fromName    = Setting::get('mail_from_name', config('mail.from.name'));
+            if ($fromAddress) config(['mail.from.address' => $fromAddress]);
+            if ($fromName)    config(['mail.from.name' => $fromName]);
+
+            if ($driver === 'smtp') {
+                $host = Setting::get('mail_host', config('mail.mailers.smtp.host'));
+                $port = (int) Setting::get('mail_port', (int) config('mail.mailers.smtp.port'));
+                $enc  = Setting::get('mail_encryption', config('mail.mailers.smtp.encryption')) ?: null;
+                $user = Setting::get('mail_username', config('mail.mailers.smtp.username'));
+                // Get password raw (may be encrypted)
+                $raw  = DB::table('settings')->where('key','mail_password')->value('value');
+                $pass = null;
+                if ($raw !== null && $raw !== '') {
+                    try { $pass = decrypt($raw); } catch (\Throwable $e) { $pass = $raw; }
+                }
+                config([
+                    'mail.mailers.smtp.host' => $host,
+                    'mail.mailers.smtp.port' => $port ?: 587,
+                    'mail.mailers.smtp.encryption' => $enc,
+                    'mail.mailers.smtp.username' => $user,
+                    'mail.mailers.smtp.password' => $pass,
+                    'mail.mailers.smtp.timeout' => 10,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Don't break the app if settings are missing; leave defaults
+            // You can inspect logs if mail config fails to apply
+        }
     }
 }

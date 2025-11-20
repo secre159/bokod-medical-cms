@@ -13,6 +13,7 @@ use Symfony\Component\Process\Process;
 use App\Models\Setting;
 use App\Rules\PhoneNumberRule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 
 class SettingsController extends Controller
 {
@@ -129,7 +130,7 @@ class SettingsController extends Controller
     public function updateEmail(Request $request)
     {
         $request->validate([
-            'mail_driver' => 'required|in:smtp,sendmail,mailgun,ses,postmark',
+            'mail_driver' => 'required|in:smtp,ses,postmark,log',
             'mail_host' => 'nullable|string|max:255',
             'mail_port' => 'nullable|integer|min:1|max:65535',
             'mail_username' => 'nullable|string|max:255',
@@ -151,6 +152,9 @@ class SettingsController extends Controller
             $this->updateSetting('mail_from_address', $request->mail_from_address);
             $this->updateSetting('mail_from_name', $request->mail_from_name);
             
+            // Clear config cache so AppServiceProvider can apply fresh values next request
+            try { Artisan::call('config:clear'); } catch (\Exception $ignored) {}
+            
             return redirect()->back()->with('success', 'Email settings updated successfully!');
         } catch (\Exception $e) {
             Log::error('Email settings update error: ' . $e->getMessage());
@@ -164,13 +168,26 @@ class SettingsController extends Controller
     public function testEmail()
     {
         try {
-            // Send test email
-            // \Mail::to(auth()->user()->email)->send(new \App\Mail\TestMail());
-            
+            $to = auth()->user()->email ?? (Setting::get('contact_email') ?: config('mail.from.address'));
+            $subject = 'Bokod CMS: Test Email ' . now()->toDateTimeString();
+            $body = "This is a test email from Bokod CMS. If you received this, SMTP settings are working.\n\n" .
+                    'Mailer=' . config('mail.default') . "\n" .
+                    'Host=' . (config('mail.mailers.smtp.host') ?? 'n/a') . ":" . (config('mail.mailers.smtp.port') ?? 'n/a') . "\n" .
+                    'Encryption=' . (config('mail.mailers.smtp.encryption') ?? 'n/a') . "\n" .
+                    'From=' . config('mail.from.address') . ' (' . config('mail.from.name') . ')';
+            Mail::raw($body, function ($m) use ($to, $subject) {
+                $m->to($to)->subject($subject);
+            });
             return response()->json([
                 'success' => true,
-                'message' => 'Test email sent successfully!'
+                'message' => 'Test email dispatched to ' . $to,
             ]);
+        } catch (\Symfony\Component\Mailer\Exception\TransportExceptionInterface $e) {
+            Log::error('Email transport error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Transport error: ' . $e->getMessage(),
+            ], 500);
         } catch (\Exception $e) {
             Log::error('Email test error: ' . $e->getMessage());
             return response()->json([
