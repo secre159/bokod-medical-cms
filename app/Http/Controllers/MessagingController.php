@@ -745,7 +745,7 @@ class MessagingController extends Controller
         }
         
         // Valid emoji list for medical chat
-        $allowedEmojis = ['👍', '❤️', '😂', '😊', '👏', '🙌', '🤝', '💪'];
+        $allowedEmojis = ['👍', '❤️', '😂', '😊', '👏', '🙌', '🤝', '💪', '😮', '😢', '😡'];
         
         if (!in_array($request->emoji, $allowedEmojis)) {
             return response()->json(['error' => 'Invalid emoji'], 400);

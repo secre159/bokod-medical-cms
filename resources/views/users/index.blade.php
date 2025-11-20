@@ -300,7 +300,7 @@
                     <div>
                         Showing {{ $users->firstItem() }} to {{ $users->lastItem() }} of {{ $users->total() }} results
                     </div>
-                    {{ $users->appends(request()->query())->links() }}
+                    {{ $users->appends(request()->query())->links('pagination::bootstrap-4') }}
                 </div>
             @else
                 <div class="text-center py-5">

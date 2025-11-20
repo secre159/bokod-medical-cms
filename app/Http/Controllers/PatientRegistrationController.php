@@ -37,7 +37,7 @@ class PatientRegistrationController extends Controller
             'student_id' => ['required', 'string', 'max:20', 'unique:patients,position'],
             'course' => ['required', 'string', 'max:255'],
             'year_level' => ['required', 'string', 'max:20'],
-            'date_of_birth' => ['required', 'date', 'before:today'],
+'date_of_birth' => ['required', 'date', 'before:' . now()->subYears(16)->toDateString(), 'after:' . now()->subYears(90)->toDateString()],
             'gender' => ['required', 'in:Male,Female,Other'],
             'phone_number' => ['required', new PhoneNumberRule],
             'address' => ['required', 'string', 'max:500'],

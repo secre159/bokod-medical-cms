@@ -19,20 +19,28 @@
         </optgroup>
     @endforeach
 @else
-    <optgroup label="Education">
-        <option value="Major in English" {{ ($selected == 'Major in English') ? 'selected' : '' }}>Major in English</option>
-        <option value="Major in Filipino" {{ ($selected == 'Major in Filipino') ? 'selected' : '' }}>Major in Filipino</option>
-        <option value="Social Science" {{ ($selected == 'Social Science') ? 'selected' : '' }}>Social Science</option>
+    <optgroup label="CED">
+        <option value="Secondary" {{ ($selected == 'Secondary') ? 'selected' : '' }}>Secondary</option>
+        <option value="Bsed" {{ ($selected == 'Bsed') ? 'selected' : '' }}>Bsed</option>
+        <option value="Filipino" {{ ($selected == 'Filipino') ? 'selected' : '' }}>Filipino</option>
+        <option value="Math" {{ ($selected == 'Math') ? 'selected' : '' }}>Math</option>
+        <option value="Social studies" {{ ($selected == 'Social studies') ? 'selected' : '' }}>Social studies</option>
+        <option value="btvted" {{ ($selected == 'btvted') ? 'selected' : '' }}>btvted</option>
+        <option value="btled" {{ ($selected == 'btled') ? 'selected' : '' }}>btled</option>
+        <option value="bee" {{ ($selected == 'bee') ? 'selected' : '' }}>bee</option>
     </optgroup>
 
-    <optgroup label="Criminology">
-        <option value="Criminology" {{ ($selected == 'Criminology') ? 'selected' : '' }}>Criminology</option>
+    <optgroup label="BPA">
         <option value="BPA" {{ ($selected == 'BPA') ? 'selected' : '' }}>BPA</option>
     </optgroup>
 
-    <optgroup label="CAT">
-        <option value="BSIT" {{ ($selected == 'BSIT') ? 'selected' : '' }}>BSIT</option>
-        <option value="Entrep" {{ ($selected == 'Entrep') ? 'selected' : '' }}>Entrep</option>
+    <optgroup label="CRIM">
+        <option value="CRIM" {{ ($selected == 'CRIM') ? 'selected' : '' }}>CRIM</option>
+    </optgroup>
+
+    <optgroup label="CAT/TECHSOC">
         <option value="BIT" {{ ($selected == 'BIT') ? 'selected' : '' }}>BIT</option>
+        <option value="BSIT" {{ ($selected == 'BSIT') ? 'selected' : '' }}>BSIT</option>
+        <option value="ENTREP" {{ ($selected == 'ENTREP') ? 'selected' : '' }}>ENTREP</option>
     </optgroup>
 @endif

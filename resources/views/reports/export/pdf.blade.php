@@ -122,6 +122,11 @@
     </style>
 </head>
 <body>
+    @php
+        $fmt = function ($v, $d = 2) {
+            return is_numeric($v) ? number_format((float)$v, $d) : number_format(0, $d);
+        };
+    @endphp
     <div class="header">
         <h1>{{ ucfirst($type) }} Report</h1>
         <div class="subtitle">Bokod Medical CMS - Generated on {{ now()->format('F d, Y h:i A') }}</div>
@@ -176,7 +181,7 @@
             <div class="stat-label">Active</div>
         </div>
         <div class="stat-item">
-            <div class="stat-number">₱{{ number_format($stats['financial']['revenue_month'] ?? 0, 2) }}</div>
+<div class="stat-number">₱{{ $fmt($stats['financial']['revenue_month'] ?? null) }}</div>
             <div class="stat-label">Revenue</div>
         </div>
         @elseif($type == 'medicines' && isset($stats['medicines']))
@@ -202,7 +207,7 @@
             <div class="stat-label">Monthly Revenue</div>
         </div>
         <div class="stat-item">
-            <div class="stat-number">₱{{ number_format($stats['financial']['revenue_today'] ?? 0, 2) }}</div>
+<div class="stat-number">₱{{ $fmt($stats['financial']['revenue_today'] ?? null) }}</div>
             <div class="stat-label">Today's Revenue</div>
         </div>
         <div class="stat-item">
@@ -210,7 +215,7 @@
             <div class="stat-label">Transactions</div>
         </div>
         <div class="stat-item">
-            <div class="stat-number">{{ collect($data)->sum('total_amount') ? '₱' . number_format(collect($data)->sum('total_amount'), 2) : '₱0.00' }}</div>
+<div class="stat-number">₱{{ $fmt(collect($data)->sum('total_amount')) }}</div>
             <div class="stat-label">Total Value</div>
         </div>
         @endif
@@ -274,12 +279,12 @@
                 <td>{{ $row['dosage'] ?? 'N/A' }}</td>
                 <td>{{ $row['quantity'] ?? 'N/A' }}</td>
                 <td>{{ ucfirst($row['status'] ?? 'N/A') }}</td>
-                <td>₱{{ isset($row['total_value']) ? number_format($row['total_value'], 2) : '0.00' }}</td>
+<td>₱{{ $fmt($row['total_value'] ?? null) }}</td>
                 @elseif($type == 'medicines')
                 <td>{{ $row['medicine_name'] ?? 'N/A' }}</td>
                 <td>{{ ucfirst(str_replace('_', ' ', $row['category'] ?? 'N/A')) }}</td>
                 <td>{{ $row['stock_quantity'] ?? 0 }}</td>
-                <td>₱{{ isset($row['unit_price']) ? number_format($row['unit_price'], 2) : '0.00' }}</td>
+<td>₱{{ $fmt($row['unit_price'] ?? null) }}</td>
                 <td>{{ $row['prescriptions_count'] ?? 0 }}</td>
                 <td>{{ ucfirst($row['status'] ?? 'N/A') }}</td>
                 @elseif($type == 'financial')
@@ -287,8 +292,8 @@
                 <td>{{ $row['patient_name'] ?? 'N/A' }}</td>
                 <td>{{ $row['medicine_name'] ?? 'N/A' }}</td>
                 <td>{{ $row['quantity'] ?? 'N/A' }}</td>
-                <td>₱{{ isset($row['unit_price']) ? number_format($row['unit_price'], 2) : '0.00' }}</td>
-                <td>₱{{ isset($row['total_amount']) ? number_format($row['total_amount'], 2) : '0.00' }}</td>
+<td>₱{{ $fmt($row['unit_price'] ?? null) }}</td>
+<td>₱{{ $fmt($row['total_amount'] ?? null) }}</td>
                 <td>{{ ucfirst($row['status'] ?? 'N/A') }}</td>
                 @endif
             </tr>

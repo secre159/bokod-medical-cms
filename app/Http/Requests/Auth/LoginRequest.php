@@ -43,12 +43,20 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // First, check if credentials are valid
+        // First, check if the email exists
+        $userRecord = \App\Models\User::where('email', $this->string('email'))->first();
+        if (!$userRecord) {
+            // Do not throttle on unknown email to avoid locking legitimate accounts
+            throw ValidationException::withMessages([
+                'email' => 'Email address not found in our records.',
+            ]);
+        }
+
+        // Attempt authentication with proper throttling for known accounts
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
-
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'password' => 'Incorrect password. Please try again or use Forgot Password.',
             ]);
         }
 

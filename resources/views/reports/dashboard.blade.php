@@ -52,7 +52,6 @@
                             <option value="patients" {{ ($initialType ?? '') == 'patients' ? 'selected' : '' }}>Patients</option>
                             <option value="prescriptions" {{ ($initialType ?? '') == 'prescriptions' ? 'selected' : '' }}>Prescriptions</option>
                             <option value="medicines" {{ ($initialType ?? '') == 'medicines' ? 'selected' : '' }}>Medicines</option>
-                            <option value="financial" {{ ($initialType ?? '') == 'financial' ? 'selected' : '' }}>Financial</option>
                         </select>
                     </div>
                 </div>

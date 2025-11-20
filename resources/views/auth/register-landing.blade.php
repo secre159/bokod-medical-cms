@@ -170,6 +170,7 @@
                 font-size: 0.875rem;
                 margin-top: 0.5rem;
             }
+            .invalid-field { border-color: #dc2626 !important; box-shadow: 0 0 0 3px rgba(220,38,38,0.1) !important; }
             
             .form-footer {
                 text-align: center;
@@ -251,8 +252,18 @@
             <h1 class="form-title">Register as Patient</h1>
             <p class="form-subtitle">Create your account to book appointments online!</p>
 
-            <form method="POST" action="{{ route('register') }}" id="landingRegisterForm">
+            <form method="POST" action="{{ route('register') }}" id="landingRegisterForm" novalidate>
                 @csrf
+                @if ($errors->any())
+                    <div class="status-message status-error">
+                        <strong>We found {{ count($errors->all()) }} error(s). Please fix the highlighted fields below.</strong>
+                        <ul style="margin: .5rem 0 0 1rem;">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 
                 <!-- Step Indicators -->
                 <div class="form-group full-width" style="margin-bottom:1rem;">
@@ -339,7 +350,7 @@
                     <!-- Date of Birth -->
                     <div class="form-group">
                         <label for="date_of_birth" class="form-label">Date of Birth</label>
-                        <input id="date_of_birth" class="form-input" type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" required>
+<input id="date_of_birth" class="form-input" type="date" name="date_of_birth" value="{{ old('date_of_birth', now()->subYears(18)->toDateString()) }}" min="{{ now()->subYears(90)->toDateString() }}" max="{{ now()->subYears(16)->toDateString() }}" required>
                         @error('date_of_birth')<div class="error-message">{{ $message }}</div>@enderror
                     </div>
 
@@ -435,7 +446,7 @@
                     <!-- Agreements moved to top for visibility on small screens -->
                     <div class="form-group full-width">
                         <label for="terms_agreement" style="display:flex;align-items:center;font-weight:400;">
-                            <input id="terms_agreement" type="checkbox" name="terms_agreement" required style="margin-right:.5rem;accent-color:#22c55e;">
+                            <input id="terms_agreement" type="checkbox" name="terms_agreement" required style="margin-right:.5rem;accent-color:#22c55e;" {{ old('terms_agreement') ? 'checked' : '' }}>
                             <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Terms and Conditions</a></span>
                         </label>
                         @error('terms_agreement')<div class="error-message">{{ $message }}</div>@enderror
@@ -443,7 +454,7 @@
 
                     <div class="form-group full-width">
                         <label for="privacy_agreement" style="display:flex;align-items:center;font-weight:400;">
-                            <input id="privacy_agreement" type="checkbox" name="privacy_agreement" required style="margin-right:.5rem;accent-color:#22c55e;">
+                            <input id="privacy_agreement" type="checkbox" name="privacy_agreement" required style="margin-right:.5rem;accent-color:#22c55e;" {{ old('privacy_agreement') ? 'checked' : '' }}>
                             <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Privacy Policy</a></span>
                         </label>
                         @error('privacy_agreement')<div class="error-message">{{ $message }}</div>@enderror
@@ -511,7 +522,33 @@
               steps.forEach((c,i)=>{
                 c.querySelectorAll('input[required], select[required], textarea[required]').forEach(el=>{ el.dataset.wasRequired = '1'; });
               });
-              showStep(1);
+              // If server returned validation errors, jump to the first step that has an error and highlight fields
+              const serverErrorFields = @json($errors->keys());
+              function fieldStep(name){
+                const step1 = ['name','email','password','password_confirmation'];
+                const step2 = ['student_id','course','year_level','date_of_birth','gender','phone_number','civil_status','address'];
+                const step3 = ['emergency_contact_name','emergency_contact_relationship','emergency_contact_phone','emergency_contact_address','height','weight','terms_agreement','privacy_agreement'];
+                if (step1.includes(name)) return 1;
+                if (step2.includes(name)) return 2;
+                if (step3.includes(name)) return 3;
+                return 1;
+              }
+              function highlightErrors(){
+                serverErrorFields.forEach(function(name){
+                  const el = document.querySelector(`[name="${name}"]`);
+                  if (el) el.classList.add('invalid-field');
+                });
+              }
+              if (serverErrorFields && serverErrorFields.length){
+                const firstStep = Math.min(...serverErrorFields.map(fieldStep));
+                showStep(firstStep);
+                highlightErrors();
+                // Focus first invalid
+                const firstInvalid = document.querySelector('.invalid-field');
+                if (firstInvalid) firstInvalid.focus({ preventScroll: false });
+              } else {
+                showStep(1);
+              }
             })();
 
             // Philippine phone number formatting (09XXXXXXXXX)

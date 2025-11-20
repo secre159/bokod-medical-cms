@@ -85,7 +85,7 @@ class UserController extends Controller
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'password' => 'required|string|min:8|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-            'date_of_birth' => 'nullable|date|before:today',
+'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'address' => 'nullable|string|max:500',
             'emergency_contact' => 'nullable|string|max:255',
@@ -269,7 +269,7 @@ class UserController extends Controller
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'password' => 'nullable|string|min:8|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-            'date_of_birth' => 'nullable|date|before:today',
+'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'address' => 'nullable|string|max:500',
             'emergency_contact' => 'nullable|string|max:255',

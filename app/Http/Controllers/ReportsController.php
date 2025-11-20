@@ -68,7 +68,7 @@ class ReportsController extends Controller
     {
         $stats = $this->getStatistics();
         $charts = $this->getChartsData();
-        $initialType = 'financial';
+        $initialType = 'patients';
         
         return view('reports.dashboard', compact('stats', 'charts', 'initialType'));
     }

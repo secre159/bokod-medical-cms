@@ -383,7 +383,7 @@ class PatientPortalController extends Controller
     }
     
     /**
-     * Export patient prescriptions to CSV
+     * Export patient prescriptions to PDF
      */
     public function exportPrescriptions()
     {
@@ -411,62 +411,15 @@ class PatientPortalController extends Controller
             
             $allPrescriptions = $allPrescriptions->sortByDesc('created_at');
             
-            // Set CSV headers
-            $filename = 'my_prescriptions_' . date('Y-m-d_H-i-s') . '.csv';
-            $headers = [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                'Pragma' => 'no-cache',
-                'Expires' => '0',
-            ];
-            
-            $callback = function() use ($allPrescriptions, $patient) {
-                $file = fopen('php://output', 'w');
-                
-                // Add UTF-8 BOM for Excel compatibility
-                fwrite($file, "\xEF\xBB\xBF");
-                
-                // CSV Headers
-                fputcsv($file, [
-                    'Patient Name',
-                    'Prescription Date',
-                    'Medicine',
-                    'Generic Name',
-                    'Dosage',
-                    'Frequency',
-                    'Instructions',
-                    'Quantity',
-                    'Status',
-                    'Appointment Date',
-                    'Appointment Reason',
-                    'Prescribed Date',
-                    'Expiry Date'
-                ]);
-                
-                // Data rows
-                foreach ($allPrescriptions as $prescription) {
-                    fputcsv($file, [
-                        $patient->patient_name ?? 'N/A',
-                        $prescription->created_at ? $prescription->created_at->format('Y-m-d H:i:s') : 'N/A',
-                        $prescription->medicine->name ?? $prescription->medicine_name ?? 'N/A',
-                        $prescription->medicine->generic_name ?? $prescription->generic_name ?? 'N/A',
-                        $prescription->dosage ?? 'N/A',
-                        $prescription->frequency ?? 'N/A',
-                        $prescription->instructions ?? 'N/A',
-                        $prescription->quantity ?? 'N/A',
-                        ucfirst($prescription->status ?? 'N/A'),
-                        $prescription->appointment_date ? $prescription->appointment_date->format('Y-m-d') : 'N/A',
-                        $prescription->appointment_reason ?? 'N/A',
-                        $prescription->prescribed_date ? $prescription->prescribed_date->format('Y-m-d') : 'N/A',
-                        $prescription->expiry_date ? $prescription->expiry_date->format('Y-m-d') : 'N/A'
-                    ]);
-                }
-                
-                fclose($file);
-            };
-            
-            return response()->stream($callback, 200, $headers);
+            // Render PDF using existing PDF library
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('prescriptions.export.pdf', [
+                'patient' => $patient,
+                'prescriptions' => $allPrescriptions,
+                'generatedAt' => now()->toDateTimeString(),
+            ]);
+
+            $filename = 'my_prescriptions_' . date('Y-m-d_H-i-s') . '.pdf';
+            return $pdf->download($filename);
             
         } catch (\Exception $e) {
             \Log::error('Patient prescription export error: ' . $e->getMessage());

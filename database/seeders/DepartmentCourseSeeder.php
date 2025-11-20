@@ -12,19 +12,26 @@ class DepartmentCourseSeeder extends Seeder
     public function run(): void
     {
         $map = [
-            'Education' => [
-                'Major in English',
-                'Major in Filipino',
-                'Social Science',
+            'CED' => [
+                'Secondary',
+                'Bsed',
+                'Filipino',
+                'Math',
+                'Social studies',
+                'btvted',
+                'btled',
+                'bee',
             ],
-            'Criminology' => [
-                'Criminology',
+            'BPA' => [
                 'BPA',
             ],
-            'CAT' => [
-                'BSIT',
-                'Entrep',
+            'CRIM' => [
+                'CRIM',
+            ],
+            'CAT/TECHSOC' => [
                 'BIT',
+                'BSIT',
+                'ENTREP',
             ],
         ];
 
@@ -35,7 +42,7 @@ class DepartmentCourseSeeder extends Seeder
             );
 
             foreach ($courses as $c) {
-                Course::firstOrCreate(
+                Course::updateOrCreate(
                     ['name' => $c],
                     ['department_id' => $dept->id, 'active' => true]
                 );
