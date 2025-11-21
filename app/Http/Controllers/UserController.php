@@ -34,7 +34,14 @@ class UserController extends Controller
             
             // Filter by status
             if ($request->filled('status')) {
-                $query->where('status', $request->status);
+                if ($request->status === 'inactive_archived') {
+                    $query->where('status', 'inactive')
+                          ->whereHas('patient', function($q) {
+                              $q->where('archived', true);
+                          });
+                } else {
+                    $query->where('status', $request->status);
+                }
             }
             
             // Search functionality
@@ -398,12 +405,12 @@ class UserController extends Controller
             $hasActiveData = false;
             $dependencies = [];
 
-            if ($user->prescriptions()->where('status', 'active')->exists()) {
+            if ($user->prescriptions()->where('prescriptions.status', 'active')->exists()) {
                 $hasActiveData = true;
                 $dependencies[] = 'active prescriptions';
             }
 
-            if ($user->appointments()->where('status', 'scheduled')->exists()) {
+            if ($user->appointments()->where('appointments.status', 'scheduled')->exists()) {
                 $hasActiveData = true;
                 $dependencies[] = 'scheduled appointments';
             }
@@ -415,17 +422,23 @@ class UserController extends Controller
 
             // Note: ImgBB images are not deleted to preserve image integrity
 
-            // Soft delete or mark as inactive instead of hard delete
+            // Archive instead of hard delete: deactivate login and archive patient record
             $user->update([
                 'status' => 'inactive',
-                'deleted_at' => now(),
                 'updated_by' => Auth::id(),
             ]);
+
+            if ($user->patient) {
+                $user->patient->update([
+                    'archived' => true,
+                    'updated_by' => Auth::id(),
+                ]);
+            }
 
             DB::commit();
 
             return redirect()->route('users.index')
-                ->with('success', 'User deleted successfully!');
+                ->with('success', 'User archived (login disabled, patient archived).');
 
         } catch (\Exception $e) {
             DB::rollBack();

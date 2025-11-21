@@ -116,6 +116,7 @@
                                 <option value="">All Status</option>
                                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="inactive_archived" {{ request('status') == 'inactive_archived' ? 'selected' : '' }}>Inactive (Archived)</option>
                             </select>
                         </div>
                     </div>
@@ -186,12 +187,17 @@
                                     <div class="user-avatar mr-2">
                                         <x-user-avatar :user="$user" size="thumbnail" width="32px" height="32px" class="img-circle elevation-1" />
                                     </div>
-                                    <div>
-                                        <strong>{{ $user->name }}</strong>
-                                        @if($user->role === 'patient' && $user->patient && $user->patient->position)
-                                            <br><small class="text-muted">{{ $user->patient->position }}</small>
-                                        @endif
-                                    </div>
+                                        <div>
+                                            <strong>{{ $user->name }}</strong>
+                                            @if($user->role === 'patient' && $user->patient && $user->patient->archived)
+                                                <span class="badge badge-secondary badge-sm ml-1" title="Patient record is archived">
+                                                    <i class="fas fa-archive mr-1"></i>Archived
+                                                </span>
+                                            @endif
+                                            @if($user->role === 'patient' && $user->patient && $user->patient->position)
+                                                <br><small class="text-muted">{{ $user->patient->position }}</small>
+                                            @endif
+                                        </div>
                                 </div>
                             </td>
                             <td>
@@ -220,6 +226,11 @@
                                     <span class="badge badge-secondary">
                                         <i class="fas fa-times-circle mr-1"></i>Inactive
                                     </span>
+                                    @if($user->role === 'patient' && $user->patient && $user->patient->archived)
+                                        <span class="badge badge-dark ml-1">
+                                            <i class="fas fa-archive mr-1"></i>Archived
+                                        </span>
+                                    @endif
                                 @endif
                             </td>
                             <td>
@@ -277,9 +288,9 @@
                                             <form action="{{ route('users.destroy', $user) }}" method="POST" style="display: inline;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="dropdown-item text-danger" 
-                                                        onclick="return confirm('Are you sure you want to delete this user? This action cannot be undone.')">
-                                                    <i class="fas fa-trash mr-2"></i>Delete User
+                                                <button type="submit" class="dropdown-item text-warning" 
+                                                        onclick="return confirm('Archive this user? This will disable their login and archive the linked patient record (if any).')">
+                                                    <i class="fas fa-archive mr-2"></i>Archive User
                                                 </button>
                                             </form>
                                         @else
