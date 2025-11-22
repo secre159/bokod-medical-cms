@@ -540,6 +540,9 @@ class SettingsController extends Controller
             $originalName = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension();
             
+            // Get file size BEFORE moving (temp file will be deleted after move)
+            $fileSize = $file->getSize();
+            
             // Generate timestamped filename
             $timestamp = now()->format('Ymd_His');
             $filename = "uploaded_{$timestamp}.{$extension}";
@@ -557,14 +560,14 @@ class SettingsController extends Controller
                     Log::info('Backup uploaded successfully (local)', [
                         'filename' => $filename,
                         'original' => $originalName,
-                        'size' => $file->getSize()
+                        'size' => $fileSize
                     ]);
                     
                     return response()->json([
                         'success' => true,
                         'message' => "Backup file '{$originalName}' uploaded successfully!",
                         'filename' => $filename,
-                        'size' => $this->formatBytes($file->getSize())
+                        'size' => $this->formatBytes($fileSize)
                     ]);
                 }
                 
@@ -612,14 +615,14 @@ class SettingsController extends Controller
                 Log::info('Backup uploaded successfully (Cloudinary)', [
                     'public_id' => $publicId,
                     'original' => $originalName,
-                    'size' => $file->getSize()
+                    'size' => $fileSize
                 ]);
                 
                 return response()->json([
                     'success' => true,
                     'message' => "Backup file '{$originalName}' uploaded successfully!",
                     'filename' => $result['public_id'] ?? $filename,
-                    'size' => $this->formatBytes($file->getSize())
+                    'size' => $this->formatBytes($fileSize)
                 ]);
             }
             
@@ -634,14 +637,14 @@ class SettingsController extends Controller
             Log::info('Backup uploaded successfully', [
                 'filename' => $filename,
                 'original' => $originalName,
-                'size' => $file->getSize()
+                'size' => $fileSize
             ]);
             
             return response()->json([
                 'success' => true,
                 'message' => "Backup file '{$originalName}' uploaded successfully!",
                 'filename' => $filename,
-                'size' => $this->formatBytes($file->getSize())
+                'size' => $this->formatBytes($fileSize)
             ]);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
