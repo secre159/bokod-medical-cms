@@ -592,13 +592,37 @@ class MedicineController extends Controller
      */
     public function bulkUpdateStock(Request $request)
     {
-        $request->validate([
-            'updates' => 'required|array',
-            'updates.*.medicine_id' => 'required|exists:medicines,id',
-            'updates.*.action' => 'required|in:add,remove,set',
-            'updates.*.quantity' => 'required|integer|min:0',
-            'reason' => 'nullable|string|max:500'
-        ]);
+        try {
+            \Log::info('Bulk stock update request received', [
+                'user_id' => auth()->id(),
+                'request_data' => $request->all()
+            ]);
+            
+            // Validate the request
+            $validated = $request->validate([
+                'updates' => 'required|array',
+                'updates.*.medicine_id' => 'required|exists:medicines,id',
+                'updates.*.action' => 'required|in:add,remove,set',
+                'updates.*.quantity' => 'required|integer|min:0',
+                'reason' => 'nullable|string|max:500'
+            ]);
+            
+            \Log::info('Bulk stock update validation passed', [
+                'updates_count' => count($validated['updates'])
+            ]);
+            
+        } catch (ValidationException $e) {
+            \Log::error('Bulk stock update validation failed', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', array_flatten($e->errors())),
+                'errors' => $e->errors()
+            ], 422);
+        }
         
         try {
             DB::beginTransaction();
@@ -606,7 +630,7 @@ class MedicineController extends Controller
             $updatedCount = 0;
             $errors = [];
             
-            foreach ($request->updates as $update) {
+            foreach ($validated['updates'] as $update) {
                 try {
                     $medicine = Medicine::findOrFail($update['medicine_id']);
                     $oldQuantity = $medicine->stock_quantity;

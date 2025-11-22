@@ -1086,8 +1086,14 @@ function performBulkStockUpdate(selectedMedicines, quantity) {
         return { 
             medicine_id: parseInt(med.id), 
             action: 'add', 
-            quantity: quantity 
+            quantity: parseInt(quantity) 
         };
+    });
+    
+    console.log('Sending updates:', updates);
+    console.log('Full payload:', {
+        updates: updates,
+        reason: 'Bulk stock addition via interface'
     });
     
     var xhr = new XMLHttpRequest();
@@ -1098,22 +1104,43 @@ function performBulkStockUpdate(selectedMedicines, quantity) {
     
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
+            console.log('Response status:', xhr.status);
+            console.log('Response text:', xhr.responseText);
+            
             if (xhr.status === 200) {
                 try {
                     var response = JSON.parse(xhr.responseText);
                     if (response.success) {
                         showSimpleModal('success', 'Bulk Update Successful!', 
-                            'Successfully updated stock for ' + selectedMedicines.length + ' medicines.\n\n' + response.message);
+                            'Successfully updated stock for ' + selectedMedicines.length + ' medicines.\\n\\n' + response.message);
                         setTimeout(function() { location.reload(); }, 3000);
                     } else {
-                        showSimpleModal('error', 'Bulk Update Failed', response.message || 'Unknown error occurred');
+                        var errorMsg = response.message || 'Unknown error occurred';
+                        if (response.errors) {
+                            errorMsg += '\\n\\nDetails:\\n' + JSON.stringify(response.errors, null, 2);
+                        }
+                        showSimpleModal('error', 'Bulk Update Failed', errorMsg);
                     }
                 } catch (e) {
-                    console.error('Bulk update error:', e);
+                    console.error('Bulk update parsing error:', e);
+                    console.error('Raw response:', xhr.responseText);
                     showSimpleModal('error', 'Error', 'Invalid response from server.');
                 }
             } else {
-                showSimpleModal('error', 'Request Failed', 'HTTP Error: ' + xhr.status + '. Please try again.');
+                // Try to parse error response
+                var errorMsg = 'HTTP Error: ' + xhr.status + '. Please try again.';
+                try {
+                    var errorResponse = JSON.parse(xhr.responseText);
+                    if (errorResponse.message) {
+                        errorMsg = errorResponse.message;
+                    }
+                    if (errorResponse.errors) {
+                        errorMsg += '\\n\\nValidation errors:\\n' + JSON.stringify(errorResponse.errors, null, 2);
+                    }
+                } catch (e) {
+                    console.error('Error parsing error response:', e);
+                }
+                showSimpleModal('error', 'Request Failed', errorMsg);
             }
         }
     };

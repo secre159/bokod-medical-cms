@@ -498,7 +498,7 @@
         <!-- Footer -->
         <div class="footer">
             <div style="margin-bottom: 0.5rem;">
-                BSU Health Portal - Student Health Management System
+                Bokod Medical CMS - Clinic Management System
             </div>
             <div>
                 <a href="{{ route('login') }}">Already have an account? Sign in here</a>

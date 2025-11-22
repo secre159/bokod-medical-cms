@@ -447,7 +447,7 @@
                     <div class="form-group full-width">
                         <label for="terms_agreement" style="display:flex;align-items:center;font-weight:400;">
                             <input id="terms_agreement" type="checkbox" name="terms_agreement" required style="margin-right:.5rem;accent-color:#22c55e;" {{ old('terms_agreement') ? 'checked' : '' }}>
-                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Terms and Conditions</a></span>
+                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link" onclick="event.preventDefault(); showTermsModal();">Terms and Conditions</a></span>
                         </label>
                         @error('terms_agreement')<div class="error-message">{{ $message }}</div>@enderror
                     </div>
@@ -455,7 +455,7 @@
                     <div class="form-group full-width">
                         <label for="privacy_agreement" style="display:flex;align-items:center;font-weight:400;">
                             <input id="privacy_agreement" type="checkbox" name="privacy_agreement" required style="margin-right:.5rem;accent-color:#22c55e;" {{ old('privacy_agreement') ? 'checked' : '' }}>
-                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link">Privacy Policy</a></span>
+                            <span style="font-size:.875rem;">I agree to the <a href="#" class="form-link" onclick="event.preventDefault(); showPrivacyModal();">Privacy Policy</a></span>
                         </label>
                         @error('privacy_agreement')<div class="error-message">{{ $message }}</div>@enderror
                     </div>
@@ -632,6 +632,85 @@
                     }
                 });
             });
+            
+            // Modal functions
+            function showTermsModal() {
+                document.getElementById('termsModal').style.display = 'flex';
+            }
+            
+            function showPrivacyModal() {
+                document.getElementById('privacyModal').style.display = 'flex';
+            }
+            
+            function closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+            
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target.classList.contains('lr-modal')) {
+                    event.target.style.display = 'none';
+                }
+            }
         </script>
+        
+        <!-- Terms Modal -->
+        <div id="termsModal" class="lr-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;padding:1rem;">
+            <div style="background:white;border-radius:12px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;border-bottom:2px solid #22c55e;padding-bottom:1rem;">
+                    <h2 style="margin:0;font-size:1.5rem;color:#22c55e;">📋 Terms and Conditions</h2>
+                    <button onclick="closeModal('termsModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">&times;</button>
+                </div>
+                <div style="line-height:1.6;color:#374151;">
+                    <h3 style="color:#22c55e;font-size:1.1rem;margin-top:0;">Bokod Medical CMS Terms of Use</h3>
+                    <p>By registering for the Bokod Medical Clinic Management System, you agree to:</p>
+                    <ul style="margin-left:1.5rem;">
+                        <li>Provide accurate and truthful information about yourself</li>
+                        <li>Use this system only for legitimate health-related appointments and medical services</li>
+                        <li>Respect appointment schedules and notify in advance of cancellations</li>
+                        <li>Maintain confidentiality of your account credentials</li>
+                        <li>Follow clinic policies and procedures</li>
+                        <li>Understand that your account requires admin approval before access is granted</li>
+                        <li>Keep your contact information updated for appointment notifications</li>
+                    </ul>
+                    <p><strong>Account Approval:</strong> Your registration will be reviewed by clinic administrators. You will receive an email notification once your account is approved.</p>
+                    <p><strong>Account Usage:</strong> Misuse of this system may result in account suspension and may affect your access to clinic services.</p>
+                </div>
+                <div style="margin-top:1.5rem;text-align:right;">
+                    <button onclick="closeModal('termsModal')" style="background:#22c55e;color:white;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500;">Close</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Privacy Modal -->
+        <div id="privacyModal" class="lr-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center;padding:1rem;">
+            <div style="background:white;border-radius:12px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;border-bottom:2px solid #22c55e;padding-bottom:1rem;">
+                    <h2 style="margin:0;font-size:1.5rem;color:#22c55e;">🔒 Privacy Policy</h2>
+                    <button onclick="closeModal('privacyModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;">&times;</button>
+                </div>
+                <div style="line-height:1.6;color:#374151;">
+                    <h3 style="color:#22c55e;font-size:1.1rem;margin-top:0;">Information Collection and Use</h3>
+                    <p>The Bokod Medical Clinic collects and uses your information to:</p>
+                    <ul style="margin-left:1.5rem;">
+                        <li>Provide medical and health services</li>
+                        <li>Maintain accurate health records</li>
+                        <li>Schedule and manage appointments</li>
+                        <li>Process prescriptions and medication dispensing</li>
+                        <li>Contact you regarding health matters and appointment reminders</li>
+                        <li>Emergency contact purposes when necessary</li>
+                        <li>Generate health reports and statistics (anonymized)</li>
+                    </ul>
+                    <h3 style="color:#22c55e;font-size:1.1rem;">Information Protection</h3>
+                    <p>Your health information is protected under Philippine medical confidentiality laws (Republic Act 10173 - Data Privacy Act of 2012) and clinic policies. Access is restricted to authorized healthcare personnel only.</p>
+                    <p><strong>Data Security:</strong> We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.</p>
+                    <p><strong>Third-Party Sharing:</strong> We do not share your personal health information with third parties without your explicit consent, except as required by law or in medical emergencies.</p>
+                    <p><strong>Your Rights:</strong> You have the right to access, correct, and request deletion of your personal information. Contact the clinic administration for data-related concerns.</p>
+                </div>
+                <div style="margin-top:1.5rem;text-align:right;">
+                    <button onclick="closeModal('privacyModal')" style="background:#22c55e;color:white;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500;">Close</button>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

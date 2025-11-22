@@ -856,14 +856,81 @@
         </p>
     </div>
 </div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Terms and Conditions</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5>Bokod Medical CMS Terms of Use</h5>
+                <p>By registering for the Bokod Medical Clinic Management System, you agree to:</p>
+                <ul>
+                    <li>Provide accurate and truthful information about yourself</li>
+                    <li>Use this system only for legitimate health-related appointments and medical services</li>
+                    <li>Respect appointment schedules and notify in advance of cancellations</li>
+                    <li>Maintain confidentiality of your account credentials</li>
+                    <li>Follow clinic policies and procedures</li>
+                    <li>Understand that your account requires admin approval before access is granted</li>
+                    <li>Keep your contact information updated for appointment notifications</li>
+                </ul>
+                <p><strong>Account Approval:</strong> Your registration will be reviewed by clinic administrators. You will receive an email notification once your account is approved.</p>
+                <p><strong>Account Usage:</strong> Misuse of this system may result in account suspension and may affect your access to clinic services.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Privacy Policy</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h5>Information Collection and Use</h5>
+                <p>The Bokod Medical Clinic collects and uses your information to:</p>
+                <ul>
+                    <li>Provide medical and health services</li>
+                    <li>Maintain accurate health records</li>
+                    <li>Schedule and manage appointments</li>
+                    <li>Process prescriptions and medication dispensing</li>
+                    <li>Contact you regarding health matters and appointment reminders</li>
+                    <li>Emergency contact purposes when necessary</li>
+                    <li>Generate health reports and statistics (anonymized)</li>
+                </ul>
+                <h5>Information Protection</h5>
+                <p>Your health information is protected under Philippine medical confidentiality laws (Republic Act 10173 - Data Privacy Act of 2012) and clinic policies. Access is restricted to authorized healthcare personnel only.</p>
+                <p><strong>Data Security:</strong> We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.</p>
+                <p><strong>Third-Party Sharing:</strong> We do not share your personal health information with third parties without your explicit consent, except as required by law or in medical emergencies.</p>
+                <p><strong>Your Rights:</strong> You have the right to access, correct, and request deletion of your personal information. Contact the clinic administration for data-related concerns.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @section('auth_footer')
     <div class="card-footer text-center">
         <p class="text-muted">
             <small>
-                <i class="fas fa-graduation-cap mr-1"></i>
-                BSU Health Portal - Student Registration
+                <i class="fas fa-clinic-medical mr-1"></i>
+                Bokod Medical CMS - Patient Registration
             </small>
         </p>
     </div>
@@ -1251,63 +1318,3 @@ style.textContent = `
 document.head.appendChild(style);
 </script>
 @stop
-
-<!-- Terms Modal -->
-<div class="modal fade" id="termsModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Terms and Conditions</h4>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <h5>BSU Health Portal Terms of Use</h5>
-                <p>By registering for the BSU Health Portal, you agree to:</p>
-                <ul>
-                    <li>Provide accurate and truthful information about yourself</li>
-                    <li>Use this system only for legitimate health-related appointments</li>
-                    <li>Respect appointment schedules and notify in advance of cancellations</li>
-                    <li>Maintain confidentiality of your account credentials</li>
-                    <li>Follow BSU health center policies and procedures</li>
-                </ul>
-                <p>Misuse of this system may result in account suspension and disciplinary action.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Privacy Modal -->
-<div class="modal fade" id="privacyModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Privacy Policy</h4>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <h5>Information Collection and Use</h5>
-                <p>The BSU Health Center collects and uses your information to:</p>
-                <ul>
-                    <li>Provide medical and health services</li>
-                    <li>Maintain accurate health records</li>
-                    <li>Schedule and manage appointments</li>
-                    <li>Contact you regarding health matters</li>
-                    <li>Emergency contact purposes when necessary</li>
-                </ul>
-                <h5>Information Protection</h5>
-                <p>Your health information is protected under medical confidentiality laws and BSU policies. Access is restricted to authorized healthcare personnel only.</p>
-                <p>We do not share your personal health information with third parties without your explicit consent, except as required by law.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
