@@ -134,6 +134,13 @@ class AppointmentController extends Controller
         );
         
         if ($conflict) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This time slot conflicts with an existing appointment. Please choose a different time.',
+                    'errors' => ['appointment_time' => ['This time slot conflicts with an existing appointment. Please choose a different time.']]
+                ], 422);
+            }
             return back()->withErrors([
                 'appointment_time' => 'This time slot conflicts with an existing appointment. Please choose a different time.'
             ])->withInput();
@@ -146,6 +153,13 @@ class AppointmentController extends Controller
         
         // Check if it's Monday-Friday only (using Philippine timezone)
         if ($appointmentDate->dayOfWeek === 0 || $appointmentDate->dayOfWeek === 6) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Appointments can only be scheduled Monday through Friday.',
+                    'errors' => ['appointment_date' => ['Appointments can only be scheduled Monday through Friday.']]
+                ], 422);
+            }
             return back()->withErrors([
                 'appointment_date' => 'Appointments can only be scheduled Monday through Friday.'
             ])->withInput();
@@ -153,6 +167,13 @@ class AppointmentController extends Controller
         
         // Check Philippine holidays
         if ($this->isPhilippineHoliday($appointmentDate)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Appointments cannot be scheduled on Philippine holidays.',
+                    'errors' => ['appointment_date' => ['Appointments cannot be scheduled on Philippine holidays.']]
+                ], 422);
+            }
             return back()->withErrors([
                 'appointment_date' => 'Appointments cannot be scheduled on Philippine holidays.'
             ])->withInput();
@@ -168,6 +189,13 @@ class AppointmentController extends Controller
                       ($appointmentTime->gte($afternoonStart) && $appointmentTime->lte($afternoonEnd));
         
         if (!$isValidTime) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Appointments can only be scheduled during school hours: 8:00 AM - 12:00 PM and 1:00 PM - 5:00 PM.',
+                    'errors' => ['appointment_time' => ['Appointments can only be scheduled during school hours: 8:00 AM - 12:00 PM and 1:00 PM - 5:00 PM.']]
+                ], 422);
+            }
             return back()->withErrors([
                 'appointment_time' => 'Appointments can only be scheduled during school hours: 8:00 AM - 12:00 PM and 1:00 PM - 5:00 PM.'
             ])->withInput();
