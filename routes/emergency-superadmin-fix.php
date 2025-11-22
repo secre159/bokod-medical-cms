@@ -171,6 +171,22 @@ Route::get('/emergency-create-tables', function () {
             $results[] = 'stock_movements table already exists';
         }
         
+        // Check if departments table exists
+        if (!\Illuminate\Support\Facades\Schema::hasTable('departments')) {
+            // Create departments table
+            \Illuminate\Support\Facades\Schema::create('departments', function ($table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->unique();
+                $table->boolean('active')->default(true);
+                $table->timestamps();
+            });
+            
+            $results[] = 'departments table created successfully';
+        } else {
+            $results[] = 'departments table already exists';
+        }
+        
         Log::info('Emergency table creation executed', [
             'user_id' => auth()->id(),
             'email' => auth()->user()->email,
