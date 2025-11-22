@@ -479,7 +479,6 @@ class ComprehensiveDataSeeder extends Seeder
                 'approval_status' => 'approved',
                 'diagnosis' => 'Upper respiratory tract infection',
                 'treatment_notes' => 'Prescribed antibiotics and rest',
-                'completed_at' => $today->copy()->subDays(7),
             ],
             [
                 'patient_id' => $patients->random()->id,
@@ -489,7 +488,6 @@ class ComprehensiveDataSeeder extends Seeder
                 'status' => 'completed',
                 'approval_status' => 'approved',
                 'diagnosis' => 'Healthy, no significant findings',
-                'completed_at' => $today->copy()->subDays(14),
             ],
         ];
         
