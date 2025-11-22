@@ -1375,11 +1375,13 @@ $(document).ready(function() {
     window.restoreBackup = function(filename) {
         showConfirmModal(
             'Restore Database',
-            '<div class="alert alert-warning mb-3"><i class="fas fa-exclamation-triangle mr-2"></i><strong>CRITICAL WARNING:</strong> This will replace ALL current data with the backup data!</div>' +
+            '<div class="alert alert-danger mb-3"><i class="fas fa-exclamation-triangle mr-2"></i><strong>CRITICAL WARNING:</strong> This will replace ALL current data with the backup data!</div>' +
+            '<div class="alert alert-warning mb-3"><i class="fas fa-sign-out-alt mr-2"></i><strong>IMPORTANT:</strong> You will be logged out automatically after restore. This is normal - your session data will be cleared. Simply log back in after the restore completes.</div>' +
             '<p><strong>What will happen:</strong></p>' +
             '<ul>' +
             '<li>Current database will be backed up as safety backup</li>' +
             '<li>All current data will be replaced with backup</li>' +
+            '<li>All active sessions will be cleared (you\'ll be logged out)</li>' +
             '<li>This action affects patients, appointments, prescriptions, etc.</li>' +
             '</ul>' +
             '<p><strong>Are you absolutely sure you want to restore?</strong></p>',
@@ -1397,9 +1399,22 @@ $(document).ready(function() {
                 }).done(function(response) {
                     $('#restoreProgress').remove();
                     if (response.success) {
-                        showAlert('success', response.message);
-                        loadBackups();
-                        showRestoreSuccessModal(response);
+                        // Show success message before redirect
+                        showConfirmModal(
+                            'Restore Complete!',
+                            '<div class="alert alert-success mb-3"><i class="fas fa-check-circle mr-2"></i>' + response.message + '</div>' +
+                            '<p>The database has been restored successfully. You will now be redirected to the login page.</p>' +
+                            '<p><strong>Please log in again to continue.</strong></p>',
+                            'info',
+                            function() {
+                                // Redirect to login page
+                                window.location.href = '{{ route("login") }}';
+                            }
+                        );
+                        // Auto-redirect after 3 seconds if user doesn't click OK
+                        setTimeout(function() {
+                            window.location.href = '{{ route("login") }}';
+                        }, 3000);
                     } else {
                         showAlert('error', response.message || 'Restore failed');
                     }
