@@ -28,6 +28,8 @@ class User extends Authenticatable
         'profile_picture_public_id',
         'password',
         'role',
+        'is_super_admin',
+        'settings_pin',
         'status',
         'registration_status',
         'approved_at',
@@ -67,6 +69,7 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'is_super_admin' => 'boolean',
             'date_of_birth' => 'date',
             'last_login_at' => 'datetime',
             'approved_at' => 'datetime',
