@@ -892,6 +892,10 @@
                             <button type="button" class="btn btn-success" id="createBackupFromModal">
                                 <i class="fas fa-plus mr-1"></i>Create New Backup
                             </button>
+                            <button type="button" class="btn btn-info" id="uploadBackupBtn">
+                                <i class="fas fa-upload mr-1"></i>Upload Backup
+                            </button>
+                            <input type="file" id="backupFileInput" accept=".sql,.gz,.dump" style="display:none">
                         </div>
                     </div>
                     <div class="row">
@@ -1227,6 +1231,94 @@ $(document).ready(function() {
             }
         );
     });
+    
+    // Upload Backup
+    $('#uploadBackupBtn').click(function() {
+        $('#backupFileInput').click();
+    });
+    
+    $('#backupFileInput').change(function() {
+        const file = this.files[0];
+        if (!file) return;
+        
+        // Validate file size (max 500MB)
+        const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+        if (file.size > maxSize) {
+            showAlert('error', 'File size exceeds maximum limit of 500MB');
+            $(this).val('');
+            return;
+        }
+        
+        // Validate file extension
+        const allowedExtensions = ['sql', 'gz', 'dump'];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(fileExtension)) {
+            showAlert('error', 'Invalid file type. Only .sql, .gz, and .dump files are allowed.');
+            $(this).val('');
+            return;
+        }
+        
+        showConfirmModal(
+            'Upload Backup File',
+            'Are you sure you want to upload "' + file.name + '" (' + formatFileSize(file.size) + ')?',
+            'info',
+            function() {
+                const btn = $('#uploadBackupBtn');
+                const originalText = btn.html();
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i>Uploading...');
+                
+                const formData = new FormData();
+                formData.append('backup_file', file);
+                formData.append('_token', '{{ csrf_token() }}');
+                
+                $.ajax({
+                    url: '{{ route("settings.uploadBackup") }}',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    xhr: function() {
+                        const xhr = new window.XMLHttpRequest();
+                        xhr.upload.addEventListener('progress', function(e) {
+                            if (e.lengthComputable) {
+                                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                                btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Uploading... ' + percentComplete + '%');
+                            }
+                        }, false);
+                        return xhr;
+                    }
+                }).done(function(response) {
+                    if (response.success) {
+                        showAlert('success', response.message);
+                        loadBackups(); // Refresh the list
+                        $('#backupFileInput').val('');
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                }).fail(function(xhr) {
+                    let errorMsg = 'Error uploading backup';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    showAlert('error', errorMsg);
+                }).always(function() {
+                    btn.prop('disabled', false).html(originalText);
+                });
+            },
+            function() {
+                $('#backupFileInput').val('');
+            }
+        );
+    });
+    
+    // Helper function to format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
     
     // Load backups list
     function loadBackups() {

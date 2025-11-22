@@ -520,6 +520,146 @@ class SettingsController extends Controller
     }
     
     /**
+     * Upload a backup file
+     */
+    public function uploadBackup(Request $request)
+    {
+        try {
+            $request->validate([
+                'backup_file' => 'required|file|mimes:sql,gz,dump|max:512000', // Max 500MB
+            ]);
+            
+            if (!$request->hasFile('backup_file')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No backup file provided'
+                ], 400);
+            }
+            
+            $file = $request->file('backup_file');
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            
+            // Generate timestamped filename
+            $timestamp = now()->format('Ymd_His');
+            $filename = "uploaded_{$timestamp}.{$extension}";
+            
+            // For PostgreSQL production
+            if ($this->isPostgres()) {
+                // If using local storage
+                if (env('BACKUP_STORAGE', 'cloudinary') === 'local') {
+                    $backupDir = rtrim(env('BACKUP_DIR', '/var/data/backups'), '/');
+                    if (!is_dir($backupDir)) {
+                        mkdir($backupDir, 0755, true);
+                    }
+                    $file->move($backupDir, $filename);
+                    
+                    Log::info('Backup uploaded successfully (local)', [
+                        'filename' => $filename,
+                        'original' => $originalName,
+                        'size' => $file->getSize()
+                    ]);
+                    
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Backup file '{$originalName}' uploaded successfully!",
+                        'filename' => $filename,
+                        'size' => $this->formatBytes($file->getSize())
+                    ]);
+                }
+                
+                // Upload to Cloudinary
+                $tempPath = $file->getRealPath();
+                $publicId = "backups/uploaded_{$timestamp}";
+                
+                $cloud = env('CLOUDINARY_CLOUD_NAME');
+                $key = env('CLOUDINARY_API_KEY');
+                $secret = env('CLOUDINARY_API_SECRET');
+                
+                if (!$cloud || !$key || !$secret) {
+                    throw new \Exception('Cloudinary credentials not configured');
+                }
+                
+                $ts = time();
+                $toSign = "public_id={$publicId}&timestamp={$ts}";
+                $sig = sha1($toSign . $secret);
+                
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => "https://api.cloudinary.com/v1_1/{$cloud}/raw/upload",
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => [
+                        'file' => new \CURLFile($tempPath, 'application/octet-stream', $originalName),
+                        'public_id' => $publicId,
+                        'api_key' => $key,
+                        'timestamp' => $ts,
+                        'signature' => $sig,
+                        'resource_type' => 'raw'
+                    ]
+                ]);
+                
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                if ($httpCode !== 200) {
+                    throw new \Exception('Cloudinary upload failed: ' . $response);
+                }
+                
+                $result = json_decode($response, true);
+                
+                Log::info('Backup uploaded successfully (Cloudinary)', [
+                    'public_id' => $publicId,
+                    'original' => $originalName,
+                    'size' => $file->getSize()
+                ]);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => "Backup file '{$originalName}' uploaded successfully!",
+                    'filename' => $result['public_id'] ?? $filename,
+                    'size' => $this->formatBytes($file->getSize())
+                ]);
+            }
+            
+            // For MySQL/local development
+            $backupDir = storage_path('app/backups');
+            if (!is_dir($backupDir)) {
+                mkdir($backupDir, 0755, true);
+            }
+            
+            $file->move($backupDir, $filename);
+            
+            Log::info('Backup uploaded successfully', [
+                'filename' => $filename,
+                'original' => $originalName,
+                'size' => $file->getSize()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Backup file '{$originalName}' uploaded successfully!",
+                'filename' => $filename,
+                'size' => $this->formatBytes($file->getSize())
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Upload backup error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error uploading backup: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
      * Download a backup file
      */
     public function downloadBackup($filename)

@@ -239,6 +239,7 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             Route::post('/system-health-check', [SettingsController::class, 'systemHealthCheck'])->name('systemHealthCheck');
             Route::post('/clean-temp-files', [SettingsController::class, 'cleanTempFiles'])->name('cleanTempFiles');
             Route::get('/list-backups', [SettingsController::class, 'listBackups'])->name('listBackups');
+            Route::post('/upload-backup', [SettingsController::class, 'uploadBackup'])->name('uploadBackup');
             Route::get('/download-backup/{filename}', [SettingsController::class, 'downloadBackup'])->name('downloadBackup');
             Route::delete('/delete-backup/{filename}', [SettingsController::class, 'deleteBackup'])->name('deleteBackup');
             Route::post('/restore-backup/{filename}', [SettingsController::class, 'restoreBackup'])->name('restoreBackup');
