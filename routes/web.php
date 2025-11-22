@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Route;
 
 // Include emergency constraint fix route
 require __DIR__.'/constraint-fix.php';
+
+// Include emergency super admin fix route (for post-restore scenarios)
+require __DIR__.'/emergency-superadmin-fix.php';
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientPortalController;
 use App\Http\Controllers\PatientProfileController;
