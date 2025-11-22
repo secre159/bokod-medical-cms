@@ -180,13 +180,15 @@ class AppointmentController extends Controller
         }
         
         // Validate school hours (8 AM to 12 PM and 1 PM to 5 PM)
-        $morningStart = Carbon::createFromTime(8, 0);
-        $morningEnd = Carbon::createFromTime(12, 0);
-        $afternoonStart = Carbon::createFromTime(13, 0);
-        $afternoonEnd = Carbon::createFromTime(17, 0);
+        // Compare times as integers (hour * 60 + minute) to avoid timezone/date issues
+        $appointmentMinutes = $appointmentTime->hour * 60 + $appointmentTime->minute;
+        $morningStart = 8 * 60;  // 8:00 AM
+        $morningEnd = 12 * 60;    // 12:00 PM
+        $afternoonStart = 13 * 60; // 1:00 PM
+        $afternoonEnd = 17 * 60;   // 5:00 PM
         
-        $isValidTime = ($appointmentTime->gte($morningStart) && $appointmentTime->lt($morningEnd)) ||
-                      ($appointmentTime->gte($afternoonStart) && $appointmentTime->lte($afternoonEnd));
+        $isValidTime = ($appointmentMinutes >= $morningStart && $appointmentMinutes < $morningEnd) ||
+                      ($appointmentMinutes >= $afternoonStart && $appointmentMinutes <= $afternoonEnd);
         
         if (!$isValidTime) {
             if ($request->expectsJson()) {
