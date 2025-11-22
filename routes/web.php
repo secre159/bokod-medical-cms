@@ -210,8 +210,22 @@ Route::middleware(['auth', 'account.status'])->group(function () {
         // Audit Logs
         Route::get('/logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('logs.index');
         
-        // Settings Management
-        Route::prefix('settings')->name('settings.')->group(function () {
+        // PIN Management (Super Admin only - must be accessible before settings)
+        Route::middleware('super.admin')->prefix('settings-pin')->name('settings.pin.')->group(function () {
+            Route::get('/setup', [App\Http\Controllers\SettingsPinController::class, 'showSetup'])->name('setup');
+            Route::post('/save', [App\Http\Controllers\SettingsPinController::class, 'savePin'])->name('save');
+            Route::post('/remove', [App\Http\Controllers\SettingsPinController::class, 'removePin'])->name('remove');
+        });
+        
+        // PIN Verification (Super Admin only - no PIN required for verify page itself)
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/settings/verify-pin', [App\Http\Controllers\SettingsPinController::class, 'showVerify'])->name('settings.verify-pin');
+            Route::post('/settings/verify-pin', [App\Http\Controllers\SettingsPinController::class, 'verifyPin'])->name('settings.verify-pin.submit');
+            Route::post('/settings/lock', [App\Http\Controllers\SettingsPinController::class, 'lock'])->name('settings.lock');
+        });
+        
+        // Settings Management (Super Admin + PIN Required)
+        Route::middleware('super.admin')->prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [SettingsController::class, 'index'])->name('index');
             Route::put('/general', [SettingsController::class, 'updateGeneral'])->name('updateGeneral');
             Route::put('/system', [SettingsController::class, 'updateSystem'])->name('updateSystem');

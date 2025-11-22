@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'account.status' => \App\Http\Middleware\AccountStatusMiddleware::class,
+            'super.admin' => \App\Http\Middleware\SuperAdminMiddleware::class,
         ]);
     })
     ->withProviders([

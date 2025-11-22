@@ -22,6 +22,12 @@ class SuperAdminMiddleware
             abort(403, 'Unauthorized. Only Super Admin can access System Settings.');
         }
         
+        // If no PIN is set yet, redirect to setup (first-time setup)
+        if (!$user->settings_pin) {
+            return redirect()->route('settings.pin.setup')
+                ->with('info', 'Please set up your Settings PIN first for enhanced security.');
+        }
+        
         // Check if PIN verification is required and valid
         if ($user->settings_pin) {
             // If PIN is set, check if session is authorized
