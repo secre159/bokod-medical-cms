@@ -230,7 +230,9 @@
         
         @if($patients->hasPages())
             <div class="card-footer clearfix">
-                {{ $patients->links() }}
+                <div class="pagination-wrapper">
+                    {{ $patients->onEachSide(1)->links('pagination::bootstrap-4') }}
+                </div>
             </div>
         @endif
     </div>
@@ -311,6 +313,31 @@
         .dragging .JColResizer { border-left: 2px dashed #007bff; }
 
         .avatar-placeholder { font-weight:600; }
+        
+        /* Fix pagination arrows */
+        .pagination-wrapper .pagination .page-link {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .pagination-wrapper .pagination .page-item.disabled .page-link {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #6c757d;
+        }
+        /* Replace arrow symbols with text */
+        .pagination .page-item:first-child .page-link::before {
+            content: "Previous";
+        }
+        .pagination .page-item:last-child .page-link::before {
+            content: "Next";
+        }
+        .pagination .page-item:first-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            font-size: 0;
+        }
+        .pagination .page-item:first-child .page-link::before,
+        .pagination .page-item:last-child .page-link::before {
+            font-size: 14px;
+        }
     </style>
 @stop
 
