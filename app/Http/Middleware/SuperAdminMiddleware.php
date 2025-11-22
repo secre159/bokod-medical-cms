@@ -22,6 +22,12 @@ class SuperAdminMiddleware
             abort(403, 'Unauthorized. Only Super Admin can access System Settings.');
         }
         
+        // Allow PIN setup and save routes to pass through without verification
+        $allowedRoutes = ['settings.pin.setup', 'settings.pin.save'];
+        if (in_array($request->route()->getName(), $allowedRoutes)) {
+            return $next($request);
+        }
+        
         // If no PIN is set yet, redirect to setup (first-time setup)
         if (!$user->settings_pin) {
             return redirect()->route('settings.pin.setup')
