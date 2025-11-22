@@ -46,6 +46,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 if ($request->expectsJson() || $request->wantsJson() || $request->ajax()) {
                     return response()->json(['message' => 'Forbidden'], 403);
                 }
+                // Don't redirect if it's a super admin access message
+                if (str_contains($e->getMessage(), 'Super Admin')) {
+                    abort(403, $e->getMessage());
+                }
                 return redirect()->route('landing')->with('warning', 'Access denied.');
             }
         });
