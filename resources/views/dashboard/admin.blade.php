@@ -900,6 +900,9 @@
             // Start polling for new messages
             startMessagePolling();
             
+            // Start polling for primary stats (every 10 seconds)
+            startPrimaryStatsPolling();
+            
             console.log('Dashboard initialization complete.');
         });
         
@@ -1312,6 +1315,71 @@
         $(document).ready(function() {
             updateCurrentTime(); // Update immediately
             setInterval(updateCurrentTime, 1000); // Update every second
+        });
+        
+        // Poll primary stats every 10 seconds for real-time updates
+        let primaryStatsPollingInterval;
+        
+        function startPrimaryStatsPolling() {
+            // Load immediately
+            loadPrimaryStats();
+            
+            // Poll every 10 seconds
+            primaryStatsPollingInterval = setInterval(function() {
+                loadPrimaryStats();
+            }, 10000);
+            
+            console.log('Primary stats polling started (every 10 seconds)');
+        }
+        
+        function loadPrimaryStats() {
+            $.ajax({
+                url: '{{ route("dashboard.primary-stats") }}',
+                method: 'GET',
+                success: function(data) {
+                    // Update total patients
+                    $('.col-lg-3:eq(0) .small-box .inner h3').text(data.total_patients);
+                    updateStatBadge('.col-lg-3:eq(0) .small-box', data.total_patients, 'info');
+                    
+                    // Update total users
+                    $('.col-lg-3:eq(1) .small-box .inner h3').text(data.total_users);
+                    updateStatBadge('.col-lg-3:eq(1) .small-box', data.total_users, 'success');
+                    
+                    // Update appointments today
+                    $('.col-lg-3:eq(2) .small-box .inner h3').text(data.appointments_today);
+                    updateStatBadge('.col-lg-3:eq(2) .small-box', data.appointments_today, 'warning');
+                    
+                    // Update pending approvals
+                    $('.col-lg-3:eq(3) .small-box .inner h3').text(data.pending_approvals);
+                    updateStatBadge('.col-lg-3:eq(3) .small-box', data.pending_approvals, 'danger');
+                    
+                    console.log('✅ Primary stats updated:', data);
+                },
+                error: function(xhr, status, error) {
+                    console.log('❌ Failed to load primary stats:', error);
+                }
+            });
+        }
+        
+        function updateStatBadge(boxSelector, count, badgeType) {
+            const box = $(boxSelector);
+            const badge = box.find('.badge');
+            const dot = box.find('.notification-dot, .notification-dot-' + badgeType);
+            
+            if (count > 0) {
+                badge.text(count > 99 ? '99+' : count).show();
+                dot.show();
+            } else {
+                badge.hide();
+                dot.hide();
+            }
+        }
+        
+        // Clean up polling on page unload
+        window.addEventListener('beforeunload', function() {
+            if (primaryStatsPollingInterval) {
+                clearInterval(primaryStatsPollingInterval);
+            }
         });
     </script>
 @stop

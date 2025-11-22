@@ -128,6 +128,30 @@ class DashboardController extends Controller
     }
     
     /**
+     * Get primary dashboard statistics for real-time updates
+     */
+    public function primaryStats()
+    {
+        $today = TimezoneHelper::now()->toDateString();
+        
+        $stats = [
+            'total_patients' => Patient::where('archived', false)->count(),
+            'total_users' => User::where('status', 'active')->count(),
+            'appointments_today' => Appointment::whereDate('appointment_date', $today)
+                ->where('status', 'active')
+                ->count(),
+            'pending_approvals' => Appointment::where('approval_status', 'pending')
+                ->where('status', 'active')
+                ->count(),
+            'pending_registrations' => User::where('registration_status', 'pending')
+                ->where('role', 'patient')
+                ->count()
+        ];
+        
+        return response()->json($stats);
+    }
+    
+    /**
      * Get recent unread messages for dashboard notifications
      */
     public function getRecentMessages()

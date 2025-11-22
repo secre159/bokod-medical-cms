@@ -117,6 +117,7 @@ Route::get('/landing', function () {
 Route::middleware(['auth', 'account.status'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     Route::get('/dashboard/async-stats', [DashboardController::class, 'asyncStats'])->name('dashboard.async-stats');
+    Route::get('/dashboard/primary-stats', [DashboardController::class, 'primaryStats'])->name('dashboard.primary-stats');
     Route::get('/dashboard/recent-messages', [DashboardController::class, 'getRecentMessages'])->name('dashboard.recent-messages');
     
     // Global Search
@@ -205,6 +206,9 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             Route::post('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('resetPassword');
             // Email verification removed - users receive credentials via email
         });
+        
+        // Audit Logs
+        Route::get('/logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('logs.index');
         
         // Settings Management
         Route::prefix('settings')->name('settings.')->group(function () {

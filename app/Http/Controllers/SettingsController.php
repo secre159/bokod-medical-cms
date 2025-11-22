@@ -344,14 +344,15 @@ class SettingsController extends Controller
             
             $fileSize = $this->formatBytes(filesize($backupPath));
             
-            return response()->json([
+            $payload = [
                 'success' => true,
                 'message' => "Database backup created successfully! File: {$filename} ({$fileSize}) [PHP Method]",
                 'filename' => $filename,
                 'size' => $fileSize,
                 'method' => 'php',
                 'path' => 'storage/app/backups/' . $filename
-            ]);
+            ];
+            return response()->json($payload);
             
         } catch (\Exception $e) {
             throw new \Exception('PHP backup failed: ' . $e->getMessage());
@@ -415,14 +416,15 @@ class SettingsController extends Controller
             
             $fileSize = $this->formatBytes(filesize($backupPath));
             
-            return response()->json([
+            $payload = [
                 'success' => true,
                 'message' => "Database backup created successfully! File: {$filename} ({$fileSize}) [MySQL Method]",
                 'filename' => $filename,
                 'size' => $fileSize,
                 'method' => 'mysql',
                 'path' => 'storage/app/backups/' . $filename
-            ]);
+            ];
+            return response()->json($payload);
             
         } catch (\Exception $e) {
             // Fallback to PHP method if MySQL method fails
@@ -799,14 +801,15 @@ class SettingsController extends Controller
             $this->updateSetting('last_restore_file', $filename);
             $this->updateSetting('safety_backup_before_restore', $safetyBackupName);
             
-            return response()->json([
+            $payload = [
                 'success' => true,
                 'message' => "Database restored successfully from {$filename}! Safety backup created: {$safetyBackupName} [MySQL Method]",
                 'restored_from' => $filename,
                 'safety_backup' => $safetyBackupName,
                 'method' => 'mysql',
                 'restore_time' => now()->toDateTimeString()
-            ]);
+            ];
+            return response()->json($payload);
             
         } catch (\Exception $e) {
             Log::warning('MySQL restore failed, falling back to PHP method: ' . $e->getMessage());
@@ -1374,11 +1377,12 @@ class SettingsController extends Controller
         $process->run();
         $out = $process->getOutput() . "\n" . $process->getErrorOutput();
         Log::info('pg restore output', ['out' => $out, 'exit' => $process->getExitCode()]);
-        if ($process->isSuccessful()) {
-            $this->updateSetting('last_restore', now()->toDateTimeString());
-            $this->updateSetting('last_restore_file', $publicId);
-            return ['success' => true, 'message' => 'Restore completed from ' . $publicId, 'restored_from' => $publicId, 'restore_time' => now()->toDateTimeString()];
-        }
+                if ($process->isSuccessful()) {
+                    $this->updateSetting('last_restore', now()->toDateTimeString());
+                    $this->updateSetting('last_restore_file', $publicId);
+                    $payload = ['success' => true, 'message' => 'Restore completed from ' . $publicId, 'restored_from' => $publicId, 'restore_time' => now()->toDateTimeString()];
+                    return $payload;
+                }
         return ['success' => false, 'message' => 'Restore failed: ' . trim($out)];
     }
 

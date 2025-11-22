@@ -198,10 +198,12 @@ return new class extends Migration
                 $table->date('prescribed_date');
                 $table->date('expiry_date')->nullable();
                 $table->text('notes')->nullable();
+                $table->string('consultation_type', 100)->nullable();
                 $table->decimal('unit_price')->nullable();
                 $table->decimal('total_amount')->nullable();
                 $table->timestamps();
                 $table->integer('dispensed_quantity')->default(0);
+                $table->integer('remaining_quantity')->nullable();
                 $table->date('dispensed_date')->nullable();
                 $table->unsignedBigInteger('dispensed_by')->nullable();
                 $table->string('prescription_number', 50)->nullable();
