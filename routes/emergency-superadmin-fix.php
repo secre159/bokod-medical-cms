@@ -117,3 +117,83 @@ Route::get('/emergency-run-migrations', function () {
         ], 500);
     }
 })->middleware('auth')->name('emergency.migrations');
+
+/**
+ * EMERGENCY TABLE CREATION ROUTE
+ * 
+ * Manually create missing tables after a restore
+ * Security: Requires authentication and super admin status
+ */
+Route::get('/emergency-create-tables', function () {
+    // Must be authenticated
+    if (!auth()->check()) {
+        abort(403, 'Authentication required');
+    }
+    
+    // Must be super admin
+    $user = auth()->user();
+    if (!$user->is_super_admin) {
+        abort(403, 'Super admin access required');
+    }
+    
+    // Require confirmation parameter
+    if (request()->input('confirm') !== 'create-tables-now') {
+        abort(403, 'Invalid confirmation');
+    }
+    
+    try {
+        $results = [];
+        
+        // Check if stock_movements table exists
+        if (!\Illuminate\Support\Facades\Schema::hasTable('stock_movements')) {
+            // Create stock_movements table
+            \Illuminate\Support\Facades\Schema::create('stock_movements', function ($table) {
+                $table->id();
+                $table->unsignedBigInteger('medicine_id');
+                $table->unsignedBigInteger('user_id');
+                $table->string('type'); // 'add', 'subtract', 'adjust', 'bulk_add', 'bulk_subtract'
+                $table->integer('quantity_changed');
+                $table->integer('quantity_before');
+                $table->integer('quantity_after');
+                $table->string('reason');
+                $table->text('notes')->nullable();
+                $table->string('reference_type')->nullable();
+                $table->unsignedBigInteger('reference_id')->nullable();
+                $table->timestamps();
+                
+                $table->foreign('medicine_id')->references('id')->on('medicines')->onDelete('cascade');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->index(['medicine_id', 'created_at']);
+            });
+            
+            $results[] = 'stock_movements table created successfully';
+        } else {
+            $results[] = 'stock_movements table already exists';
+        }
+        
+        Log::info('Emergency table creation executed', [
+            'user_id' => auth()->id(),
+            'email' => auth()->user()->email,
+            'results' => $results
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Table creation completed!',
+            'results' => $results,
+            'user' => auth()->user()->email
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Emergency table creation failed', [
+            'error' => $e->getMessage(),
+            'user_id' => auth()->id()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to create tables',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+})->middleware('auth')->name('emergency.create.tables');
