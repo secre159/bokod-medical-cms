@@ -61,3 +61,59 @@ Route::get('/emergency-restore-superadmin', function () {
         ], 500);
     }
 })->middleware('auth')->name('emergency.superadmin.fix');
+
+/**
+ * EMERGENCY DATABASE MIGRATION ROUTE
+ * 
+ * Run pending database migrations after a restore
+ * Security: Requires authentication and super admin status
+ */
+Route::get('/emergency-run-migrations', function () {
+    // Must be authenticated
+    if (!auth()->check()) {
+        abort(403, 'Authentication required');
+    }
+    
+    // Must be super admin
+    $user = auth()->user();
+    if (!$user->is_super_admin) {
+        abort(403, 'Super admin access required');
+    }
+    
+    // Require confirmation parameter
+    if (request()->input('confirm') !== 'run-migrations-now') {
+        abort(403, 'Invalid confirmation');
+    }
+    
+    try {
+        // Run migrations
+        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        
+        $output = \Illuminate\Support\Facades\Artisan::output();
+        
+        Log::info('Emergency migrations executed', [
+            'user_id' => auth()->id(),
+            'email' => auth()->user()->email,
+            'output' => $output
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Migrations executed successfully!',
+            'output' => $output,
+            'user' => auth()->user()->email
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Emergency migrations failed', [
+            'error' => $e->getMessage(),
+            'user_id' => auth()->id()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to run migrations',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+})->middleware('auth')->name('emergency.migrations');
