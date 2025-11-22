@@ -59,7 +59,7 @@ class SettingsPinController extends Controller
         
         Log::info('Settings PIN updated', ['user_id' => $user->id, 'email' => $user->email]);
         
-        return redirect()->route('settings.pin-setup')
+        return redirect()->route('settings.pin.setup')
             ->with('success', 'Settings PIN has been ' . ($request->current_pin ? 'updated' : 'created') . ' successfully!');
     }
     
@@ -77,7 +77,7 @@ class SettingsPinController extends Controller
         
         // If no PIN is set, redirect to setup
         if (!$user->settings_pin) {
-            return redirect()->route('settings.pin-setup')
+            return redirect()->route('settings.pin.setup')
                 ->with('info', 'Please set up your Settings PIN first.');
         }
         
@@ -176,7 +176,7 @@ class SettingsPinController extends Controller
             'email' => $user->email
         ]);
         
-        return redirect()->route('settings.pin-setup')
+        return redirect()->route('settings.pin.setup')
             ->with('success', 'Settings PIN has been removed. You can now access settings without a PIN.');
     }
 }
