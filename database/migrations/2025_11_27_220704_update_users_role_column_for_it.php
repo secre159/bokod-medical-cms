@@ -14,8 +14,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Check if there's an ENUM constraint and modify it
-        DB::statement("ALTER TABLE users MODIFY COLUMN role VARCHAR(50) NOT NULL DEFAULT 'user'");
+        // Use Laravel's Schema builder which handles both MySQL and PostgreSQL
+        Schema::table('users', function (Blueprint $table) {
+            // Change the role column to varchar to accept 'it' role
+            $table->string('role', 50)->default('user')->change();
+        });
     }
 
     /**
