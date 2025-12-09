@@ -10,6 +10,9 @@ class Patient extends Model
 {
     protected $fillable = [
         'patient_name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'address',
         'position',
         'civil_status',
@@ -82,6 +85,21 @@ class Patient extends Model
     }
     
     // Accessors
+    
+    /**
+     * Get full name from separated name fields
+     */
+    public function getFullNameAttribute()
+    {
+        $parts = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+        ]);
+        
+        return !empty($parts) ? implode(' ', $parts) : $this->patient_name;
+    }
+    
     public function getAgeAttribute()
     {
         return $this->date_of_birth ? $this->date_of_birth->age : null;
@@ -128,6 +146,16 @@ class Patient extends Model
      */
     public function getInitials()
     {
+        // Try to use separated name fields first
+        if ($this->first_name && $this->last_name) {
+            return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
+        }
+        
+        if ($this->first_name && strlen($this->first_name) >= 2) {
+            return strtoupper(substr($this->first_name, 0, 2));
+        }
+        
+        // Fall back to parsing patient_name field
         if (!$this->patient_name) {
             return '??';
         }

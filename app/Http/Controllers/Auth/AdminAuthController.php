@@ -9,28 +9,36 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
-class AuthenticatedSessionController extends Controller
+class AdminAuthController extends Controller
 {
     /**
-     * Display the login view.
+     * Display the admin login view.
      */
     public function create(): View
     {
-        return view('auth.login-landing');
+        return view('auth.admin-login');
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Handle an incoming admin authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
-        $request->session()->regenerate();
-        
         $user = Auth::user();
         
-        // Redirect IT users to settings instead of dashboard
+        // Only allow admin and IT roles to use this login endpoint
+        if (!$user->isAdmin() && !$user->isIT()) {
+            Auth::logout();
+            return back()->withErrors([
+                'email' => 'This login is for administrators and IT personnel only.',
+            ])->onlyInput('email');
+        }
+
+        $request->session()->regenerate();
+
+        // Redirect IT users to settings, admins to dashboard
         if ($user->isIT()) {
             return redirect()->route('settings.index');
         }
@@ -39,7 +47,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Destroy an authenticated session.
+     * Destroy an authenticated admin session.
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -49,6 +57,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/admin/login');
     }
 }

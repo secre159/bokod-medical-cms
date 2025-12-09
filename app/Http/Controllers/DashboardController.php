@@ -20,6 +20,11 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
+        // Redirect IT users directly to settings
+        if ($user->isIT()) {
+            return redirect()->route('settings.index');
+        }
+        
         // Role-based dashboard
         if ($user->role === 'admin') {
             return $this->adminDashboard();

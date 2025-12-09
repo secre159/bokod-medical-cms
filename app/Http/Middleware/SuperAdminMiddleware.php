@@ -17,9 +17,14 @@ class SuperAdminMiddleware
     {
         $user = auth()->user();
         
-        // Check if user is super admin
-        if (!$user || !$user->is_super_admin) {
-            abort(403, 'Unauthorized. Only Super Admin can access System Settings.');
+        // Check if user is super admin or IT role
+        if (!$user || (!$user->is_super_admin && !$user->isIT())) {
+            abort(403, 'Unauthorized. Only Super Admin and IT personnel can access System Settings.');
+        }
+        
+        // IT users don't need PIN verification - allow direct access
+        if ($user->isIT()) {
+            return $next($request);
         }
         
         // Allow PIN setup and save routes to pass through without verification
@@ -28,13 +33,13 @@ class SuperAdminMiddleware
             return $next($request);
         }
         
-        // If no PIN is set yet, redirect to setup (first-time setup)
+        // If no PIN is set yet, redirect to setup (first-time setup) - Super Admins only
         if (!$user->settings_pin) {
             return redirect()->route('settings.pin.setup')
                 ->with('info', 'Please set up your Settings PIN first for enhanced security.');
         }
         
-        // Check if PIN verification is required and valid
+        // Check if PIN verification is required and valid - Super Admins only
         if ($user->settings_pin) {
             // If PIN is set, check if session is authorized
             if (!session()->has('settings_pin_verified') || 

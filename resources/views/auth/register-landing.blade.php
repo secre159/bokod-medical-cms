@@ -276,11 +276,25 @@
 
                 <!-- STEP 1: Account -->
                 <div class="form-grid lr-step" data-step="1">
-                    <!-- Name -->
+                    <!-- First Name -->
                     <div class="form-group">
-                        <label for="name" class="form-label">Full Name</label>
-                        <input id="name" class="form-input" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder="Enter your full name">
-                        @error('name')<div class="error-message">{{ $message }}</div>@enderror
+                        <label for="first_name" class="form-label">First Name</label>
+                        <input id="first_name" class="form-input" type="text" name="first_name" value="{{ old('first_name') }}" required autofocus autocomplete="given-name" placeholder="Enter your first name">
+                        @error('first_name')<div class="error-message">{{ $message }}</div>@enderror
+                    </div>
+                    
+                    <!-- Middle Name -->
+                    <div class="form-group">
+                        <label for="middle_name" class="form-label">Middle Name <small style="color:#6b7280;">(Optional)</small></label>
+                        <input id="middle_name" class="form-input" type="text" name="middle_name" value="{{ old('middle_name') }}" autocomplete="additional-name" placeholder="Enter your middle name">
+                        @error('middle_name')<div class="error-message">{{ $message }}</div>@enderror
+                    </div>
+                    
+                    <!-- Last Name -->
+                    <div class="form-group">
+                        <label for="last_name" class="form-label">Last Name</label>
+                        <input id="last_name" class="form-input" type="text" name="last_name" value="{{ old('last_name') }}" required autocomplete="family-name" placeholder="Enter your last name">
+                        @error('last_name')<div class="error-message">{{ $message }}</div>@enderror
                     </div>
                     
                     <!-- Email Address -->

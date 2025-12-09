@@ -311,6 +311,7 @@ return [
             'route' => 'dashboard.index',
             'icon' => 'fas fa-fw fa-tachometer-alt',
             'active' => ['dashboard*'],
+            'can' => ['admin', 'patient'], // Hide dashboard for IT users
         ],
         
         // ADMIN ONLY SECTIONS
@@ -446,11 +447,24 @@ return [
             'can' => 'admin',
             'active' => ['admin/documentation*'],
         ],
+        
+        // IT ROLE SECTIONS - Settings Only
+        ['header' => 'SYSTEM SETTINGS', 'can' => 'it'],
         [
-            'text' => 'Settings',
+            'text' => 'System Settings',
             'route' => 'settings.index',
             'icon' => 'fas fa-fw fa-cog',
-            'can' => 'manage-settings',
+            'can' => 'it',
+            'active' => ['settings*'],
+        ],
+        
+        ['header' => 'MY ACCOUNT', 'can' => 'it'],
+        [
+            'text' => 'My Profile',
+            'route' => 'profile.edit',
+            'icon' => 'fas fa-fw fa-user',
+            'can' => 'it',
+            'active' => ['profile*'],
         ],
         
         // PATIENT ONLY SECTIONS

@@ -96,29 +96,40 @@ class MedicineController extends Controller
      */
     public function store(Request $request)
     {
-        // Validation rules
+        // Validation rules - Only 4 fields truly required
         $rules = [
+            // REQUIRED: Essential identification
             'medicine_name' => 'required|string|max:255',
+            'batch_number' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('medicines')->where(function ($query) use ($request) {
+                    return $query->where('medicine_name', $request->medicine_name);
+                })
+            ],
+            'dosage_form' => 'required|string|max:255',
+            'stock_quantity' => 'required|integer|min:0',
+            
+            // OPTIONAL: All other fields
             'generic_name' => 'nullable|string|max:255',
             'brand_name' => 'nullable|string|max:255',
             'manufacturer' => 'nullable|string|max:255',
-            'category' => 'required|string|max:255',
+            'category' => 'nullable|string|max:255',
             'therapeutic_class' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'indication' => 'nullable|string',
-            'dosage_form' => 'required|string|max:255',
-            'strength' => 'required|string|max:255',
+            'strength' => 'nullable|string|max:255',
             'dosage_instructions' => 'nullable|string',
             'age_restrictions' => 'nullable|string|max:255',
-            'unit_measure' => 'nullable|string|max:255', // Changed from 'unit' to 'unit_measure' and made nullable
-            'stock_quantity' => 'required|integer|min:0',
-            'minimum_stock' => 'required|integer|min:0',
+            'unit_measure' => 'nullable|string|max:255',
+            'unit' => 'nullable|string|max:255',
+            'minimum_stock' => 'nullable|integer|min:0',
             'balance_per_card' => 'nullable|integer|min:0',
             'on_hand_per_count' => 'nullable|integer|min:0',
             'shortage_overage' => 'nullable|integer',
             'inventory_remarks' => 'nullable|string|max:500',
             'supplier' => 'nullable|string|max:255',
-            'batch_number' => 'nullable|string|max:255',
             'manufacturing_date' => 'nullable|date|before_or_equal:today',
             'expiry_date' => 'nullable|date|after:manufacturing_date',
             'storage_conditions' => 'nullable|string|max:255',
@@ -129,7 +140,7 @@ class MedicineController extends Controller
             'warnings' => 'nullable|string',
             'requires_prescription' => 'boolean',
             'notes' => 'nullable|string',
-            'medicine_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
+            'medicine_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
         ];
         
         try {
@@ -251,7 +262,14 @@ class MedicineController extends Controller
             'shortage_overage' => 'nullable|integer',
             'inventory_remarks' => 'nullable|string|max:500',
             'supplier' => 'nullable|string|max:255',
-            'batch_number' => 'nullable|string|max:255',
+            'batch_number' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('medicines')->where(function ($query) use ($request) {
+                    return $query->where('medicine_name', $request->medicine_name);
+                })->ignore($medicine->id)
+            ],
             'manufacturing_date' => 'nullable|date|before_or_equal:today',
             'expiry_date' => 'nullable|date|after:manufacturing_date',
             'storage_conditions' => 'nullable|string|max:255',
@@ -514,9 +532,45 @@ class MedicineController extends Controller
                                      ->orWhere('brand_name', 'like', "%{$search}%");
                            })
                            ->limit(10)
-                           ->get(['id', 'medicine_name', 'generic_name', 'brand_name', 'strength', 'dosage_form', 'stock_quantity']);
+                           ->get(['id', 'medicine_name', 'generic_name', 'brand_name', 'strength', 'dosage_form', 'stock_quantity', 'batch_number', 'expiry_date']);
         
         return response()->json($medicines);
+    }
+    
+    /**
+     * Get available batches for a medicine name (AJAX)
+     */
+    public function getBatchesByName(Request $request)
+    {
+        $medicineName = $request->get('medicine_name');
+        
+        if (!$medicineName) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Medicine name is required'
+            ], 400);
+        }
+        
+        $batches = Medicine::where('medicine_name', $medicineName)
+                          ->orderBy('expiry_date', 'asc')
+                          ->get(['id', 'batch_number', 'manufacturing_date', 'expiry_date', 'stock_quantity', 'status'])
+                          ->map(function($batch) {
+                              return [
+                                  'id' => $batch->id,
+                                  'batch_number' => $batch->batch_number,
+                                  'manufacturing_date' => $batch->manufacturing_date ? $batch->manufacturing_date->format('Y-m-d') : null,
+                                  'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('Y-m-d') : null,
+                                  'stock_quantity' => $batch->stock_quantity,
+                                  'status' => $batch->status,
+                                  'is_expired' => $batch->is_expired,
+                                  'is_expiring_soon' => $batch->is_expiring_soon,
+                              ];
+                          });
+        
+        return response()->json([
+            'success' => true,
+            'batches' => $batches
+        ]);
     }
     
     /**

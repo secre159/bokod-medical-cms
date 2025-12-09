@@ -121,8 +121,8 @@
                             
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="generic_name">Generic Name</label>
-                                    <input type="text" name="generic_name" id="generic_name" class="form-control" 
+                                    <label for="generic_name">Generic Name <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="text" name="generic_name" id="generic_name" class="form-control"
                                            placeholder="Enter generic name" 
                                            value="{{ old('generic_name', $medicine->generic_name) }}">
                                     @error('generic_name')
@@ -135,8 +135,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="brand_name">Brand Name</label>
-                                    <input type="text" name="brand_name" id="brand_name" class="form-control" 
+                                    <label for="brand_name">Brand Name <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="text" name="brand_name" id="brand_name" class="form-control"
                                            placeholder="Enter brand name" 
                                            value="{{ old('brand_name', $medicine->brand_name) }}">
                                     @error('brand_name')
@@ -147,8 +147,8 @@
                             
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="manufacturer">Manufacturer</label>
-                                    <input type="text" name="manufacturer" id="manufacturer" class="form-control" 
+                                    <label for="manufacturer">Manufacturer <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="text" name="manufacturer" id="manufacturer" class="form-control"
                                            placeholder="Enter manufacturer name" 
                                            value="{{ old('manufacturer', $medicine->manufacturer) }}">
                                     @error('manufacturer')
@@ -177,7 +177,7 @@
                             <!-- Therapeutic Class -->
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="therapeutic_class">Therapeutic Class</label>
+                                    <label for="therapeutic_class">Therapeutic Class <span class="badge badge-secondary">Optional</span></label>
                                     <select name="therapeutic_class" id="therapeutic_class" class="form-control">
                                         <option value="">Select Therapeutic Class</option>
                                         @foreach($therapeuticClasses as $key => $className)
@@ -204,10 +204,12 @@
                                     @enderror
                                 </div>
                             </div>
-                            
-                            <div class="col-md-4">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="strength">Strength</label>
+                                    <label for="strength">Strength <span class="badge badge-secondary">Optional</span></label>
                                     <input type="text" name="strength" id="strength" class="form-control" 
                                            placeholder="e.g., 500mg, 5ml" 
                                            value="{{ old('strength', $medicine->strength) }}">
@@ -223,8 +225,8 @@
                             <!-- Dosage Instructions -->
                             <div class="col-md-8">
                                 <div class="form-group">
-                                    <label for="dosage_instructions">Dosage Instructions</label>
-                                    <textarea name="dosage_instructions" id="dosage_instructions" class="form-control" rows="2" 
+                                    <label for="dosage_instructions">Dosage Instructions <span class="badge badge-secondary">Optional</span></label>
+                                    <textarea name="dosage_instructions" id="dosage_instructions" class="form-control" rows="2"
                                               placeholder="e.g., Take 1 tablet twice daily with food">{{ old('dosage_instructions', $medicine->dosage_instructions) }}</textarea>
                                     @error('dosage_instructions')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -235,8 +237,8 @@
                             <!-- Age Restrictions -->
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="age_restrictions">Age Restrictions</label>
-                                    <input type="text" name="age_restrictions" id="age_restrictions" 
+                                    <label for="age_restrictions">Age Restrictions <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="text" name="age_restrictions" id="age_restrictions"
                                            class="form-control" value="{{ old('age_restrictions', $medicine->age_restrictions) }}"
                                            placeholder="e.g., Adults only, 12+ years">
                                     @error('age_restrictions')
@@ -250,8 +252,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="description">Description</label>
-                                    <textarea name="description" id="description" class="form-control" rows="3" 
+                                    <label for="description">Description <span class="badge badge-secondary">Optional</span></label>
+                                    <textarea name="description" id="description" class="form-control" rows="3"
                                               placeholder="Brief description of the medicine...">{{ old('description', $medicine->description) }}</textarea>
                                     @error('description')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -262,8 +264,8 @@
                             <!-- Indication -->
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="indication">Indication</label>
-                                    <textarea name="indication" id="indication" class="form-control" rows="3" 
+                                    <label for="indication">Indication <span class="badge badge-secondary">Optional</span></label>
+                                    <textarea name="indication" id="indication" class="form-control" rows="3"
                                               placeholder="What is this medicine used to treat?">{{ old('indication', $medicine->indication) }}</textarea>
                                     @error('indication')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -290,8 +292,8 @@
                             <!-- Stock Number -->
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="stock_number">Stock Number</label>
-                                    <input type="text" name="stock_number" id="stock_number" 
+                                    <label for="stock_number">Stock Number <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="text" name="stock_number" id="stock_number"
                                            class="form-control" value="{{ old('stock_number', $medicine->stock_number) }}" 
                                            placeholder="e.g., MED-001">
                                     <small class="form-text text-muted">
@@ -306,7 +308,7 @@
                             <!-- Unit Measure -->
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="unit_measure">Unit Measure</label>
+                                    <label for="unit_measure">Unit Measure <span class="badge badge-secondary">Optional</span></label>
                                     <select name="unit_measure" id="unit_measure" class="form-control">
                                         <option value="">-- Select Unit --</option>
                                         <option value="pc" {{ old('unit_measure', $medicine->unit_measure) == 'pc' ? 'selected' : '' }}>Piece (pc)</option>
@@ -331,8 +333,8 @@
                             <!-- Minimum Stock -->
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="minimum_stock">Minimum Stock Level</label>
-                                    <input type="number" name="minimum_stock" id="minimum_stock" 
+                                    <label for="minimum_stock">Minimum Stock Level <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="number" name="minimum_stock" id="minimum_stock"
                                            class="form-control" value="{{ old('minimum_stock', $medicine->minimum_stock) }}" min="0">
                                     <small class="form-text text-muted">
                                         <i class="fas fa-info-circle mr-1"></i>Low stock alert threshold
@@ -361,8 +363,8 @@
                             <!-- Balance Per Card -->
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="balance_per_card">Balance Per Card</label>
-                                    <input type="number" name="balance_per_card" id="balance_per_card" 
+                                    <label for="balance_per_card">Balance Per Card <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="number" name="balance_per_card" id="balance_per_card"
                                            class="form-control" value="{{ old('balance_per_card', $medicine->balance_per_card) }}" min="0">
                                     <small class="form-text text-muted">
                                         <i class="fas fa-info-circle mr-1"></i>Expected balance according to records
@@ -376,8 +378,8 @@
                             <!-- On Hand Per Count -->
                             <div class="col-md-3">
                                 <div class="form-group">
-                                    <label for="on_hand_per_count">On Hand Per Count</label>
-                                    <input type="number" name="on_hand_per_count" id="on_hand_per_count" 
+                                    <label for="on_hand_per_count">On Hand Per Count <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="number" name="on_hand_per_count" id="on_hand_per_count"
                                            class="form-control" value="{{ old('on_hand_per_count', $medicine->on_hand_per_count) }}" min="0">
                                     <small class="form-text text-muted">
                                         <i class="fas fa-info-circle mr-1"></i>Actual count in physical inventory
@@ -406,8 +408,8 @@
                             <!-- Inventory Remarks -->
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="inventory_remarks">Inventory Remarks</label>
-                                    <input type="text" name="inventory_remarks" id="inventory_remarks" 
+                                    <label for="inventory_remarks">Inventory Remarks <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="text" name="inventory_remarks" id="inventory_remarks"
                                            class="form-control" value="{{ old('inventory_remarks', $medicine->inventory_remarks) }}"
                                            placeholder="Any inventory notes...">
                                     <small class="form-text text-muted">
@@ -423,8 +425,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="supplier">Supplier</label>
-                                    <input type="text" name="supplier" id="supplier" class="form-control" 
+                                    <label for="supplier">Supplier <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="text" name="supplier" id="supplier" class="form-control"
                                            placeholder="Enter supplier name" 
                                            value="{{ old('supplier', $medicine->supplier) }}">
                                     @error('supplier')
@@ -435,15 +437,56 @@
                             
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="batch_number">Batch Number</label>
+                                    <label for="batch_number" class="required">Batch Number</label>
                                     <input type="text" name="batch_number" id="batch_number" class="form-control" 
                                            placeholder="Enter batch number" 
-                                           value="{{ old('batch_number', $medicine->batch_number) }}">
+                                           value="{{ old('batch_number', $medicine->batch_number) }}" required>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i> <strong>Warning:</strong> Changing batch number creates a new batch identity
+                                    </small>
                                     @error('batch_number')
                                         <span class="text-danger small">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+                        </div>
+                        
+                        <!-- Related Batches Info -->
+                        @php
+                            $otherBatches = $medicine->getOtherBatches();
+                        @endphp
+                        @if($otherBatches->count() > 0)
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-layer-group"></i> Other Batches of "{{ $medicine->medicine_name }}"</h5>
+                                    <ul class="mb-0 pl-3">
+                                        @foreach($otherBatches as $batch)
+                                        <li>
+                                            <strong>Batch:</strong> {{ $batch->batch_number }} | 
+                                            <strong>Stock:</strong> {{ $batch->stock_quantity }} | 
+                                            <strong>Expiry:</strong> {{ $batch->expiry_date ? $batch->expiry_date->format('M d, Y') : 'N/A' }}
+                                            @if($batch->is_expired)
+                                                <span class="badge badge-danger ml-2">Expired</span>
+                                            @elseif($batch->is_expiring_soon)
+                                                <span class="badge badge-warning ml-2">Expiring Soon</span>
+                                            @else
+                                                <span class="badge badge-success ml-2">Active</span>
+                                            @endif
+                                            <a href="{{ route('medicines.edit', $batch) }}" class="btn btn-xs btn-outline-primary ml-2">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                        </li>
+                                        @endforeach
+                                    </ul>
+                                    <small class="text-muted mt-2 d-block">Total {{ $otherBatches->count() + 1 }} batch(es) for this medicine</small>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                        
+                        <div class="row">
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -459,8 +502,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="manufacturing_date">Manufacturing Date</label>
-                                    <input type="date" name="manufacturing_date" id="manufacturing_date" class="form-control" 
+                                    <label for="manufacturing_date">Manufacturing Date <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="date" name="manufacturing_date" id="manufacturing_date" class="form-control"
                                            value="{{ old('manufacturing_date', $medicine->manufacturing_date ? $medicine->manufacturing_date->format('Y-m-d') : '') }}">
                                     @error('manufacturing_date')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -470,8 +513,8 @@
                             
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="expiry_date">Expiry Date</label>
-                                    <input type="date" name="expiry_date" id="expiry_date" class="form-control" 
+                                    <label for="expiry_date">Expiry Date <span class="badge badge-secondary">Optional</span></label>
+                                    <input type="date" name="expiry_date" id="expiry_date" class="form-control"
                                            value="{{ old('expiry_date', $medicine->expiry_date ? $medicine->expiry_date->format('Y-m-d') : '') }}">
                                     @error('expiry_date')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -481,8 +524,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="storage_conditions">Storage Conditions</label>
-                            <textarea name="storage_conditions" id="storage_conditions" class="form-control" rows="2" 
+                            <label for="storage_conditions">Storage Conditions <span class="badge badge-secondary">Optional</span></label>
+                            <textarea name="storage_conditions" id="storage_conditions" class="form-control" rows="2"
                                       placeholder="e.g., Store in a cool, dry place below 30°C">{{ old('storage_conditions', $medicine->storage_conditions) }}</textarea>
                             @error('storage_conditions')
                                 <span class="text-danger small">{{ $message }}</span>
@@ -493,8 +536,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="side_effects">Side Effects</label>
-                                    <textarea name="side_effects" id="side_effects" class="form-control" rows="3" 
+                                    <label for="side_effects">Side Effects <span class="badge badge-secondary">Optional</span></label>
+                                    <textarea name="side_effects" id="side_effects" class="form-control" rows="3"
                                               placeholder="List common side effects...">{{ old('side_effects', $medicine->side_effects) }}</textarea>
                                     @error('side_effects')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -504,8 +547,8 @@
                             
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="contraindications">Contraindications</label>
-                                    <textarea name="contraindications" id="contraindications" class="form-control" rows="3" 
+                                    <label for="contraindications">Contraindications <span class="badge badge-secondary">Optional</span></label>
+                                    <textarea name="contraindications" id="contraindications" class="form-control" rows="3"
                                               placeholder="List contraindications...">{{ old('contraindications', $medicine->contraindications) }}</textarea>
                                     @error('contraindications')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -518,8 +561,8 @@
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="form-group">
-                                    <label for="drug_interactions">Drug Interactions</label>
-                                    <textarea name="drug_interactions" id="drug_interactions" class="form-control" rows="3" 
+                                    <label for="drug_interactions">Drug Interactions <span class="badge badge-secondary">Optional</span></label>
+                                    <textarea name="drug_interactions" id="drug_interactions" class="form-control" rows="3"
                                               placeholder="List known drug interactions...">{{ old('drug_interactions', $medicine->drug_interactions) }}</textarea>
                                     @error('drug_interactions')
                                         <span class="text-danger small">{{ $message }}</span>
@@ -529,7 +572,7 @@
                             
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="pregnancy_category">Pregnancy Category</label>
+                                    <label for="pregnancy_category">Pregnancy Category <span class="badge badge-secondary">Optional</span></label>
                                     <select name="pregnancy_category" id="pregnancy_category" class="form-control">
                                         <option value="">Select Category</option>
                                         @foreach($pregnancyCategories as $key => $categoryName)
@@ -545,8 +588,8 @@
                         
                         <!-- Warnings -->
                         <div class="form-group">
-                            <label for="warnings">Warnings</label>
-                            <textarea name="warnings" id="warnings" class="form-control" rows="3" 
+                            <label for="warnings">Warnings <span class="badge badge-secondary">Optional</span></label>
+                            <textarea name="warnings" id="warnings" class="form-control" rows="3"
                                       placeholder="Important warnings and precautions...">{{ old('warnings', $medicine->warnings) }}</textarea>
                             @error('warnings')
                                 <span class="text-danger small">{{ $message }}</span>

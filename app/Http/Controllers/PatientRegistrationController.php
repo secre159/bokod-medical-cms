@@ -29,7 +29,9 @@ class PatientRegistrationController extends Controller
     {
         $request->validate([
             // User account info
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
             'email' => ['required', new EmailValidationRule, 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             
@@ -61,11 +63,21 @@ class PatientRegistrationController extends Controller
         try {
             DB::beginTransaction();
 
+            // Build full name from parts for backward compatibility
+            $fullName = trim(implode(' ', array_filter([
+                $request->first_name,
+                $request->middle_name,
+                $request->last_name,
+            ])));
+
             // All registrations require manual approval by admin
             // Create user account with all relevant data
             $user = User::create([
-                'name' => $request->name,
-                'display_name' => $request->name,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'name' => $fullName,
+                'display_name' => $fullName,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => 'patient',
@@ -92,7 +104,10 @@ class PatientRegistrationController extends Controller
 
             // Create patient record
             $patient = Patient::create([
-                'patient_name' => $request->name,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'patient_name' => $fullName, // Keep for backward compatibility
                 'position' => $request->student_id, // Using position field for student ID
                 'course' => $request->course,
                 'date_of_birth' => $request->date_of_birth,
@@ -125,7 +140,8 @@ class PatientRegistrationController extends Controller
             \Log::error('Patient registration failed', [
                 'error' => $e->getMessage(),
                 'email' => $request->email,
-                'name' => $request->name,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
                 'trace' => $e->getTraceAsString()
             ]);
             

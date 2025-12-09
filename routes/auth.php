@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AdminAuthController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 // Email verification controllers removed - not needed
@@ -22,6 +23,13 @@ Route::middleware('guest')->group(function () {
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    // Admin login routes
+    Route::get('admin/login', [AdminAuthController::class, 'create'])
+        ->name('admin.login');
+
+    Route::post('admin/login', [AdminAuthController::class, 'store'])
+        ->name('admin.login.submit');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
@@ -60,4 +68,8 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+    
+    // Admin logout route
+    Route::post('admin/logout', [AdminAuthController::class, 'destroy'])
+        ->name('admin.logout');
 });

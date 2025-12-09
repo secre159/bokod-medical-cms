@@ -19,6 +19,16 @@
 
 @section('content')
 
+    <!-- Quick Start Info -->
+    <div class="alert alert-info alert-dismissible">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <h5><i class="fas fa-lightbulb mr-2"></i>Quick Add Medicine</h5>
+        <p class="mb-0">
+            <strong>Only 4 fields required:</strong> Medicine Name, Batch Number, Dosage Form, and Stock Quantity. 
+            All other fields are optional and can be added later.
+        </p>
+    </div>
+
     <!-- Error Messages -->
     @if ($errors->any())
         <div class="alert alert-danger alert-dismissible">
@@ -54,17 +64,23 @@
                         <div class="form-group">
                             <label for="medicine_name" class="required">Medicine Name</label>
                             <input type="text" name="medicine_name" id="medicine_name" 
-                                   class="form-control" value="{{ old('medicine_name') }}" required>
+                                   class="form-control" value="{{ old('medicine_name') }}" required list="existing_medicine_names">
+                            <datalist id="existing_medicine_names"></datalist>
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>Enter the primary medicine name
+                                <i class="fas fa-info-circle mr-1"></i>Enter the primary medicine name (you can add multiple batches with same name)
                             </small>
+                            <div id="existing_batches_alert" class="alert alert-info mt-2" style="display: none;">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <strong>Existing Batches Found:</strong>
+                                <div id="existing_batches_list" class="mt-2"></div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Generic Name -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="generic_name">Generic Name</label>
+                            <label for="generic_name">Generic Name <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="generic_name" id="generic_name" 
                                    class="form-control" value="{{ old('generic_name') }}">
                             <small class="form-text text-muted">
@@ -78,7 +94,7 @@
                     <!-- Brand Name -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="brand_name">Brand Name</label>
+                            <label for="brand_name">Brand Name <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="brand_name" id="brand_name" 
                                    class="form-control" value="{{ old('brand_name') }}">
                             <small class="form-text text-muted">
@@ -90,7 +106,7 @@
                     <!-- Manufacturer -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="manufacturer">Manufacturer</label>
+                            <label for="manufacturer">Manufacturer <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="manufacturer" id="manufacturer" 
                                    class="form-control" value="{{ old('manufacturer') }}">
                             <small class="form-text text-muted">
@@ -104,15 +120,15 @@
                     <!-- Category -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="category" class="required">Category</label>
-                            <select name="category" id="category" class="form-control select2" required>
+                            <label for="category">Category <span class="badge badge-secondary">Optional</span></label>
+                            <select name="category" id="category" class="form-control select2">
                                 <option value="">-- Select Category --</option>
                                 @foreach($categories as $key => $categoryName)
                                     <option value="{{ $key }}" {{ old('category') == $key ? 'selected' : '' }}>{{ $categoryName }}</option>
                                 @endforeach
                             </select>
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>Medicine therapeutic category
+                                <i class="fas fa-info-circle mr-1"></i>Medicine therapeutic category (can be added later)
                             </small>
                         </div>
                     </div>
@@ -120,7 +136,7 @@
                     <!-- Therapeutic Class -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="therapeutic_class">Therapeutic Class</label>
+                            <label for="therapeutic_class">Therapeutic Class <span class="badge badge-secondary">Optional</span></label>
                             <select name="therapeutic_class" id="therapeutic_class" class="form-control select2">
                                 <option value="">-- Select Therapeutic Class --</option>
                                 @foreach($therapeuticClasses as $key => $className)
@@ -136,7 +152,7 @@
                     <!-- Requires Prescription -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="requires_prescription">Prescription Requirement</label>
+                            <label for="requires_prescription">Prescription Requirement <span class="badge badge-secondary">Optional</span></label>
                             <div class="custom-control custom-switch mt-2">
                                 <input type="checkbox" class="custom-control-input" id="requires_prescription" 
                                        name="requires_prescription" value="1" {{ old('requires_prescription') ? 'checked' : 'checked' }}>
@@ -153,7 +169,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="description">Description</label>
+                            <label for="description">Description <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="description" id="description" class="form-control" rows="3" 
                                       placeholder="Brief description of the medicine...">{{ old('description') }}</textarea>
                             <small class="form-text text-muted">
@@ -165,7 +181,7 @@
                     <!-- Indication -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="indication">Indication</label>
+                            <label for="indication">Indication <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="indication" id="indication" class="form-control" rows="3" 
                                       placeholder="What is this medicine used to treat?">{{ old('indication') }}</textarea>
                             <small class="form-text text-muted">
@@ -205,12 +221,12 @@
                     <!-- Strength -->
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="strength" class="required">Strength</label>
+                            <label for="strength">Strength <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="strength" id="strength" 
-                                   class="form-control" value="{{ old('strength') }}" required
+                                   class="form-control" value="{{ old('strength') }}"
                                    placeholder="e.g., 500mg, 250ml, 100IU">
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>Dosage strength per unit
+                                <i class="fas fa-info-circle mr-1"></i>Dosage strength per unit (can be added later)
                             </small>
                         </div>
                     </div>
@@ -218,8 +234,8 @@
                     <!-- Unit -->
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="unit" class="required">Unit</label>
-                            <select name="unit" id="unit" class="form-control" required>
+                            <label for="unit">Unit <span class="badge badge-secondary">Optional</span></label>
+                            <select name="unit" id="unit" class="form-control">
                                 <option value="">-- Select Unit --</option>
                                 <option value="pieces" {{ old('unit') == 'pieces' ? 'selected' : 'selected' }}>Pieces</option>
                                 <option value="bottles" {{ old('unit') == 'bottles' ? 'selected' : '' }}>Bottles</option>
@@ -229,7 +245,7 @@
                                 <option value="sachets" {{ old('unit') == 'sachets' ? 'selected' : '' }}>Sachets</option>
                             </select>
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>Unit of measurement
+                                <i class="fas fa-info-circle mr-1"></i>Unit of measurement (optional)
                             </small>
                         </div>
                     </div>
@@ -240,7 +256,7 @@
                     <!-- Dosage Instructions -->
                     <div class="col-md-8">
                         <div class="form-group">
-                            <label for="dosage_instructions">Dosage Instructions</label>
+                            <label for="dosage_instructions">Dosage Instructions <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="dosage_instructions" id="dosage_instructions" class="form-control" rows="2" 
                                       placeholder="e.g., Take 1 tablet twice daily with food">{{ old('dosage_instructions') }}</textarea>
                             <small class="form-text text-muted">
@@ -252,7 +268,7 @@
                     <!-- Age Restrictions -->
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="age_restrictions">Age Restrictions</label>
+                            <label for="age_restrictions">Age Restrictions <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="age_restrictions" id="age_restrictions" 
                                    class="form-control" value="{{ old('age_restrictions') }}"
                                    placeholder="e.g., Adults only, 12+ years">
@@ -267,7 +283,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="form-group">
-                            <label for="storage_conditions">Storage Conditions</label>
+                            <label for="storage_conditions">Storage Conditions <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="storage_conditions" id="storage_conditions" 
                                    class="form-control" value="{{ old('storage_conditions') }}"
                                    placeholder="e.g., Store in a cool, dry place away from direct sunlight">
@@ -293,7 +309,7 @@
                     <!-- Stock Number -->
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="stock_number">Stock Number</label>
+                            <label for="stock_number">Stock Number <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="stock_number" id="stock_number" 
                                    class="form-control" value="{{ old('stock_number') }}" 
                                    placeholder="e.g., MED-001">
@@ -306,7 +322,7 @@
                     <!-- Unit Measure -->
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="unit_measure">Unit Measure</label>
+                            <label for="unit_measure">Unit Measure <span class="badge badge-secondary">Optional</span></label>
                             <select name="unit_measure" id="unit_measure" class="form-control">
                                 <option value="">-- Select Unit --</option>
                                 <option value="pc" {{ old('unit_measure') == 'pc' ? 'selected' : '' }}>Piece (pc)</option>
@@ -328,15 +344,16 @@
                     <!-- Minimum Stock -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="minimum_stock" class="required">Minimum Stock Level</label>
+                            <label for="minimum_stock">Minimum Stock Level <span class="badge badge-secondary">Optional</span></label>
                             <input type="number" name="minimum_stock" id="minimum_stock" 
-                                   class="form-control" value="{{ old('minimum_stock', 10) }}" required min="0">
+                                   class="form-control" value="{{ old('minimum_stock', 10) }}" min="0">
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>Low stock alert threshold
+                                <i class="fas fa-info-circle mr-1"></i>Low stock alert threshold (defaults to 10)
                             </small>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Inventory Count Information -->
                 <div class="row">
@@ -355,7 +372,7 @@
                     <!-- Balance Per Card -->
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="balance_per_card">Balance Per Card</label>
+                            <label for="balance_per_card">Balance Per Card <span class="badge badge-secondary">Optional</span></label>
                             <input type="number" name="balance_per_card" id="balance_per_card" 
                                    class="form-control" value="{{ old('balance_per_card', 0) }}" min="0">
                             <small class="form-text text-muted">
@@ -367,7 +384,7 @@
                     <!-- On Hand Per Count -->
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="on_hand_per_count">On Hand Per Count</label>
+                            <label for="on_hand_per_count">On Hand Per Count <span class="badge badge-secondary">Optional</span></label>
                             <input type="number" name="on_hand_per_count" id="on_hand_per_count" 
                                    class="form-control" value="{{ old('on_hand_per_count', 0) }}" min="0">
                             <small class="form-text text-muted">
@@ -379,7 +396,7 @@
                     <!-- Shortage/Overage -->
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label for="shortage_overage">Shortage/Overage</label>
+                            <label for="shortage_overage">Shortage/Overage <span class="badge badge-secondary">Optional</span></label>
                             <input type="number" name="shortage_overage" id="shortage_overage" 
                                    class="form-control" value="{{ old('shortage_overage', 0) }}" readonly>
                             <small class="form-text text-muted">
@@ -394,7 +411,7 @@
                     <!-- Inventory Remarks -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="inventory_remarks">Inventory Remarks</label>
+                            <label for="inventory_remarks">Inventory Remarks <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="inventory_remarks" id="inventory_remarks" 
                                    class="form-control" value="{{ old('inventory_remarks') }}"
                                    placeholder="Any inventory notes...">
@@ -410,7 +427,7 @@
                     <!-- Supplier -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="supplier">Supplier</label>
+                            <label for="supplier">Supplier <span class="badge badge-secondary">Optional</span></label>
                             <input type="text" name="supplier" id="supplier" 
                                    class="form-control" value="{{ old('supplier') }}">
                             <small class="form-text text-muted">
@@ -422,11 +439,11 @@
                     <!-- Batch Number -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="batch_number">Batch Number</label>
+                            <label for="batch_number" class="required">Batch Number</label>
                             <input type="text" name="batch_number" id="batch_number" 
-                                   class="form-control" value="{{ old('batch_number') }}">
+                                   class="form-control" value="{{ old('batch_number') }}" required>
                             <small class="form-text text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>Batch or lot number for tracking
+                                <i class="fas fa-info-circle mr-1"></i><strong>Required:</strong> Unique batch/lot number for tracking this specific batch
                             </small>
                         </div>
                     </div>
@@ -446,7 +463,7 @@
                     <!-- Manufacturing Date -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="manufacturing_date">Manufacturing Date</label>
+                            <label for="manufacturing_date">Manufacturing Date <span class="badge badge-secondary">Optional</span></label>
                             <input type="date" name="manufacturing_date" id="manufacturing_date" 
                                    class="form-control" value="{{ old('manufacturing_date') }}"
                                    max="{{ date('Y-m-d') }}">
@@ -459,7 +476,7 @@
                     <!-- Expiry Date -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="expiry_date">Expiry Date</label>
+                            <label for="expiry_date">Expiry Date <span class="badge badge-secondary">Optional</span></label>
                             <input type="date" name="expiry_date" id="expiry_date" 
                                    class="form-control" value="{{ old('expiry_date') }}">
                             <small class="form-text text-muted">
@@ -483,7 +500,7 @@
                     <!-- Side Effects -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="side_effects">Side Effects</label>
+                            <label for="side_effects">Side Effects <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="side_effects" id="side_effects" class="form-control" rows="4" 
                                       placeholder="List common side effects...">{{ old('side_effects') }}</textarea>
                             <small class="form-text text-muted">
@@ -495,7 +512,7 @@
                     <!-- Contraindications -->
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="contraindications">Contraindications</label>
+                            <label for="contraindications">Contraindications <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="contraindications" id="contraindications" class="form-control" rows="4" 
                                       placeholder="List contraindications...">{{ old('contraindications') }}</textarea>
                             <small class="form-text text-muted">
@@ -510,7 +527,7 @@
                     <!-- Drug Interactions -->
                     <div class="col-md-8">
                         <div class="form-group">
-                            <label for="drug_interactions">Drug Interactions</label>
+                            <label for="drug_interactions">Drug Interactions <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="drug_interactions" id="drug_interactions" class="form-control" rows="3" 
                                       placeholder="List known drug interactions...">{{ old('drug_interactions') }}</textarea>
                             <small class="form-text text-muted">
@@ -522,7 +539,7 @@
                     <!-- Pregnancy Category -->
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label for="pregnancy_category">Pregnancy Category</label>
+                            <label for="pregnancy_category">Pregnancy Category <span class="badge badge-secondary">Optional</span></label>
                             <select name="pregnancy_category" id="pregnancy_category" class="form-control">
                                 <option value="">-- Select Category --</option>
                                 @foreach($pregnancyCategories as $key => $categoryName)
@@ -540,7 +557,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="form-group">
-                            <label for="warnings">Warnings</label>
+                            <label for="warnings">Warnings <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="warnings" id="warnings" class="form-control" rows="3" 
                                       placeholder="Important warnings and precautions...">{{ old('warnings') }}</textarea>
                             <small class="form-text text-muted">
@@ -554,7 +571,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="form-group">
-                            <label for="medicine_image">Medicine Image</label>
+                            <label for="medicine_image">Medicine Image <span class="badge badge-secondary">Optional</span></label>
                             <div class="custom-file">
                                 <input type="file" name="medicine_image" id="medicine_image" class="custom-file-input" 
                                        accept="image/*">
@@ -582,7 +599,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div class="form-group">
-                            <label for="notes">Additional Notes</label>
+                            <label for="notes">Additional Notes <span class="badge badge-secondary">Optional</span></label>
                             <textarea name="notes" id="notes" class="form-control" rows="3" 
                                       placeholder="Any additional notes or special instructions...">{{ old('notes') }}</textarea>
                             <small class="form-text text-muted">
@@ -716,6 +733,59 @@ $(document).ready(function() {
         calculateShortageOverage();
     });
 
+    // Check for existing batches when medicine name changes
+    var checkBatchesTimeout;
+    $('#medicine_name').on('input', function() {
+        var medicineName = $(this).val().trim();
+        
+        // Clear previous timeout
+        clearTimeout(checkBatchesTimeout);
+        
+        if (medicineName.length < 2) {
+            $('#existing_batches_alert').hide();
+            return;
+        }
+        
+        // Debounce the request
+        checkBatchesTimeout = setTimeout(function() {
+            $.ajax({
+                url: '{{ route("medicines.batchesByName") }}',
+                type: 'GET',
+                data: { medicine_name: medicineName },
+                success: function(response) {
+                    if (response.success && response.batches.length > 0) {
+                        var batchesHtml = '<ul class="mb-0 pl-3">';
+                        response.batches.forEach(function(batch) {
+                            var statusBadge = '';
+                            if (batch.is_expired) {
+                                statusBadge = '<span class="badge badge-danger">Expired</span>';
+                            } else if (batch.is_expiring_soon) {
+                                statusBadge = '<span class="badge badge-warning">Expiring Soon</span>';
+                            } else {
+                                statusBadge = '<span class="badge badge-success">Active</span>';
+                            }
+                            
+                            batchesHtml += '<li><strong>Batch:</strong> ' + batch.batch_number + 
+                                ' | <strong>Stock:</strong> ' + batch.stock_quantity + 
+                                ' | <strong>Expiry:</strong> ' + (batch.expiry_date || 'N/A') + 
+                                ' ' + statusBadge + '</li>';
+                        });
+                        batchesHtml += '</ul>';
+                        batchesHtml += '<small class="text-muted">You are adding a new batch to this existing medicine.</small>';
+                        
+                        $('#existing_batches_list').html(batchesHtml);
+                        $('#existing_batches_alert').show();
+                    } else {
+                        $('#existing_batches_alert').hide();
+                    }
+                },
+                error: function() {
+                    $('#existing_batches_alert').hide();
+                }
+            });
+        }, 500); // Wait 500ms after user stops typing
+    });
+    
     // Date validation
     $('#manufacturing_date').on('change', function() {
         var mfgDate = $(this).val();

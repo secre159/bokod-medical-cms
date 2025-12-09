@@ -38,6 +38,10 @@ class AdminLTEServiceProvider extends ServiceProvider
             return $user && $user->isActive();
         });
         
+        Gate::define('it', function ($user) {
+            return $user && $user->isIT();
+        });
+        
         // Specific admin permission gates
         Gate::define('manage-patients', function ($user) {
             return $user && $user->isAdmin() && $user->isActive();

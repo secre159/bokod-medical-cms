@@ -301,12 +301,18 @@
                         <div class="form-group">
                             <label for="dosage">Dosage <span class="text-danger medicine-required">*</span></label>
                             <input type="text" name="dosage" id="dosage" class="form-control" 
-                                   placeholder="e.g., 500mg, 2 tablets, 5ml"
+                                   placeholder="e.g., 500mg, 2 tablets, 5ml, 10ml with syringe"
                                    value="{{ old('dosage') }}">
+                            <small class="form-text text-muted">
+                                <i class="fas fa-magic mr-1"></i>Select a medicine to see dosage suggestions based on its form
+                            </small>
                             @error('dosage')
                                 <span class="text-danger small">{{ $message }}</span>
                             @enderror
                         </div>
+                        
+                        {{-- Include Smart Dosage Helper --}}
+                        @include('prescriptions.partials.dosage-helper')
                     </div>
                     
                     <div class="col-md-6">
@@ -601,6 +607,7 @@ function initPrescriptionCreate() {
         const generic = selectedOption.data('generic');
         const brand = selectedOption.data('brand');
         const strength = selectedOption.data('strength');
+        const dosageForm = selectedOption.data('form');
         const stock = selectedOption.data('stock');
         
         if ($(this).val()) {
@@ -616,11 +623,21 @@ function initPrescriptionCreate() {
             
             // Set max quantity based on stock
             $('#quantity').attr('max', stock);
+            
+            // Update dosage helper based on medicine form
+            if (typeof updateDosageHelper === 'function') {
+                updateDosageHelper(dosageForm);
+            }
         } else {
             $('#medicineInfo').hide();
             $('#medicine_name').val('');
             $('#generic_name').val('');
             $('#quantity').removeAttr('max');
+            
+            // Hide dosage helper
+            if (typeof updateDosageHelper === 'function') {
+                updateDosageHelper(null);
+            }
         }
     });
 

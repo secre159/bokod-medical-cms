@@ -212,6 +212,20 @@ class Medicine extends Model
         return $query->where('requires_prescription', true);
     }
     
+    public function scopeByMedicineName($query, $name)
+    {
+        return $query->where('medicine_name', $name);
+    }
+    
+    public function scopeActiveBatches($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE)
+                    ->where(function($q) {
+                        $q->whereNull('expiry_date')
+                          ->orWhere('expiry_date', '>=', now());
+                    });
+    }
+    
     // Helper methods
     public static function getTherapeuticClasses(): array
     {
@@ -277,5 +291,67 @@ class Medicine extends Model
     public static function getPregnancyCategoriesList()
     {
         return self::PREGNANCY_CATEGORIES;
+    }
+    
+    /**
+     * Get other batches of the same medicine
+     */
+    public function getOtherBatches()
+    {
+        return self::where('medicine_name', $this->medicine_name)
+                   ->where('id', '!=', $this->id)
+                   ->orderBy('expiry_date', 'asc')
+                   ->get();
+    }
+    
+    /**
+     * Get all batches of this medicine (including self)
+     */
+    public function getAllBatches()
+    {
+        return self::where('medicine_name', $this->medicine_name)
+                   ->orderBy('expiry_date', 'asc')
+                   ->get();
+    }
+    
+    /**
+     * Get total stock across all batches of this medicine
+     */
+    public function getTotalStockAcrossBatches()
+    {
+        return self::where('medicine_name', $this->medicine_name)
+                   ->sum('stock_quantity');
+    }
+    
+    /**
+     * Get the batch with nearest expiry (FEFO - First Expired First Out)
+     */
+    public static function getBatchWithNearestExpiry($medicineName, $minStock = 1)
+    {
+        return self::where('medicine_name', $medicineName)
+                   ->where('status', self::STATUS_ACTIVE)
+                   ->where('stock_quantity', '>=', $minStock)
+                   ->where(function($q) {
+                       $q->whereNull('expiry_date')
+                         ->orWhere('expiry_date', '>=', now());
+                   })
+                   ->orderBy('expiry_date', 'asc')
+                   ->first();
+    }
+    
+    /**
+     * Check if this is the only batch of this medicine
+     */
+    public function isOnlyBatch()
+    {
+        return self::where('medicine_name', $this->medicine_name)->count() === 1;
+    }
+    
+    /**
+     * Get batch count for this medicine name
+     */
+    public function getBatchCount()
+    {
+        return self::where('medicine_name', $this->medicine_name)->count();
     }
 }

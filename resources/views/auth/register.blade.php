@@ -533,13 +533,37 @@
                 <div class="form-section">
                     <h5><i class="fas fa-user text-primary"></i> Personal Information</h5>
                     
-                    <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" 
-                               placeholder="Enter your full name" value="{{ old('name') }}" required autofocus>
-                        @error('name')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" 
+                                       placeholder="Enter first name" value="{{ old('first_name') }}" required autofocus>
+                                @error('first_name')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Middle Name <small>(Optional)</small></label>
+                                <input type="text" name="middle_name" class="form-control @error('middle_name') is-invalid @enderror" 
+                                       placeholder="Enter middle name" value="{{ old('middle_name') }}">
+                                @error('middle_name')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" 
+                                       placeholder="Enter last name" value="{{ old('last_name') }}" required>
+                                @error('last_name')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">

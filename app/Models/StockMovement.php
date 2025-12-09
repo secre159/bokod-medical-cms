@@ -55,6 +55,9 @@ class StockMovement extends Model
             'adjust' => 'Stock Adjusted',
             'bulk_add' => 'Bulk Addition',
             'bulk_subtract' => 'Bulk Removal',
+            'physical_count' => 'Physical Count',
+            'adjustment_add' => 'Adjustment (Added)',
+            'adjustment_subtract' => 'Adjustment (Removed)',
             default => ucfirst($this->type)
         };
     }
@@ -65,9 +68,10 @@ class StockMovement extends Model
     public function getIconClassAttribute(): string
     {
         return match($this->type) {
-            'add', 'bulk_add' => 'fas fa-plus-circle text-success',
-            'subtract', 'bulk_subtract' => 'fas fa-minus-circle text-danger',
+            'add', 'bulk_add', 'adjustment_add' => 'fas fa-plus-circle text-success',
+            'subtract', 'bulk_subtract', 'adjustment_subtract' => 'fas fa-minus-circle text-danger',
             'adjust' => 'fas fa-edit text-warning',
+            'physical_count' => 'fas fa-clipboard-check text-info',
             default => 'fas fa-circle text-info'
         };
     }

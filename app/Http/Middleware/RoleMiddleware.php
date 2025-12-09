@@ -13,10 +13,12 @@ class RoleMiddleware
      * 
      * This middleware checks both role authorization and account status.
      * Users must have the correct role AND be active/approved to access resources.
+     * 
+     * Supports multiple roles separated by pipe (|), e.g., "admin|it"
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
         
@@ -45,8 +47,8 @@ class RoleMiddleware
             }
         }
 
-        // Check role authorization
-        if ($user->role !== $role) {
+        // Check role authorization - supports multiple roles
+        if (!in_array($user->role, $roles)) {
             abort(403, 'Access denied. Insufficient permissions.');
         }
 

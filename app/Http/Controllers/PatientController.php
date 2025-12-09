@@ -91,13 +91,15 @@ class PatientController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'patient_name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => ['required', new EmailValidationRule, 'unique:patients,email'],
             'phone_number' => ['nullable', new PhoneNumberRule],
-'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
+            'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
             'gender' => 'required|in:Male,Female,Other',
             'address' => 'nullable|string',
-'position' => ['nullable','string','max:100', Rule::unique('patients','position')],
+            'position' => ['nullable','string','max:100', Rule::unique('patients','position')],
             'civil_status' => 'required|in:Single,Married,Divorced,Widowed',
             'course' => 'nullable|string|max:100',
             'emergency_contact_name' => 'nullable|string|max:255',
@@ -116,13 +118,23 @@ class PatientController extends Controller
         try {
             DB::beginTransaction();
             
+            // Build full name from parts for backward compatibility
+            $fullName = trim(implode(' ', array_filter([
+                $validated['first_name'],
+                $validated['middle_name'],
+                $validated['last_name'],
+            ])));
+            
             // Generate random password
             $randomPassword = $this->generateSecurePassword();
             
             // Create user account for patient
             $user = User::create([
-                'name' => $validated['patient_name'],
-                'display_name' => $validated['patient_name'],
+                'first_name' => $validated['first_name'],
+                'middle_name' => $validated['middle_name'],
+                'last_name' => $validated['last_name'],
+                'name' => $fullName,
+                'display_name' => $fullName,
                 'email' => $validated['email'],
                 'password' => Hash::make($randomPassword),
                 'role' => User::ROLE_PATIENT,
@@ -131,6 +143,7 @@ class PatientController extends Controller
             
             // Create patient record
             $validated['user_id'] = $user->id;
+            $validated['patient_name'] = $fullName; // Keep for backward compatibility
             $patient = Patient::create($validated);
             
             DB::commit();
@@ -172,13 +185,15 @@ class PatientController extends Controller
     public function update(Request $request, Patient $patient)
     {
         $validated = $request->validate([
-            'patient_name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => ['required', new EmailValidationRule, Rule::unique('patients', 'email')->ignore($patient->id)],
             'phone_number' => ['nullable', new PhoneNumberRule],
-'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
+            'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
             'gender' => 'required|in:Male,Female,Other',
             'address' => 'nullable|string',
-'position' => ['nullable','string','max:100', Rule::unique('patients','position')->ignore($patient->id)],
+            'position' => ['nullable','string','max:100', Rule::unique('patients','position')->ignore($patient->id)],
             'civil_status' => 'required|in:Single,Married,Divorced,Widowed',
             'course' => 'nullable|string|max:100',
             'emergency_contact_name' => 'nullable|string|max:255',
@@ -197,14 +212,25 @@ class PatientController extends Controller
         try {
             DB::beginTransaction();
             
+            // Build full name from parts for backward compatibility
+            $fullName = trim(implode(' ', array_filter([
+                $validated['first_name'],
+                $validated['middle_name'],
+                $validated['last_name'],
+            ])));
+            
             // Update patient record
+            $validated['patient_name'] = $fullName; // Keep for backward compatibility
             $patient->update($validated);
             
             // Update associated user record
             if ($patient->user) {
                 $patient->user->update([
-                    'name' => $validated['patient_name'],
-                    'display_name' => $validated['patient_name'],
+                    'first_name' => $validated['first_name'],
+                    'middle_name' => $validated['middle_name'],
+                    'last_name' => $validated['last_name'],
+                    'name' => $fullName,
+                    'display_name' => $fullName,
                     'email' => $validated['email'],
                 ]);
             }

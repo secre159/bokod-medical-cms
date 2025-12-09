@@ -139,7 +139,15 @@
                                 @if($medicine->batch_number)
                                 <tr>
                                     <th>Current Batch:</th>
-                                    <td>{{ $medicine->batch_number }}</td>
+                                    <td>
+                                        <span class="badge badge-primary">{{ $medicine->batch_number }}</span>
+                                        @php
+                                            $batchCount = \App\Models\Medicine::where('medicine_name', $medicine->medicine_name)->count();
+                                        @endphp
+                                        @if($batchCount > 1)
+                                            <br><small class="text-muted">{{ $batchCount }} total batches</small>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @endif
                                 <tr>
@@ -171,6 +179,97 @@
                     @endif
                 </div>
             </div>
+            
+            <!-- Related Batches Card -->
+            @php
+                $allBatches = $medicine->getAllBatches();
+            @endphp
+            @if($allBatches->count() > 1)
+            <div class="card card-primary card-outline">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-layer-group mr-2"></i>All Batches of "{{ $medicine->medicine_name }}"
+                    </h3>
+                    <div class="card-tools">
+                        <span class="badge badge-info">{{ $allBatches->count() }} Total Batches</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="25%">Batch Number</th>
+                                    <th width="15%" class="text-center">Stock</th>
+                                    <th width="15%">Mfg Date</th>
+                                    <th width="15%">Expiry Date</th>
+                                    <th width="15%" class="text-center">Status</th>
+                                    <th width="15%" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($allBatches as $batch)
+                                <tr class="{{ $batch->id == $medicine->id ? 'table-active' : '' }}">
+                                    <td>
+                                        <strong>{{ $batch->batch_number }}</strong>
+                                        @if($batch->id == $medicine->id)
+                                            <span class="badge badge-success ml-2">Current</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="{{ $batch->stock_quantity <= $batch->minimum_stock ? 'text-danger' : 'text-success' }}">
+                                            <strong>{{ $batch->stock_quantity }}</strong>
+                                        </span>
+                                    </td>
+                                    <td>{{ $batch->manufacturing_date ? $batch->manufacturing_date->format('M d, Y') : 'N/A' }}</td>
+                                    <td>{{ $batch->expiry_date ? $batch->expiry_date->format('M d, Y') : 'N/A' }}</td>
+                                    <td class="text-center">
+                                        @if($batch->is_expired)
+                                            <span class="badge badge-danger">Expired</span>
+                                        @elseif($batch->is_expiring_soon)
+                                            <span class="badge badge-warning">Expiring Soon</span>
+                                        @elseif($batch->stock_quantity <= 0)
+                                            <span class="badge badge-secondary">Out of Stock</span>
+                                        @elseif($batch->stock_quantity <= $batch->minimum_stock)
+                                            <span class="badge badge-warning">Low Stock</span>
+                                        @else
+                                            <span class="badge badge-success">Active</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @if($batch->id != $medicine->id)
+                                            <a href="{{ route('medicines.show', $batch) }}" class="btn btn-xs btn-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('medicines.edit', $batch) }}" class="btn btn-xs btn-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="font-weight-bold bg-light">
+                                    <td>Total Stock Across All Batches:</td>
+                                    <td class="text-center">
+                                        <strong class="text-primary">{{ $allBatches->sum('stock_quantity') }}</strong>
+                                    </td>
+                                    <td colspan="4"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ route('medicines.create') }}?medicine_name={{ urlencode($medicine->medicine_name) }}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus mr-1"></i>Add New Batch for this Medicine
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <!-- Date Information Card -->
             <div class="card">

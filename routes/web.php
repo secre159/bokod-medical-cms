@@ -169,6 +169,7 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             Route::get('/export-stock', [MedicineController::class, 'exportStockReport'])->name('exportStock');
             Route::get('/search', [MedicineController::class, 'searchForPrescription'])->name('searchForPrescription');
             Route::get('/low-stock-alerts', [MedicineController::class, 'getLowStockAlert'])->name('lowStockAlerts');
+            Route::get('/batches-by-name', [MedicineController::class, 'getBatchesByName'])->name('batchesByName');
             
             // Inventory management routes
             Route::post('/{medicine}/update-physical-count', [MedicineController::class, 'updatePhysicalCount'])->name('updatePhysicalCount');
@@ -213,40 +214,7 @@ Route::middleware(['auth', 'account.status'])->group(function () {
         // Audit Logs
         Route::get('/logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('logs.index');
         
-        // PIN Management (Super Admin only - must be accessible before settings)
-        Route::middleware('super.admin')->prefix('settings-pin')->name('settings.pin.')->group(function () {
-            Route::get('/setup', [App\Http\Controllers\SettingsPinController::class, 'showSetup'])->name('setup');
-            Route::post('/save', [App\Http\Controllers\SettingsPinController::class, 'savePin'])->name('save');
-            Route::post('/remove', [App\Http\Controllers\SettingsPinController::class, 'removePin'])->name('remove');
-        });
-        
-        // PIN Verification (Super Admin only - no PIN required for verify page itself)
-        Route::middleware('role:admin')->group(function () {
-            Route::get('/settings/verify-pin', [App\Http\Controllers\SettingsPinController::class, 'showVerify'])->name('settings.verify-pin');
-            Route::post('/settings/verify-pin', [App\Http\Controllers\SettingsPinController::class, 'verifyPin'])->name('settings.verify-pin.submit');
-            Route::post('/settings/lock', [App\Http\Controllers\SettingsPinController::class, 'lock'])->name('settings.lock');
-        });
-        
-        // Settings Management (Super Admin + PIN Required)
-        Route::middleware('super.admin')->prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [SettingsController::class, 'index'])->name('index');
-            Route::put('/general', [SettingsController::class, 'updateGeneral'])->name('updateGeneral');
-            Route::put('/system', [SettingsController::class, 'updateSystem'])->name('updateSystem');
-            Route::put('/email', [SettingsController::class, 'updateEmail'])->name('updateEmail');
-            Route::post('/test-email', [SettingsController::class, 'testEmail'])->name('testEmail');
-            Route::post('/clear-cache', [SettingsController::class, 'clearCache'])->name('clearCache');
-            Route::post('/clear-config-cache', [SettingsController::class, 'clearConfigCache'])->name('clearConfigCache');
-            Route::post('/clear-view-cache', [SettingsController::class, 'clearViewCache'])->name('clearViewCache');
-            Route::post('/create-backup', [SettingsController::class, 'createBackup'])->name('createBackup');
-            Route::post('/optimize-database', [SettingsController::class, 'optimizeDatabase'])->name('optimizeDatabase');
-            Route::post('/system-health-check', [SettingsController::class, 'systemHealthCheck'])->name('systemHealthCheck');
-            Route::post('/clean-temp-files', [SettingsController::class, 'cleanTempFiles'])->name('cleanTempFiles');
-            Route::get('/list-backups', [SettingsController::class, 'listBackups'])->name('listBackups');
-            Route::post('/upload-backup', [SettingsController::class, 'uploadBackup'])->name('uploadBackup');
-            Route::get('/download-backup/{filename}', [SettingsController::class, 'downloadBackup'])->name('downloadBackup');
-            Route::delete('/delete-backup/{filename}', [SettingsController::class, 'deleteBackup'])->name('deleteBackup');
-            Route::post('/restore-backup/{filename}', [SettingsController::class, 'restoreBackup'])->name('restoreBackup');
-        });
+        // Settings routes moved outside admin-only group (see below) to allow IT role access
         
         // Documentation Management (AdminLTE Menu)
         Route::prefix('admin/documentation')->name('admin.documentation.')->group(function () {
@@ -329,6 +297,42 @@ Route::middleware(['auth', 'account.status'])->group(function () {
             // Performance optimization route
             Route::get('/optimize-messaging-performance', [DatabaseFixController::class, 'optimizeMessagingPerformance'])->name('optimizePerformance');
         });
+    }); // End of admin-only routes
+    
+    // Settings Management (Super Admin + IT role access, with PIN for Super Admins only)
+    // PIN Management (Super Admin only - must be accessible before settings)
+    Route::middleware('super.admin')->prefix('settings-pin')->name('settings.pin.')->group(function () {
+        Route::get('/setup', [App\Http\Controllers\SettingsPinController::class, 'showSetup'])->name('setup');
+        Route::post('/save', [App\Http\Controllers\SettingsPinController::class, 'savePin'])->name('save');
+        Route::post('/remove', [App\Http\Controllers\SettingsPinController::class, 'removePin'])->name('remove');
+    });
+    
+    // PIN Verification (Admin role required - no PIN needed for IT users)
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/settings/verify-pin', [App\Http\Controllers\SettingsPinController::class, 'showVerify'])->name('settings.verify-pin');
+        Route::post('/settings/verify-pin', [App\Http\Controllers\SettingsPinController::class, 'verifyPin'])->name('settings.verify-pin.submit');
+        Route::post('/settings/lock', [App\Http\Controllers\SettingsPinController::class, 'lock'])->name('settings.lock');
+    });
+    
+    // Settings Management (Super Admin + IT users, PIN required for super admins only)
+    Route::middleware('super.admin')->prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [SettingsController::class, 'index'])->name('index');
+        Route::put('/general', [SettingsController::class, 'updateGeneral'])->name('updateGeneral');
+        Route::put('/system', [SettingsController::class, 'updateSystem'])->name('updateSystem');
+        Route::put('/email', [SettingsController::class, 'updateEmail'])->name('updateEmail');
+        Route::post('/test-email', [SettingsController::class, 'testEmail'])->name('testEmail');
+        Route::post('/clear-cache', [SettingsController::class, 'clearCache'])->name('clearCache');
+        Route::post('/clear-config-cache', [SettingsController::class, 'clearConfigCache'])->name('clearConfigCache');
+        Route::post('/clear-view-cache', [SettingsController::class, 'clearViewCache'])->name('clearViewCache');
+        Route::post('/create-backup', [SettingsController::class, 'createBackup'])->name('createBackup');
+        Route::post('/optimize-database', [SettingsController::class, 'optimizeDatabase'])->name('optimizeDatabase');
+        Route::post('/system-health-check', [SettingsController::class, 'systemHealthCheck'])->name('systemHealthCheck');
+        Route::post('/clean-temp-files', [SettingsController::class, 'cleanTempFiles'])->name('cleanTempFiles');
+        Route::get('/list-backups', [SettingsController::class, 'listBackups'])->name('listBackups');
+        Route::post('/upload-backup', [SettingsController::class, 'uploadBackup'])->name('uploadBackup');
+        Route::get('/download-backup/{filename}', [SettingsController::class, 'downloadBackup'])->name('downloadBackup');
+        Route::delete('/delete-backup/{filename}', [SettingsController::class, 'deleteBackup'])->name('deleteBackup');
+        Route::post('/restore-backup/{filename}', [SettingsController::class, 'restoreBackup'])->name('restoreBackup');
     });
     
     // Patient routes

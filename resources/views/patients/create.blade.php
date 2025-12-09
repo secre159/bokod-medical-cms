@@ -31,17 +31,42 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="form-group">
-                            <label for="patient_name">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" name="patient_name" id="patient_name" 
-                                   class="form-control @error('patient_name') is-invalid @enderror" 
-                                   value="{{ old('patient_name') }}" required>
-                            @error('patient_name')
+                            <label for="first_name">First Name <span class="text-danger">*</span></label>
+                            <input type="text" name="first_name" id="first_name" 
+                                   class="form-control @error('first_name') is-invalid @enderror" 
+                                   value="{{ old('first_name') }}" required>
+                            @error('first_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="middle_name">Middle Name</label>
+                            <input type="text" name="middle_name" id="middle_name" 
+                                   class="form-control @error('middle_name') is-invalid @enderror" 
+                                   value="{{ old('middle_name') }}">
+                            @error('middle_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="last_name">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" name="last_name" id="last_name" 
+                                   class="form-control @error('last_name') is-invalid @enderror" 
+                                   value="{{ old('last_name') }}" required>
+                            @error('last_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
                             <label for="gender">Gender <span class="text-danger">*</span></label>

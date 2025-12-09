@@ -17,14 +17,24 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        
         // Redirect patient users to the specialized patient profile edit page
-        if ($request->user()->role === 'patient') {
+        if ($user->role === 'patient') {
             return redirect()->route('patient.profile.edit')
                 ->with('info', 'Redirected to your patient profile page with full editing capabilities.');
         }
         
+        // Use AdminLTE layout for admin and IT users
+        if ($user->role === 'admin' || $user->role === 'it') {
+            return view('profile.edit-adminlte', [
+                'user' => $user,
+            ]);
+        }
+        
+        // Fallback to default profile view
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 

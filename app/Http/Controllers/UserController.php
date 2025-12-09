@@ -49,6 +49,9 @@ class UserController extends Controller
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('first_name', 'like', "%{$search}%")
+                      ->orWhere('middle_name', 'like', "%{$search}%")
+                      ->orWhere('last_name', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%")
                       ->orWhere('phone', 'like', "%{$search}%");
                 });
@@ -85,14 +88,16 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => ['required', new EmailValidationRule, 'unique:users'],
             'phone' => ['nullable', new PhoneNumberRule],
-            'role' => ['required', Rule::in(['admin', 'patient'])],
+            'role' => ['required', Rule::in(['admin', 'patient', 'it'])],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'password' => 'required|string|min:8|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
+            'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'address' => 'nullable|string|max:500',
             'emergency_contact' => 'nullable|string|max:255',
@@ -105,8 +110,18 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
             
+            // Build full name from parts for backward compatibility
+            $fullName = trim(implode(' ', array_filter([
+                $request->first_name,
+                $request->middle_name,
+                $request->last_name,
+            ])));
+            
             $userData = [
-                'name' => $request->name,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'name' => $fullName, // Keep for backward compatibility
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'role' => $request->role,
@@ -179,7 +194,10 @@ class UserController extends Controller
             // If creating a patient, also create patient record
             if ($request->role === 'patient') {
                 $user->patient()->create([
-                    'patient_name' => $request->name,
+                    'first_name' => $request->first_name,
+                    'middle_name' => $request->middle_name,
+                    'last_name' => $request->last_name,
+                    'patient_name' => $fullName, // Keep for backward compatibility
                     'email' => $request->email,
                     'phone' => $request->phone,
                     'date_of_birth' => $request->date_of_birth,
@@ -269,14 +287,16 @@ class UserController extends Controller
         }
 
         $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => ['required', new EmailValidationRule, Rule::unique('users')->ignore($user->id)],
             'phone' => ['nullable', new PhoneNumberRule],
-            'role' => ['required', Rule::in(['admin', 'patient'])],
+            'role' => ['required', Rule::in(['admin', 'patient', 'it'])],
             'status' => ['required', Rule::in(['active', 'inactive'])],
             'password' => 'nullable|string|min:8|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
+            'date_of_birth' => 'nullable|date|before:' . now()->subYears(16)->toDateString() . '|after:' . now()->subYears(90)->toDateString(),
             'gender' => ['nullable', Rule::in(['male', 'female', 'other'])],
             'address' => 'nullable|string|max:500',
             'emergency_contact' => 'nullable|string|max:255',
@@ -289,8 +309,18 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
+            // Build full name from parts for backward compatibility
+            $fullName = trim(implode(' ', array_filter([
+                $request->first_name,
+                $request->middle_name,
+                $request->last_name,
+            ])));
+
             $userData = [
-                'name' => $request->name,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'name' => $fullName, // Keep for backward compatibility
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'role' => $request->role,
@@ -348,7 +378,10 @@ class UserController extends Controller
             // Update patient record if exists and role is patient
             if ($request->role === 'patient' && $user->patient) {
                 $patientData = [
-                    'patient_name' => $request->name,
+                    'first_name' => $request->first_name,
+                    'middle_name' => $request->middle_name,
+                    'last_name' => $request->last_name,
+                    'patient_name' => $fullName, // Keep for backward compatibility
                     'email' => $request->email,
                     'phone' => $request->phone,
                     'phone_number' => $request->phone, // Also update phone_number for consistency

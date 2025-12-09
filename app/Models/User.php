@@ -22,6 +22,9 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'display_name',
         'email',
         'profile_picture',
@@ -81,6 +84,7 @@ class User extends Authenticatable
      */
     const ROLE_ADMIN = 'admin';
     const ROLE_PATIENT = 'patient';
+    const ROLE_IT = 'it';
     
     /**
      * Status constants
@@ -119,6 +123,14 @@ class User extends Authenticatable
     public function isPatient(): bool
     {
         return $this->role === self::ROLE_PATIENT;
+    }
+    
+    /**
+     * Check if user is IT
+     */
+    public function isIT(): bool
+    {
+        return $this->role === self::ROLE_IT;
     }
     
     /**
@@ -204,11 +216,25 @@ class User extends Authenticatable
     }
     
     /**
+     * Get full name from separated name fields
+     */
+    public function getFullNameAttribute()
+    {
+        $parts = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+        ]);
+        
+        return !empty($parts) ? implode(' ', $parts) : $this->name;
+    }
+    
+    /**
      * Get the display name or fallback to name
      */
     public function getDisplayNameAttribute($value)
     {
-        return $value ?: $this->name;
+        return $value ?: ($this->full_name ?: $this->name);
     }
     
     
@@ -218,6 +244,16 @@ class User extends Authenticatable
      */
     public function getInitials()
     {
+        // Try to use separated name fields first
+        if ($this->first_name && $this->last_name) {
+            return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
+        }
+        
+        if ($this->first_name && strlen($this->first_name) >= 2) {
+            return strtoupper(substr($this->first_name, 0, 2));
+        }
+        
+        // Fall back to parsing the full name field
         if (!$this->name || trim($this->name) === '') {
             // Use email as fallback if available
             if ($this->email) {
@@ -306,7 +342,7 @@ class User extends Authenticatable
      */
     public function adminlte_full_name()
     {
-        return $this->name;
+        return $this->full_name ?: $this->name;
     }
     
     /**
@@ -372,6 +408,14 @@ class User extends Authenticatable
     public function scopePatients($query)
     {
         return $query->where('role', self::ROLE_PATIENT);
+    }
+    
+    /**
+     * Scope to get only IT users
+     */
+    public function scopeITUsers($query)
+    {
+        return $query->where('role', self::ROLE_IT);
     }
     
     /**

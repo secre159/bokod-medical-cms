@@ -202,9 +202,9 @@
                         <tr style="background-color: #f8f9fa;">
                             <th width="8%" class="text-center">Article</th>
                             <th width="25%">Description</th>
+                            <th width="10%" class="text-center">Batch Number</th>
                             <th width="10%" class="text-center">Stock Number</th>
                             <th width="10%" class="text-center">Unit Measure</th>
-                            <th width="10%" class="text-center">Unit Value</th>
                             <th width="12%" class="text-center">Balance (Quantity)</th>
                             <th width="10%" class="text-center">On Hand Per Count</th>
                             <th width="10%" class="text-center">Shortage/Overage</th>
@@ -225,14 +225,23 @@
                                 @if($medicine->strength)
                                     <br><small class="text-info">{{ $medicine->strength }}</small>
                                 @endif
+                                @php
+                                    $batchCount = \App\Models\Medicine::where('medicine_name', $medicine->medicine_name)->count();
+                                @endphp
+                                @if($batchCount > 1)
+                                    <br><small class="badge badge-info"><i class="fas fa-layer-group"></i> {{ $batchCount }} batches</small>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-primary">{{ $medicine->batch_number }}</span>
+                                @if($medicine->manufacturing_date)
+                                    <br><small class="text-muted">Mfg: {{ $medicine->manufacturing_date->format('M Y') }}</small>
+                                @endif
                             </td>
                             <td class="text-center">
                                 <span class="badge badge-secondary">MED-{{ str_pad($medicine->id, 4, '0', STR_PAD_LEFT) }}</span>
                             </td>
                             <td class="text-center">{{ $medicine->unit_measure ?? 'pcs' }}</td>
-                            <td class="text-center">
-                                <span class="text-muted">-</span>
-                            </td>
                             <td class="text-center">
                                 <strong class="{{ $medicine->stock_quantity <= $medicine->minimum_stock ? 'text-danger' : 'text-success' }}">
                                     {{ $medicine->stock_quantity }}

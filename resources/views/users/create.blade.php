@@ -49,16 +49,39 @@
                 <div class="row">
                     <div class="col-md-8">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="name">Full Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                           id="name" name="name" value="{{ old('name') }}" required>
-                                    @error('name')
+                                    <label for="first_name">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('first_name') is-invalid @enderror" 
+                                           id="first_name" name="first_name" value="{{ old('first_name') }}" required>
+                                    @error('first_name')
                                         <span class="invalid-feedback">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="middle_name">Middle Name</label>
+                                    <input type="text" class="form-control @error('middle_name') is-invalid @enderror" 
+                                           id="middle_name" name="middle_name" value="{{ old('middle_name') }}">
+                                    @error('middle_name')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="last_name">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('last_name') is-invalid @enderror" 
+                                           id="last_name" name="last_name" value="{{ old('last_name') }}" required>
+                                    @error('last_name')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="email">Email Address <span class="text-danger">*</span></label>
@@ -117,6 +140,7 @@
                                             id="role" name="role" required>
                                         <option value="">Select Role</option>
                                         <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                        <option value="it" {{ old('role') == 'it' ? 'selected' : '' }}>IT</option>
                                         <option value="patient" {{ old('role') == 'patient' ? 'selected' : '' }}>Patient</option>
                                     </select>
                                     @error('role')
